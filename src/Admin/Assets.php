@@ -5,7 +5,6 @@ namespace CB\Backups\Admin;
 
 use CB\Backups\Jobs\Repository;
 use CB\Core\Admin\PageRegistry;
-use CB\Core\UI\Assets as CoreUiAssets;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -21,23 +20,10 @@ final class Assets {
 			return;
 		}
 
-		// Backups lives below the Core Blueprint admin menu. Consume the
-		// shared Foundation primitives with the Core presentation instead of
-		// shipping plugin-local modal/toast behavior.
-		CoreUiAssets::enqueue_modals( CoreUiAssets::MODAL_PRESENTATION_CORE );
-		CoreUiAssets::enqueue_toasts( CoreUiAssets::TOAST_PRESENTATION_CORE );
-
-		// Time input remains a normal HH:MM text field. Base progressively
-		// enhances the declarative markup with the shared 24-hour TimePicker.
-		// Keep older compatible Base builds functional as plain text inputs.
-		if ( method_exists( CoreUiAssets::class, 'enqueue_time_picker' ) ) {
-			CoreUiAssets::enqueue_time_picker();
-		}
-
 		wp_enqueue_style(
 			'cb-backups-admin',
 			CB_BACKUPS_URL . 'assets/css/admin.css',
-			[ 'cb-core-css-layout', 'cb-core-css-panels', 'cb-core-css-nav-tabs', 'cb-core-css-buttons', 'cb-core-css-form-controls', 'cb-core-css-notices' ],
+			[],
 			CB_BACKUPS_VERSION
 		);
 
