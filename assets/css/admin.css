@@ -1,0 +1,299 @@
+/**
+ * Core Blueprint Backups - Core Admin page-specific styles.
+ *
+ * Shared surfaces, typography, tabs, buttons, tables and form controls are
+ * owned by Core Blueprint Base. This file only styles backup-domain layout
+ * and controls that do not have a shared Core Admin primitive yet.
+ */
+
+.cb-backups-tabs {
+	margin-bottom: var(--cb-space-5);
+}
+
+.cb-backups-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: var(--cb-space-4);
+	margin: var(--cb-space-5) 0 var(--cb-space-6);
+	max-width: 1000px;
+}
+
+.cb-backups-card {
+	margin: 0;
+}
+
+.cb-backups-card h2,
+.cb-backups-job h2 {
+	margin-top: 0;
+}
+
+.cb-backups-card p {
+	color: var(--cb-text-muted);
+	line-height: var(--cb-lh-relaxed);
+}
+
+.cb-backups-wide-card {
+	max-width: 760px;
+	margin: var(--cb-space-5) 0;
+}
+
+.cb-backups-restore-warning {
+	margin: var(--cb-space-5) 0;
+}
+
+.cb-backups-job {
+	margin: var(--cb-space-5) 0;
+}
+
+.cb-backups-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--cb-space-2);
+}
+
+.cb-backups-actions form {
+	margin: 0;
+}
+
+.cb-backups-actions .button {
+	margin: 0;
+}
+
+
+.cb-backups-progress {
+	height: 10px;
+	overflow: hidden;
+	border: 1px solid var(--cb-border);
+	border-radius: var(--cb-radius-pill);
+	background: var(--cb-surface-0);
+}
+
+.cb-backups-progress span {
+	display: block;
+	height: 100%;
+	background: var(--cb-accent);
+	transition: width 200ms ease;
+}
+
+.cb-backups-error {
+	color: var(--cb-danger);
+}
+
+.cb-backups-ok {
+	color: var(--cb-success);
+	font-weight: var(--cb-fw-semibold);
+}
+
+.cb-backups-schedules select {
+	min-width: 130px;
+}
+
+.cb-core-wrap.cb-backups input[type="file"] {
+	color: var(--cb-text);
+}
+
+.cb-core-wrap.cb-backups input[type="file"]::file-selector-button {
+	min-height: var(--cb-control-height);
+	margin-right: var(--cb-space-2);
+	padding: 0 var(--cb-space-3);
+	background: transparent;
+	border: 1px solid var(--cb-border);
+	border-radius: var(--cb-radius-sm);
+	color: var(--cb-text);
+	cursor: pointer;
+}
+
+.cb-core-wrap.cb-backups input[type="file"]::file-selector-button:hover {
+	border-color: var(--cb-accent);
+	color: var(--cb-text-strong);
+}
+
+@media (max-width: 782px) {
+	.cb-backups-actions {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.cb-backups-actions .button {
+		width: 100%;
+		text-align: center;
+	}
+}
+
+/* Job telemetry */
+.cb-backups-job {
+	max-width: 1000px;
+}
+
+.cb-backups-job-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--cb-space-3);
+}
+
+.cb-backups-job-heading h2 {
+	margin-bottom: var(--cb-space-3);
+}
+
+.cb-backups-status {
+	color: var(--cb-text-muted);
+	font-weight: var(--cb-fw-semibold);
+	text-transform: capitalize;
+}
+
+.cb-backups-progress-line {
+	margin-bottom: var(--cb-space-4);
+}
+
+.cb-backups-metrics {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+	gap: var(--cb-space-3);
+	margin: var(--cb-space-4) 0;
+}
+
+.cb-backups-metric {
+	padding: var(--cb-space-3);
+	border: 1px solid var(--cb-border);
+	border-radius: var(--cb-radius-sm);
+	background: var(--cb-surface-0);
+}
+
+.cb-backups-metric dt {
+	margin-bottom: var(--cb-space-1);
+	color: var(--cb-text-muted);
+	font-size: 12px;
+}
+
+.cb-backups-metric dd {
+	margin: 0;
+	color: var(--cb-text-strong);
+	font-size: 15px;
+	font-weight: var(--cb-fw-semibold);
+}
+
+.cb-backups-current {
+	margin: var(--cb-space-3) 0;
+	color: var(--cb-text-muted);
+}
+
+.cb-backups-current code {
+	color: var(--cb-text-strong);
+}
+
+.cb-backups-long-warning {
+	margin: var(--cb-space-3) 0 !important;
+}
+
+.cb-backups-job-actions {
+	display: flex;
+	gap: var(--cb-space-2);
+	margin-top: var(--cb-space-3);
+}
+
+/* Preserve semantic hidden state against WordPress button display rules. */
+.cb-backups [hidden] {
+	display: none !important;
+}
+
+.cb-backups-current code {
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+
+/* Resumable import */
+.cb-backups-import-controls {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--cb-space-2);
+}
+
+.cb-backups-import-progress {
+	margin-top: var(--cb-space-4);
+	padding-top: var(--cb-space-4);
+	border-top: 1px solid var(--cb-border);
+}
+
+.cb-backups-import-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--cb-space-3);
+	margin-bottom: var(--cb-space-2);
+}
+
+.cb-backups-import-progress p {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--cb-space-3);
+	color: var(--cb-text-muted);
+}
+
+.cb-backups-import-filename {
+	overflow-wrap: anywhere;
+	text-align: right;
+}
+
+.cb-backups-prepared-status {
+	color: var(--cb-success);
+	font-weight: var(--cb-fw-semibold);
+}
+
+@media (max-width: 782px) {
+	.cb-backups-import-controls {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.cb-backups-import-controls input[type="file"],
+	.cb-backups-import-controls .button {
+		width: 100%;
+	}
+}
+
+
+
+/* Bulk backup management */
+.cb-backups-bulk-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--cb-space-3);
+	margin: 0 0 var(--cb-space-3);
+}
+
+.cb-backups-selection-count {
+	color: var(--cb-text-muted);
+}
+
+.cb-backups-table .check-column {
+	width: 2.2em;
+	padding-right: 0;
+}
+
+.cb-backups-table .check-column input[type="checkbox"] {
+	margin: 0;
+}
+
+/* Management-data section rhythm ----------------------------------------- */
+/*
+ * Tables stay native `widefat striped`: Base owns their WordPress Pro
+ * presentation, theme colours, borders, zebra states and hover treatment.
+ * Backups only owns section rhythm and responsive overflow.
+ */
+.cb-backups-section-description {
+	margin: 0 0 var(--cb-space-3);
+	color: var(--cb-text-muted);
+}
+
+.cb-backups-table-scroll {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.cb-backups-table-scroll > table.widefat {
+	margin: 0;
+}
