@@ -27,6 +27,10 @@
 	margin: var(--cb-space-5) 0;
 }
 
+.cb-backups-settings-panel {
+	max-width: 1100px;
+}
+
 .cb-backups-restore-warning {
 	margin: var(--cb-space-5) 0;
 }
