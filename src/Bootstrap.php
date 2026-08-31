@@ -42,7 +42,13 @@ final class Bootstrap {
 		SiteHealth::boot();
 
 		add_action( 'cb_core_register_pages', static function (): void {
-			PageRegistry::register( new Page() );
+			PageRegistry::register(
+				new Page(),
+				[
+					'foundations' => [ 'modal', 'toast', 'time-picker' ],
+					'components'  => [ 'nav-tabs', 'panels', 'notices', 'form-controls' ],
+				]
+			);
 		} );
 
 		add_action( 'cb_backups_run_job', [ Runner::class, 'scheduled_tick' ], 10, 1 );
