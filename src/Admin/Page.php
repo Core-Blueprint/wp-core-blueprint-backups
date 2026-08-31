@@ -156,7 +156,7 @@ final class Page implements PageContract {
 
 	/** @param array<int,array<string,mixed>> $imports */
 	private function prepared_import_table( array $imports ): void {
-		echo '<div class="cb-core-panel cb-backups-table-scroll">';
+		echo '<div class="cb-core-panel cb-core-panel--table cb-backups-table-scroll">';
 		echo '<table class="widefat striped cb-backups-import-table"><thead><tr>';
 		echo '<th>' . esc_html__( 'Imported', 'core-blueprint-backups' ) . '</th>';
 		echo '<th>' . esc_html__( 'Original file', 'core-blueprint-backups' ) . '</th>';
@@ -234,7 +234,7 @@ final class Page implements PageContract {
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="cb_backups_save_schedules">';
 		wp_nonce_field( 'cb_backups_save_schedules' );
-		echo '<div class="cb-core-panel cb-backups-table-scroll">';
+		echo '<div class="cb-core-panel cb-core-panel--table cb-backups-table-scroll">';
 		echo '<table class="widefat striped cb-backups-schedules"><thead><tr><th>' . esc_html__( 'Backup', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Enabled', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Frequency', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Weekday', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Time', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Keep automatic', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Last success', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'Next run', 'core-blueprint-backups' ) . '</th><th>' . esc_html__( 'State', 'core-blueprint-backups' ) . '</th></tr></thead><tbody>';
 		$weekdays = [ 1 => __( 'Monday', 'core-blueprint-backups' ), 2 => __( 'Tuesday', 'core-blueprint-backups' ), 3 => __( 'Wednesday', 'core-blueprint-backups' ), 4 => __( 'Thursday', 'core-blueprint-backups' ), 5 => __( 'Friday', 'core-blueprint-backups' ), 6 => __( 'Saturday', 'core-blueprint-backups' ), 7 => __( 'Sunday', 'core-blueprint-backups' ) ];
 		foreach ( [ 'database' => __( 'Database', 'core-blueprint-backups' ), 'website' => __( 'Full website', 'core-blueprint-backups' ) ] as $type => $label ) {
@@ -311,7 +311,7 @@ final class Page implements PageContract {
 			echo '</form>';
 		}
 
-		echo '<div class="cb-core-panel cb-backups-table-scroll">';
+		echo '<div class="cb-core-panel cb-core-panel--table cb-backups-table-scroll">';
 		echo '<table class="widefat striped cb-backups-table"><thead><tr>';
 		if ( ! $restore_mode ) {
 			echo '<td class="check-column"><input type="checkbox" data-cb-backups-select-all aria-label="' . esc_attr__( 'Select all backups', 'core-blueprint-backups' ) . '"></td>';
