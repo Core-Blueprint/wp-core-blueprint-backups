@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
+use CB\Backups\DB\ContentDigest;
 use RuntimeException;
 use ZipArchive;
 
@@ -145,6 +146,7 @@ final class ArchiveValidator {
 		if ( '' === $prefix || strlen( $prefix ) > 63 || ! preg_match( '/^[A-Za-z0-9_$-]+$/', $prefix ) ) throw new RuntimeException( 'Backup manifest contains an unsafe WordPress table prefix.' );
 		$db = is_array( $manifest['database'] ?? null ) ? $manifest['database'] : []; $tables = isset( $db['tables'] ) && is_array( $db['tables'] ) ? array_values( $db['tables'] ) : [];
 		if ( ! $tables ) throw new RuntimeException( 'Backup manifest does not contain a database table inventory.' );
+		ContentDigest::validate_inventory( $tables, $db['content_integrity'] ?? [] );
 		foreach ( $tables as $table ) { $table = (string) $table; if ( '' === $table || ! str_starts_with( $table, $prefix ) || ! preg_match( '/^[A-Za-z0-9_$-]+$/', $table ) ) throw new RuntimeException( 'Backup manifest contains an unsafe database table name.' ); }
 		MigrationPlan::build( $manifest );
 		$fs = is_array( $manifest['filesystem'] ?? null ) ? $manifest['filesystem'] : []; $tops = isset( $fs['top_levels'] ) && is_array( $fs['top_levels'] ) ? $fs['top_levels'] : [];

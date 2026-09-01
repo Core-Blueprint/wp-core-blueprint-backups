@@ -24,6 +24,7 @@ final class Manifest {
 			],
 			'database'       => [
 				'tables'       => isset( $meta['db_tables'] ) && is_array( $meta['db_tables'] ) ? array_values( $meta['db_tables'] ) : [],
+				'content_integrity' => $meta['db_content_integrity'] ?? [],
 				'table_count'  => (int) ( $meta['db_tables_total'] ?? 0 ),
 				'row_count'    => (int) ( $meta['db_rows_total'] ?? $meta['db_rows_done'] ?? 0 ),
 			],

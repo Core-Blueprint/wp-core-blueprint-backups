@@ -65,6 +65,7 @@ final class MigrationPlan {
 			'target_home_url'     => $target_home,
 			'source_site_url'     => $source_site,
 			'target_site_url'     => $target_site,
+			'source_integrity'    => $database['content_integrity'] ?? [],
 			'source_tables'       => $source_tables,
 			'target_tables'       => $target_tables,
 			'table_map'           => $table_map,

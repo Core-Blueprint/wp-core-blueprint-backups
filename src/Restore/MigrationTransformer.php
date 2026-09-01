@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Restore;
 
 use CB\Backups\DB\SqlValueCodec;
+use CB\Backups\DB\ContentDigest;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -16,6 +17,9 @@ final class MigrationTransformer {
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan @return array{done:bool,progress:int,meta:array<string,mixed>} */
 	public static function tick( string $source_sql, string $target_sql, array $meta, array $plan ): array {
 		MigrationPlan::assert_plan( $plan );
+		ContentDigest::validate_inventory( $plan['source_tables'], $plan['source_integrity'] ?? [] );
+		$meta['migration_integrity_dir'] = dirname( $target_sql ) . '/migration-content';
+		if ( ! empty( $meta['migration_content_pending'] ) ) return self::finish_content_tick( $meta, $plan );
 		if ( empty( $plan['requires_migration'] ) ) throw new RuntimeException( 'Database migration transform was requested for a same-site restore.' );
 		if ( ! is_file( $source_sql ) || ! is_readable( $source_sql ) ) throw new RuntimeException( 'Verified database export is unavailable for migration.' );
 		$source_size = filesize( $source_sql );
@@ -61,6 +65,7 @@ final class MigrationTransformer {
 				$record = self::read_record( $in, $bytes, $lines );
 				if ( false === $record ) break;
 				self::write_all( $out, self::transform_line( $record, $meta, $plan ) );
+				if ( ! empty( $meta['migration_content_pending'] ) ) break;
 			}
 
 			if ( ! fflush( $out ) ) throw new RuntimeException( 'Migration database staging file could not be flushed.' );
@@ -71,7 +76,7 @@ final class MigrationTransformer {
 			if ( false === $source_position || false === $target_position ) throw new RuntimeException( 'Migration database checkpoint could not be recorded.' );
 			$meta['migration_source_offset'] = (int) $source_position;
 			$meta['migration_target_cursor'] = (int) $target_position;
-			$done = feof( $in );
+			$done = empty( $meta['migration_content_pending'] ) && feof( $in );
 		} finally {
 			if ( $locked ) flock( $out, LOCK_UN );
 			fclose( $in );
@@ -243,15 +248,28 @@ final class MigrationTransformer {
 
 		$rows = self::split_top_level( $values_segment, ',' );
 		$encoded_rows = [];
+		$source_rows = []; $target_rows = [];
 		foreach ( $rows as $row ) {
 			$row = trim( $row );
 			if ( strlen( $row ) < 2 || '(' !== $row[0] || ')' !== $row[ strlen( $row ) - 1 ] ) throw new RuntimeException( sprintf( 'Migration INSERT row is malformed for %s.', $source_table ) );
 			$tokens = self::split_top_level( substr( $row, 1, -1 ), ',' );
 			if ( count( $tokens ) !== count( $columns ) ) throw new RuntimeException( sprintf( 'Migration INSERT column/value count differs for %s.', $source_table ) );
-			foreach ( $tokens as $index => $token ) $tokens[ $index ] = self::transform_token( trim( $token ), (string) $columns[ $index ], $source_table, $meta, $plan );
+			$source_row = []; $target_row = [];
+			foreach ( $tokens as $index => $token ) {
+				$column = (string) $columns[ $index ];
+				$source_row[ $column ] = SqlValueCodec::decode( trim( $token ) );
+				$target_value = null;
+				$tokens[ $index ] = self::transform_token( trim( $token ), $column, $source_table, $meta, $plan, $target_value );
+				$target_row[ $column ] = $target_value;
+			}
+			$source_rows[] = $source_row; $target_rows[] = $target_row;
 			$encoded_rows[] = '(' . implode( ', ', $tokens ) . ')';
 		}
 
+		$schema = $plan['source_integrity'][ $source_table ]['columns'];
+		$dir = $meta['migration_integrity_dir'] . '/' . $meta['migration_table_index'];
+		ContentDigest::append( $dir . '/source', $meta['migration_source_content'], $source_rows, $schema );
+		ContentDigest::append( $dir . '/target', $meta['migration_target_content'], $target_rows, $schema );
 		return 'INSERT INTO `' . self::escape_identifier( $target_table ) . '` (' . $column_segment . ') VALUES ' . implode( ', ', $encoded_rows ) . ';';
 	}
 
@@ -261,7 +279,8 @@ final class MigrationTransformer {
 	}
 
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan */
-	private static function transform_token( string $token, string $column, string $source_table, array &$meta, array $plan ): string {
+	private static function transform_token( string $token, string $column, string $source_table, array &$meta, array $plan, ?string &$target_value ): string {
+		$target_value = SqlValueCodec::decode( $token );
 		if ( 'NULL' === strtoupper( $token ) || str_starts_with( strtoupper( $token ), 'UNHEX(' ) ) return $token;
 		if ( strlen( $token ) < 2 || "'" !== $token[0] || "'" !== $token[ strlen( $token ) - 1 ] ) throw new RuntimeException( sprintf( 'Migration database contains an unsupported value token in %s.', $source_table ) );
 
@@ -275,6 +294,7 @@ final class MigrationTransformer {
 		if ( 'guid' !== $column ) $value = self::replace_urls( $value, $plan );
 		if ( $value !== $original ) $meta['migration_replacements'] = (int) ( $meta['migration_replacements'] ?? 0 ) + 1;
 
+		$target_value = $value;
 		return SqlValueCodec::encode( $value );
 	}
 
@@ -383,6 +403,8 @@ final class MigrationTransformer {
 		if ( '' !== (string) ( $meta['migration_current_table'] ?? '' ) || ! isset( $tables[ $index ] ) || (string) $tables[ $index ] !== $source ) throw new RuntimeException( sprintf( 'Migration database table order is invalid at %s.', $source ) );
 		self::target_table( $source, $plan );
 		$meta['migration_current_table'] = $source;
+		$meta['migration_source_content'] = [];
+		$meta['migration_target_content'] = [];
 	}
 
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan */
@@ -390,8 +412,25 @@ final class MigrationTransformer {
 		$current = (string) ( $meta['migration_current_table'] ?? '' );
 		if ( '' === $current || $current !== $source ) throw new RuntimeException( sprintf( 'Migration database table boundary is invalid for %s.', $source ) );
 		self::target_table( $source, $plan );
-		$meta['migration_table_index'] = max( 0, (int) ( $meta['migration_table_index'] ?? 0 ) ) + 1;
-		$meta['migration_current_table'] = '';
+		$meta['migration_content_pending'] = true;
+	}
+
+	private static function finish_content_tick( array $meta, array $plan ): array {
+		$source = $meta['migration_current_table'];
+		$dir = $meta['migration_integrity_dir'] . '/' . $meta['migration_table_index'];
+		$expected = $plan['source_integrity'][ $source ];
+		$source_done = ContentDigest::finish_tick( $dir . '/source', $meta['migration_source_content'] );
+		$target_done = ContentDigest::finish_tick( $dir . '/target', $meta['migration_target_content'] );
+		if ( $source_done && $target_done ) {
+			ContentDigest::assert_equal( $expected, ContentDigest::summary( $meta['migration_source_content'], $expected['columns'] ), $source );
+			$target = self::target_table( $source, $plan );
+			$meta['migration_target_integrity'][ $target ] = ContentDigest::summary( $meta['migration_target_content'], $expected['columns'] );
+			++$meta['migration_table_index'];
+			$meta['migration_current_table'] = '';
+			unset( $meta['migration_content_pending'], $meta['migration_source_content'], $meta['migration_target_content'] );
+		}
+		$progress = (int) floor( 100 * (int) $meta['migration_source_offset'] / max( 1, (int) $meta['migration_source_size'] ) );
+		return [ 'done' => false, 'progress' => min( 99, $progress ), 'meta' => $meta ];
 	}
 
 	/** @param array<string,mixed> $plan */

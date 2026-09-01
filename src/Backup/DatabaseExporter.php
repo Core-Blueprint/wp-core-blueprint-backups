@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Backup;
 
 use CB\Backups\DB\SqlValueCodec;
+use CB\Backups\DB\ContentDigest;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,6 +22,20 @@ final class DatabaseExporter {
 	 * @return array{done:bool,meta:array<string,mixed>,progress:int}
 	 */
 	public static function tick( string $work_dir, array $meta ): array {
+		$file = $work_dir . '/database.sql';
+		$cursor = (int) ( $meta['db_sql_cursor'] ?? 0 );
+		$handle = fopen( $file, 'c+b' );
+		if ( false === $handle ) throw new RuntimeException( 'Cannot open database export checkpoint.' );
+		try {
+			if ( fstat( $handle )['size'] < $cursor || ! ftruncate( $handle, $cursor ) ) throw new RuntimeException( 'Database export checkpoint is incomplete.' );
+		} finally { fclose( $handle ); }
+		$result = self::advance( $work_dir, $meta );
+		clearstatcache( true, $file );
+		$result['meta']['db_sql_cursor'] = filesize( $file );
+		return $result;
+	}
+
+	private static function advance( string $work_dir, array $meta ): array {
 		global $wpdb;
 
 		$sql_file = $work_dir . '/database.sql';
@@ -70,6 +85,19 @@ final class DatabaseExporter {
 			$offset = 0;
 		}
 
+		$digest_dir = $work_dir . '/content-export-' . $table_index;
+		if ( ! empty( $meta['db_content_pending'] ) ) {
+			if ( ContentDigest::finish_tick( $digest_dir, $meta['db_content_state'] ) ) {
+				$meta['db_content_integrity'][ $table ] = ContentDigest::summary( $meta['db_content_state'], $meta['db_content_columns'] );
+				self::write( $sql_file, "-- CB END TABLE: {$table}\n", true );
+				++$meta['db_table_index'];
+				++$meta['db_tables_done'];
+				$meta = self::clear_table_state( $meta );
+				unset( $meta['db_content_pending'], $meta['db_content_state'], $meta['db_content_columns'] );
+			}
+			return [ 'done' => false, 'meta' => $meta, 'progress' => self::progress( $meta, $table_index, $total ) ];
+		}
+
 		$binary_columns = isset( $meta['db_binary_columns'] ) && is_array( $meta['db_binary_columns'] ) ? array_values( $meta['db_binary_columns'] ) : [];
 		$primary_key    = isset( $meta['db_primary_key'] ) && is_array( $meta['db_primary_key'] ) ? array_values( $meta['db_primary_key'] ) : [];
 		$strategy       = (string) ( $meta['db_strategy'] ?? 'offset' );
@@ -80,7 +108,7 @@ final class DatabaseExporter {
 			$rows = self::select_keyset_rows( $table, $primary_key, $meta, $chunk_rows );
 		} else {
 			$query = $wpdb->prepare(
-				'SELECT * FROM `' . self::escape_identifier( $table ) . '` LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				'SELECT * FROM `' . self::escape_identifier( $table ) . '` ORDER BY ' . ContentDigest::order_by( $meta['db_content_columns'] ) . ' LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$chunk_rows,
 				$offset
 			);
@@ -92,6 +120,7 @@ final class DatabaseExporter {
 		}
 
 		if ( $rows ) {
+			ContentDigest::append( $digest_dir, $meta['db_content_state'], $rows, $meta['db_content_columns'] );
 			self::append_rows( $sql_file, $table, $rows, $binary_columns );
 			$count = count( $rows );
 			$meta['db_rows_done'] = (int) ( $meta['db_rows_done'] ?? 0 ) + $count;
@@ -112,11 +141,7 @@ final class DatabaseExporter {
 		}
 
 		if ( $table_complete ) {
-			self::write( $sql_file, "-- CB END TABLE: {$table}\n", true );
-			++$table_index;
-			$offset = 0;
-			$meta['db_tables_done'] = min( $total, (int) ( $meta['db_tables_done'] ?? 0 ) + 1 );
-			$meta = self::clear_table_state( $meta );
+			$meta['db_content_pending'] = true;
 		} elseif ( 'offset' === $strategy ) {
 			$offset += $chunk_rows;
 		}
@@ -183,6 +208,8 @@ final class DatabaseExporter {
 		self::write( $sql_file, $header, true );
 
 		$estimates = isset( $meta['db_table_row_estimates'] ) && is_array( $meta['db_table_row_estimates'] ) ? $meta['db_table_row_estimates'] : [];
+		$meta['db_content_state'] = [];
+		$meta['db_content_columns'] = ContentDigest::columns( $table );
 		$meta['db_current_table']                = $table;
 		$meta['db_current_table_rows_done']      = 0;
 		$meta['db_current_table_rows_estimated'] = max( 0, (int) ( $estimates[ $table ] ?? 0 ) );

@@ -6,6 +6,7 @@ require __DIR__ . '/bootstrap.php';
 use CB\Backups\Backup\DatabaseExporter;
 use CB\Backups\DB\SqlValueCodec;
 use CB\Backups\Restore\DatabaseImporter;
+use CB\Backups\Restore\DatabaseContentVerifier;
 use CB\Backups\Restore\MigrationPlan;
 use CB\Backups\Restore\MigrationTransformer;
 
@@ -52,8 +53,31 @@ foreach ( $rows as $i => $row ) {
 	check( $binary === $row['raw'], 'Binary mismatch at fixture ' . $i );
 }
 echo "Real wpdb -> exporter -> importer/shadow: PASS\n";
+$import['manifest']['database']['content_integrity'] = $export['db_content_integrity'];
+$refused = false;
+try { DatabaseImporter::prepare_commit( $import, $tables, $job ); }
+catch ( RuntimeException $e ) { $refused = str_contains( $e->getMessage(), 'must be verified' ); }
+check( $refused, 'Live preparation bypassed the content gate.' );
+// Change content without changing the row count. The source is still untouched.
+sql( "UPDATE `{$shadow}` SET payload='CORRUPTED' WHERE id=1" );
+$refused = false;
+try { run_ticks( static fn ( array $meta ): array => DatabaseContentVerifier::tick( $work . '/bad-shadow', $meta, $tables, $export['db_content_integrity'], $job ), $import ); }
+catch ( RuntimeException $e ) { $refused = str_contains( $e->getMessage(), 'content verification failed' ); }
+check( $refused, 'Same-row-count content corruption was accepted.' );
+check( '100%' === $wpdb->get_var( 'SELECT payload FROM cbtest_fidelity WHERE id=1' ), 'Verification failure changed live source.' );
+sql( "UPDATE `{$shadow}` SET payload='100%' WHERE id=1" );
+$import = run_ticks( static fn ( array $meta ): array => DatabaseContentVerifier::tick( $work . '/good-shadow', $meta, $tables, $export['db_content_integrity'], $job ), $import );
+$import = DatabaseImporter::prepare_commit( $import, $tables, $job );
+$import = DatabaseImporter::commit_snapshot( $import, $tables, $job );
+DatabaseImporter::assert_restored_snapshot( $import, $tables );
+$rows = $wpdb->get_results( 'SELECT * FROM cbtest_fidelity ORDER BY id', ARRAY_A );
+foreach ( $rows as $i => $row ) check( $values[ $i ] === $row['payload'] && $binary === $row['raw'], 'Live same-site value mismatch.' );
+DatabaseImporter::rollback( $import, $tables, $job );
+check( '100%' === $wpdb->get_var( 'SELECT payload FROM cbtest_fidelity WHERE id=1' ), 'Rollback lost source data.' );
+echo "Pre-commit corruption rejection, same-site commit and rollback: PASS\n";
 
-$manifest = [ 'database' => [ 'tables' => $tables ], 'site' => [ 'table_prefix' => 'cbtest_', 'home_url' => 'https://source.example.test', 'site_url' => 'https://source.example.test' ] ];
+
+$manifest = [ 'database' => [ 'tables' => $tables, 'content_integrity' => $export['db_content_integrity'] ], 'site' => [ 'table_prefix' => 'cbtest_', 'home_url' => 'https://source.example.test', 'site_url' => 'https://source.example.test' ] ];
 $wpdb->set_prefix( 'cbtarget_' );
 add_filter( 'pre_option_home', static fn (): string => 'https://destination.example.test' );
 add_filter( 'pre_option_siteurl', static fn (): string => 'https://destination.example.test' );
@@ -70,6 +94,23 @@ foreach ( $rows as $i => $row ) {
 	check( $binary === $row['raw'], 'Migration changed binary data.' );
 }
 echo "Migration against independently specified values -> shadow: PASS\n";
+$migration_import['manifest']['database']['content_integrity'] = $migrated['migration_target_integrity'];
+$migration_import = run_ticks( static fn ( array $meta ): array => DatabaseContentVerifier::tick( $work . '/migration-shadow', $meta, $targets, $migrated['migration_target_integrity'], $migration_job ), $migration_import );
+$migration_import = DatabaseImporter::prepare_commit( $migration_import, $targets, $migration_job );
+$migration_import = DatabaseImporter::commit_snapshot( $migration_import, $targets, $migration_job );
+DatabaseImporter::assert_restored_snapshot( $migration_import, $targets );
+$rows = $wpdb->get_results( 'SELECT * FROM cbtarget_fidelity ORDER BY id', ARRAY_A );
+foreach ( $rows as $i => $row ) check( $expected_migration[ $i ] === $row['payload'] && $binary === $row['raw'], 'Live migration value mismatch.' );
+echo "Migration content gate and live database commit: PASS\n";
+// A dump edited after export cannot acquire a new trusted migration digest.
+$bad_sql = str_replace( "'100%'", "'101%'", (string) file_get_contents( $work . '/database.sql' ) );
+file_put_contents( $work . '/bad-source.sql', $bad_sql );
+$refused = false;
+try { run_ticks( static fn ( array $meta ): array => MigrationTransformer::tick( $work . '/bad-source.sql', $work . '/bad-migrated.sql', $meta, $plan ) ); }
+catch ( RuntimeException $e ) { $refused = str_contains( $e->getMessage(), 'content verification failed' ); }
+check( $refused, 'Migration accepted a source dump that differs from source metadata.' );
+echo "Source-derived migration digest rejection: PASS\n";
+
 
 $wpdb->set_prefix( 'cbtest_' );
 $fail = static function ( string $query ): string {

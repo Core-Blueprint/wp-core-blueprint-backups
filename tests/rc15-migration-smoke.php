@@ -44,6 +44,7 @@ namespace CB\Backups\DB {
 
 namespace {
 	require dirname( __DIR__ ) . '/src/DB/SqlValueCodec.php';
+	require dirname( __DIR__ ) . '/src/DB/ContentDigest.php';
 	require dirname( __DIR__ ) . '/src/Restore/MigrationPlan.php';
 	require dirname( __DIR__ ) . '/src/Restore/MigrationTransformer.php';
 
@@ -104,8 +105,24 @@ namespace {
 	$target = $dir . '/database-migrated.sql';
 	file_put_contents( $source, $sql );
 
+	// Expected source rows are independent fixture data, not transformer output.
+	$fixture_rows = [
+		'stg_options' => [ [ 'option_id' => '1', 'option_name' => 'stg_user_roles', 'option_value' => $serialized ], [ 'option_id' => '2', 'option_name' => 'api_json', 'option_value' => $json ] ],
+		'stg_usermeta' => [ [ 'umeta_id' => '1', 'meta_key' => 'stg_capabilities', 'meta_value' => 'a:1:{s:13:"administrator";b:1;}' ], [ 'umeta_id' => '2', 'meta_key' => 'stg_user_level', 'meta_value' => '10' ] ],
+		'stg_posts' => [ [ 'ID' => '1', 'guid' => 'https://staging.infused.academy/?p=1', 'post_content' => 'Visit https://staging.infused.academy/course/test' ] ],
+		'stg_cb_certificate_artwork' => [ [ 'id' => '1', 'artwork' => $large_artwork ] ],
+	];
+	foreach ( $fixture_rows as $table => $rows ) {
+		$columns = array_map( static fn ( string $name ): array => [ 'name' => $name, 'type' => 'longtext', 'collation' => null, 'nullable' => 'YES' ], array_keys( $rows[0] ) );
+		$state = [];
+		$hash_dir = $dir . '/fixture-' . $table;
+		\CB\Backups\DB\ContentDigest::append( $hash_dir, $state, $rows, $columns );
+		while ( ! \CB\Backups\DB\ContentDigest::finish_tick( $hash_dir, $state ) ) {}
+		$manifest['database']['content_integrity'][ $table ] = \CB\Backups\DB\ContentDigest::summary( $state, $columns );
+	}
+	$plan = MigrationPlan::build( $manifest );
 	$meta = [];
-	for ( $i = 0; $i < 20; ++$i ) {
+	for ( $i = 0; $i < 100; ++$i ) {
 		$result = MigrationTransformer::tick( $source, $target, $meta, $plan );
 		$meta = $result['meta'];
 		if ( $result['done'] ) break;
@@ -146,6 +163,7 @@ namespace {
 	smoke_assert( 'https://infused.academy/' === $target_manifest['site']['site_url'], 'Target manifest URL is wrong.' );
 	smoke_assert( [ 'wp_options', 'wp_usermeta', 'wp_posts', 'wp_cb_certificate_artwork' ] === $target_manifest['database']['tables'], 'Target manifest table inventory is wrong.' );
 
-	@unlink( $source ); @unlink( $target ); @rmdir( $dir );
+	foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST ) as $entry ) { $entry->isDir() ? rmdir( $entry->getPathname() ) : unlink( $entry->getPathname() ); }
+	rmdir( $dir );
 	echo "RC15 migration smoke: PASS\n";
 }

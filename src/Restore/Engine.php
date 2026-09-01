@@ -71,6 +71,7 @@ final class Engine {
 			$base = 'website' === $type ? 73 : 66; $end = 'website' === $type ? 79 : 72;
 			if ( ! $result['done'] ) { $progress = $base + (int) floor( $result['progress'] * ( ( $end - $base ) / 100 ) ); Repository::update( $job_id, [ 'progress' => min( $end - 1, $progress ), 'meta' => $meta ] ); return; }
 			$source_manifest = is_array( $meta['manifest'] ?? null ) ? $meta['manifest'] : []; $meta['source_manifest'] = $source_manifest; $meta['manifest'] = MigrationPlan::target_manifest( $source_manifest, $plan );
+			$meta['manifest']['database']['content_integrity'] = $meta['migration_target_integrity'];
 			$meta['migration_applied'] = true; $meta['migration_sql_path'] = $target;
 			Repository::update( $job_id, [ 'stage' => 'restore_database', 'progress' => $end, 'meta' => $meta ] ); return;
 		}
@@ -83,7 +84,17 @@ final class Engine {
 				$base = 'website' === $type ? ( ! empty( $meta['migration_applied'] ) ? 79 : 73 ) : ( ! empty( $meta['migration_applied'] ) ? 72 : 66 );
 				$progress = $base + (int) floor( $result['progress'] * ( ( 95 - $base ) / 100 ) ); Repository::update( $job_id, [ 'progress' => min( 95, $progress ), 'meta' => $meta ] ); return;
 			}
-			Repository::update( $job_id, [ 'stage' => 'prepare_live', 'progress' => 96, 'meta' => $meta ] ); return;
+			Repository::update( $job_id, [ 'stage' => 'verify_database_content', 'progress' => 95, 'meta' => $meta ] ); return;
+		}
+
+		if ( 'verify_database_content' === $stage ) {
+			$tables = self::manifest_tables( $meta );
+			$inventory = $meta['manifest']['database']['content_integrity'] ?? [];
+			try { $result = DatabaseContentVerifier::tick( $work, $meta, $tables, $inventory, $job_id ); }
+			catch ( \Throwable $e ) { DatabaseImporter::rollback( $meta, $tables, $job_id ); throw $e; }
+			$meta = $result['meta'];
+			Repository::update( $job_id, [ 'stage' => $result['done'] ? 'prepare_live' : 'verify_database_content', 'progress' => $result['done'] ? 96 : 95, 'meta' => $meta ] );
+			return;
 		}
 
 		if ( 'prepare_live' === $stage ) {

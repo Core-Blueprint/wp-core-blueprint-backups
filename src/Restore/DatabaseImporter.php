@@ -140,6 +140,7 @@ final class DatabaseImporter {
 	 */
 	public static function prepare_commit( array $meta, array $expected_tables, string $job_id ): array {
 		$expected_tables = self::normalise_expected_tables( $expected_tables );
+		DatabaseContentVerifier::assert_verified( $meta, $expected_tables, $job_id );
 		if ( ! empty( $meta['db_commit_prepared'] ) ) {
 			return $meta;
 		}
@@ -193,6 +194,7 @@ final class DatabaseImporter {
 	public static function commit_snapshot( array $meta, array $expected_tables, string $job_id ): array {
 		global $wpdb;
 		$expected_tables = self::normalise_expected_tables( $expected_tables );
+		DatabaseContentVerifier::assert_verified( $meta, $expected_tables, $job_id );
 		if ( empty( $meta['db_commit_prepared'] ) ) {
 			throw new RuntimeException( 'Database live commit plan was not durably prepared.' );
 		}
@@ -511,7 +513,7 @@ final class DatabaseImporter {
 		return (string) $found === $table;
 	}
 
-	private static function shadow_name( string $job_id, int $index ): string {
+	public static function shadow_name( string $job_id, int $index ): string {
 		return self::temporary_name( 'cbtmp', $job_id, $index );
 	}
 
