@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace CB\Backups\Admin;
 
 use CB\Backups\Jobs\Repository;
+use CB\Backups\Restore\ArchiveValidator;
+use CB\Backups\Restore\MigrationPlan;
 use CB\Backups\Schedule\Scheduler;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\Capabilities;
@@ -134,7 +136,7 @@ final class Page implements PageContract {
 		$imports = LocalStorage::list_imports();
 		echo '<section class="cb-core-section cb-backups-section">';
 		echo '<h2 class="cb-core-section-title">' . esc_html__( 'Prepared imports', 'core-blueprint-backups' ) . '</h2>';
-		echo '<p class="description cb-backups-section-description">' . esc_html__( 'Prepared imports are temporary staging copies. Inactive imports are removed automatically after 24 hours.', 'core-blueprint-backups' ) . '</p>';
+		echo '<p class="description cb-backups-section-description">' . esc_html__( 'Prepared imports are temporary staging copies. Review the source and destination identity before restoring. Inactive imports are removed automatically after 24 hours.', 'core-blueprint-backups' ) . '</p>';
 		if ( ! $imports ) {
 			echo '<p>' . esc_html__( 'No imported backups are waiting for restore.', 'core-blueprint-backups' ) . '</p>';
 		} else {
@@ -162,6 +164,7 @@ final class Page implements PageContract {
 		echo '<th>' . esc_html__( 'Original file', 'core-blueprint-backups' ) . '</th>';
 		echo '<th>' . esc_html__( 'Type', 'core-blueprint-backups' ) . '</th>';
 		echo '<th>' . esc_html__( 'Size', 'core-blueprint-backups' ) . '</th>';
+		echo '<th>' . esc_html__( 'Source → Destination', 'core-blueprint-backups' ) . '</th>';
 		echo '<th>' . esc_html__( 'Status', 'core-blueprint-backups' ) . '</th>';
 		echo '<th>' . esc_html__( 'Actions', 'core-blueprint-backups' ) . '</th></tr></thead><tbody>';
 		foreach ( $imports as $import ) {
@@ -171,20 +174,60 @@ final class Page implements PageContract {
 			}
 			$created = (int) ( $import['created_timestamp'] ?? $import['modified_at'] ?? 0 );
 			$type = 'website' === (string) ( $import['backup_type'] ?? '' ) ? __( 'Full website', 'core-blueprint-backups' ) : __( 'Database', 'core-blueprint-backups' );
+			$preflight = $this->import_preflight( $import, $name );
+			$preflight_error = (string) ( $preflight['error'] ?? '' );
+			$is_migration = '' === $preflight_error && ! empty( $preflight['requires_migration'] );
 			echo '<tr><td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td>';
 			echo '<td><code>' . esc_html( (string) ( $import['original_name'] ?? $name ) ) . '</code></td>';
 			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) ) . '</td>';
-			echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Prepared', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			echo '<td>';
+			if ( '' !== $preflight_error ) {
+				echo '<strong>' . esc_html__( 'Preflight unavailable', 'core-blueprint-backups' ) . '</strong><br><small>' . esc_html( $preflight_error ) . '</small>';
+			} else {
+				echo '<strong>' . esc_html__( 'Source', 'core-blueprint-backups' ) . '</strong><br><code>' . esc_html( (string) $preflight['source_site_url'] ) . '</code><br><small>' . esc_html__( 'Table prefix:', 'core-blueprint-backups' ) . ' <code>' . esc_html( (string) $preflight['source_prefix'] ) . '</code></small>';
+				echo '<br><span aria-hidden="true">↓</span><br>';
+				echo '<strong>' . esc_html__( 'Destination', 'core-blueprint-backups' ) . '</strong><br><code>' . esc_html( (string) $preflight['target_site_url'] ) . '</code><br><small>' . esc_html__( 'Table prefix:', 'core-blueprint-backups' ) . ' <code>' . esc_html( (string) $preflight['target_prefix'] ) . '</code></small>';
+			}
+			echo '</td>';
+			if ( '' !== $preflight_error ) {
+				echo '<td><span class="cb-backups-prepared-status">⚠ ' . esc_html__( 'Needs review', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			} elseif ( $is_migration ) {
+				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Migration ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			} else {
+				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Restore ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			}
 
-			$restore_body = sprintf(
-				/* translators: %s: imported backup filename. */
-				__( 'Restore %s? The archive will be fully verified first. If verification succeeds, live site files and database data will be replaced.', 'core-blueprint-backups' ),
-				(string) ( $import['original_name'] ?? $name )
-			);
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr__( 'Restore imported backup?', 'core-blueprint-backups' ) . '" data-cb-modal-body="' . esc_attr( $restore_body ) . '" data-cb-modal-confirm-label="' . esc_attr__( 'Restore backup', 'core-blueprint-backups' ) . '" data-cb-modal-variant="danger">';
-			echo '<input type="hidden" name="action" value="cb_backups_restore_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
-			wp_nonce_field( 'cb_backups_restore_import_' . $name );
-			echo '<button type="submit" class="button cb-core-button cb-core-button--warning">' . esc_html__( 'Restore', 'core-blueprint-backups' ) . '</button></form>';
+			if ( '' === $preflight_error ) {
+				if ( $is_migration ) {
+					$restore_body = sprintf(
+						/* translators: 1: imported backup filename, 2: source URL, 3: source prefix, 4: destination URL, 5: destination prefix. */
+						__( 'Migrate %1$s from %2$s (prefix %3$s) to %4$s (prefix %5$s)? The archive will be fully verified first. Core Blueprint will prepare a private migration copy, map database tables to the destination prefix, replace source URLs in serialization-aware data where required, preserve post GUID values, and only then replace live site data.', 'core-blueprint-backups' ),
+						(string) ( $import['original_name'] ?? $name ),
+						(string) $preflight['source_site_url'],
+						(string) $preflight['source_prefix'],
+						(string) $preflight['target_site_url'],
+						(string) $preflight['target_prefix']
+					);
+					$modal_title = __( 'Migrate imported backup?', 'core-blueprint-backups' );
+					$confirm_label = __( 'Migrate & restore', 'core-blueprint-backups' );
+					$button_label = __( 'Migrate & restore', 'core-blueprint-backups' );
+				} else {
+					$restore_body = sprintf(
+						/* translators: 1: imported backup filename, 2: destination URL, 3: destination prefix. */
+						__( 'Restore %1$s to %2$s (prefix %3$s)? The source and destination identity match. The archive will be fully verified first; if verification succeeds, live site files and database data will be replaced.', 'core-blueprint-backups' ),
+						(string) ( $import['original_name'] ?? $name ),
+						(string) $preflight['target_site_url'],
+						(string) $preflight['target_prefix']
+					);
+					$modal_title = __( 'Restore imported backup?', 'core-blueprint-backups' );
+					$confirm_label = __( 'Restore backup', 'core-blueprint-backups' );
+					$button_label = __( 'Restore', 'core-blueprint-backups' );
+				}
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr( $modal_title ) . '" data-cb-modal-body="' . esc_attr( $restore_body ) . '" data-cb-modal-confirm-label="' . esc_attr( $confirm_label ) . '" data-cb-modal-variant="danger">';
+				echo '<input type="hidden" name="action" value="cb_backups_restore_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
+				wp_nonce_field( 'cb_backups_restore_import_' . $name );
+				echo '<button type="submit" class="button cb-core-button cb-core-button--warning">' . esc_html( $button_label ) . '</button></form>';
+			}
 
 			$delete_body = sprintf(
 				/* translators: %s: imported backup filename. */
@@ -199,6 +242,40 @@ final class Page implements PageContract {
 		}
 		echo '</tbody></table>';
 		echo '</div>';
+	}
+
+	/** @param array<string,mixed> $import @return array<string,mixed> */
+	private function import_preflight( array $import, string $archive_name ): array {
+		global $wpdb;
+		$source_home = untrailingslashit( (string) ( $import['source_home_url'] ?? '' ) );
+		$source_site = untrailingslashit( (string) ( $import['source_site_url'] ?? $import['site_url'] ?? '' ) );
+		$source_prefix = (string) ( $import['source_prefix'] ?? '' );
+		$target_home = untrailingslashit( home_url( '/' ) );
+		$target_site = untrailingslashit( site_url( '/' ) );
+		$target_prefix = (string) $wpdb->prefix;
+
+		if ( '' !== $source_site && '' !== $source_prefix ) {
+			if ( '' === $source_home ) {
+				$source_home = $source_site;
+			}
+			return [
+				'requires_migration' => $source_home !== $target_home || $source_site !== $target_site || $source_prefix !== $target_prefix,
+				'source_home_url'    => $source_home,
+				'source_site_url'    => $source_site,
+				'source_prefix'      => $source_prefix,
+				'target_home_url'    => $target_home,
+				'target_site_url'    => $target_site,
+				'target_prefix'      => $target_prefix,
+			];
+		}
+
+		try {
+			$archive = LocalStorage::import_path( $archive_name );
+			$manifest = ArchiveValidator::validate( $archive, false );
+			return MigrationPlan::build( $manifest );
+		} catch ( \Throwable $e ) {
+			return [ 'error' => $e->getMessage() ];
+		}
 	}
 
 	private function schedules_tab(): void {
@@ -270,7 +347,6 @@ final class Page implements PageContract {
 					$state_label = __( 'Healthy', 'core-blueprint-backups' );
 				} else {
 					$state_label = __( 'Waiting for first run', 'core-blueprint-backups' );
-				}
 			}
 			echo '<td><strong>' . esc_html( $state_label ) . '</strong>';
 			if ( '' !== (string) ( $row['last_error'] ?? '' ) ) {
