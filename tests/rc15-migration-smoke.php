@@ -81,11 +81,11 @@ namespace {
 
 	$sql = "-- Core Blueprint Backups database export\n-- Format version: 1\nSET FOREIGN_KEY_CHECKS=0;\n";
 	$sql .= "\n-- CB TABLE: stg_options\nDROP TABLE IF EXISTS `stg_options`;\nCREATE TABLE `stg_options` (`option_id` bigint, `option_name` varchar(191), `option_value` longtext);\n";
-	$sql .= "INSERT INTO `stg_options` (`option_id`, `option_name`, `option_value`) VALUES (1, 'stg_user_roles', " . $GLOBALS['wpdb']->prepare( '%s', $serialized ) . "), (2, 'api_json', " . $GLOBALS['wpdb']->prepare( '%s', $json ) . ");\n-- CB END TABLE: stg_options\n";
+	$sql .= "INSERT INTO `stg_options` (`option_id`, `option_name`, `option_value`) VALUES ('1', 'stg_user_roles', " . $GLOBALS['wpdb']->prepare( '%s', $serialized ) . "), ('2', 'api_json', " . $GLOBALS['wpdb']->prepare( '%s', $json ) . ");\n-- CB END TABLE: stg_options\n";
 	$sql .= "\n-- CB TABLE: stg_usermeta\nDROP TABLE IF EXISTS `stg_usermeta`;\nCREATE TABLE `stg_usermeta` (`umeta_id` bigint, `meta_key` varchar(255), `meta_value` longtext);\n";
-	$sql .= "INSERT INTO `stg_usermeta` (`umeta_id`, `meta_key`, `meta_value`) VALUES (1, 'stg_capabilities', 'a:1:{s:13:\"administrator\";b:1;}'), (2, 'stg_user_level', '10');\n-- CB END TABLE: stg_usermeta\n";
+	$sql .= "INSERT INTO `stg_usermeta` (`umeta_id`, `meta_key`, `meta_value`) VALUES ('1', 'stg_capabilities', 'a:1:{s:13:\"administrator\";b:1;}'), ('2', 'stg_user_level', '10');\n-- CB END TABLE: stg_usermeta\n";
 	$sql .= "\n-- CB TABLE: stg_posts\nDROP TABLE IF EXISTS `stg_posts`;\nCREATE TABLE `stg_posts` (`ID` bigint, `guid` varchar(255), `post_content` longtext);\n";
-	$sql .= "INSERT INTO `stg_posts` (`ID`, `guid`, `post_content`) VALUES (1, 'https://staging.infused.academy/?p=1', 'Visit https://staging.infused.academy/course/test');\n-- CB END TABLE: stg_posts\nSET FOREIGN_KEY_CHECKS=1;\n";
+	$sql .= "INSERT INTO `stg_posts` (`ID`, `guid`, `post_content`) VALUES ('1', 'https://staging.infused.academy/?p=1', 'Visit https://staging.infused.academy/course/test');\n-- CB END TABLE: stg_posts\nSET FOREIGN_KEY_CHECKS=1;\n";
 
 	$dir = sys_get_temp_dir() . '/cb-backups-rc15-' . bin2hex( random_bytes( 5 ) );
 	if ( ! mkdir( $dir, 0700, true ) && ! is_dir( $dir ) ) throw new \RuntimeException( 'Could not create smoke test directory.' );
