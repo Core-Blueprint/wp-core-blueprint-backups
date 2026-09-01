@@ -47,6 +47,12 @@ final class Assets {
 			[ '@cb-core/modal', '@cb-core/toast' ],
 			CB_BACKUPS_VERSION
 		);
+		wp_enqueue_script_module(
+			'@cb-backups/job-terminal-recovery',
+			CB_BACKUPS_URL . 'assets/js/job-terminal-recovery.js',
+			[],
+			CB_BACKUPS_VERSION
+		);
 
 		if ( ! self::$module_data_registered ) {
 			add_filter(
