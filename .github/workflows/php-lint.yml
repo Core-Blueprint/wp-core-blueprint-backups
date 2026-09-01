@@ -21,3 +21,5 @@ jobs:
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Run RC15 migration smoke test
         run: php tests/rc15-migration-smoke.php
+      - name: Run RC15 filesystem policy smoke test
+        run: php tests/rc15-filesystem-policy-smoke.php
