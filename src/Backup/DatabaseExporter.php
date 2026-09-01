@@ -27,6 +27,7 @@ final class DatabaseExporter {
 	}
 
 	private static function checkpoint_tick( string $work_dir, array $meta ): array {
+		if ( ! empty( $meta['db_tables'] ) && ! isset( $meta['db_sql_cursor'] ) ) throw new RuntimeException( 'This export started with an older runtime. Start a new backup job.' );
 		$file = $work_dir . '/database.sql';
 		$cursor = (int) ( $meta['db_sql_cursor'] ?? 0 );
 		$handle = fopen( $file, 'c+b' );

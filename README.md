@@ -2,7 +2,20 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
-## v0.1.0-rc15.5 migration restore RC
+## v0.1.0-rc15.6 database fidelity RC
+
+RC15.6 uses one WordPress-aware SQL value codec in export and migration, removes request-local percent placeholders before writing SQL, and fails database reads explicitly. It records source-derived content digests and row counts, then verifies the shadow snapshot before preparing or executing the live rename. Migration validates the source dump and derives target expectations before SQL re-encoding.
+
+This is a release candidate. PR #4 remains open. Do not use production or the golden-source staging for restore acceptance tests. Finish/cancel existing jobs before updating the runtime. Create fresh backups after installation: archives without source-derived content metadata cannot pass the new restore preflight, and previously corrupted dumps are not automatically repaired.
+
+Validation and remaining release gates are documented in [RC15.6 validation](docs/rc15.6-validation.md). Archive verification remains a checksum check; it is not a claim that a restore rehearsal or remote chain test was performed.
+
+### Build and test
+
+Use Python 3.10+ from a complete repository checkout: `python3 tools/build-release.py --output /tmp/cb-release`. The deterministic ZIP keeps the canonical `core-blueprint-backups/` root and excludes CI/tests/development state. It verifies the two version declarations, required files and archive CRCs; mismatches or unreadable files fail the build. Output is `core-blueprint-backups-<version>.zip`. Maintain the allowlist in the script when adding a runtime directory.
+
+PHP smoke tests run with `php tests/rc15-migration-smoke.php` and the two filesystem smoke scripts. The database-fidelity workflow runs PHP 8.4, official WordPress 7.0, MySQL 8.0 and MariaDB 10.11 in disposable CI databases. Its integration bootstrap refuses any database not explicitly named `cb_backups_test` and marked disposable. See the workflow for the environment variables and setup; never point it at a real site.
+
 
 ### rc15.5 managed storage-root hardening
 

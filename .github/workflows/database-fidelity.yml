@@ -50,3 +50,5 @@ jobs:
         run: php tests/integration/database-roundtrip.php
       - name: Database robustness and checkpoint replay
         run: php tests/integration/database-robustness.php
+      - name: Database job and archive E2E
+        run: php tests/integration/database-engine-e2e.php
