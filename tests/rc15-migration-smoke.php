@@ -81,7 +81,8 @@ namespace {
 		'nested_serialized' => $nested_serialized,
 	] );
 	$json = '{"endpoint":"https:\/\/staging.infused.academy\/api"}';
-	$large_artwork = str_repeat( 'A', 1200000 ) . 'https://staging.infused.academy/certificate/artwork';
+	$large_artwork = str_repeat( "svg-rule:fill:red;https://staging.infused.academy/certificate/artwork\n", 20000 );
+	smoke_assert( strlen( $large_artwork ) > 1000000, 'Certificate artwork fixture must exceed 1 MB.' );
 
 	$sql = "-- Core Blueprint Backups database export\n-- Format version: 1\nSET FOREIGN_KEY_CHECKS=0;\n";
 	$sql .= "\n-- CB TABLE: stg_options\nDROP TABLE IF EXISTS `stg_options`;\nCREATE TABLE `stg_options` (`option_id` bigint, `option_name` varchar(191), `option_value` longtext);\n";
@@ -91,7 +92,9 @@ namespace {
 	$sql .= "\n-- CB TABLE: stg_posts\nDROP TABLE IF EXISTS `stg_posts`;\nCREATE TABLE `stg_posts` (`ID` bigint, `guid` varchar(255), `post_content` longtext);\n";
 	$sql .= "INSERT INTO `stg_posts` (`ID`, `guid`, `post_content`) VALUES ('1', 'https://staging.infused.academy/?p=1', 'Visit https://staging.infused.academy/course/test');\n-- CB END TABLE: stg_posts\n";
 	$sql .= "\n-- CB TABLE: stg_cb_certificate_artwork\nDROP TABLE IF EXISTS `stg_cb_certificate_artwork`;\nCREATE TABLE `stg_cb_certificate_artwork` (`id` bigint, `artwork` longtext);\n";
-	$sql .= "INSERT INTO `stg_cb_certificate_artwork` (`id`, `artwork`) VALUES ('1', " . $GLOBALS['wpdb']->prepare( '%s', $large_artwork ) . ");\n-- CB END TABLE: stg_cb_certificate_artwork\nSET FOREIGN_KEY_CHECKS=1;\n";
+	// Deliberately keep physical newlines and semicolons inside the quoted artwork value.
+	$sql .= "INSERT INTO `stg_cb_certificate_artwork` (`id`, `artwork`) VALUES ('1', '" . $large_artwork . "');\n-- CB END TABLE: stg_cb_certificate_artwork\nSET FOREIGN_KEY_CHECKS=1;\n";
+	smoke_assert( substr_count( $sql, "\n" ) > 10000, 'Certificate artwork fixture must span physical SQL lines.' );
 
 	$dir = sys_get_temp_dir() . '/cb-backups-rc15-' . bin2hex( random_bytes( 5 ) );
 	if ( ! mkdir( $dir, 0700, true ) && ! is_dir( $dir ) ) throw new \RuntimeException( 'Could not create smoke test directory.' );
@@ -111,12 +114,13 @@ namespace {
 
 	smoke_assert( str_contains( $output, '-- CB TABLE: wp_options' ), 'Migrated options boundary missing.' );
 	smoke_assert( str_contains( $output, 'INSERT INTO `wp_usermeta`' ), 'Migrated usermeta insert missing.' );
-	smoke_assert( str_contains( $output, 'INSERT INTO `wp_cb_certificate_artwork`' ), 'Large certificate artwork insert was not migrated.' );
+	smoke_assert( str_contains( $output, 'INSERT INTO `wp_cb_certificate_artwork`' ), 'Large multiline certificate artwork insert was not migrated.' );
 	smoke_assert( str_contains( $output, "'wp_user_roles'" ), 'user_roles option key was not remapped.' );
 	smoke_assert( str_contains( $output, "'wp_capabilities'" ), 'Capabilities meta key was not remapped.' );
 	smoke_assert( str_contains( $output, "'wp_user_level'" ), 'User level meta key was not remapped.' );
 	smoke_assert( str_contains( $output, 'https://infused.academy/course/test' ), 'Plain URL was not migrated.' );
-	smoke_assert( str_contains( $output, 'https://infused.academy/certificate/artwork' ), 'Large certificate artwork URL was not migrated.' );
+	smoke_assert( str_contains( $output, 'https://infused.academy/certificate/artwork' ), 'Large multiline certificate artwork URL was not migrated.' );
+	smoke_assert( ! str_contains( $output, 'https://staging.infused.academy/certificate/artwork' ), 'Source URL remains in migrated certificate artwork.' );
 	$api_position = strpos( $output, "'api_json'" );
 	smoke_assert( false !== $api_position, 'JSON migration fixture is missing.' );
 	$api_fragment = substr( $output, (int) $api_position, 240 );
