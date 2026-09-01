@@ -17,15 +17,23 @@ final class JobPresentation {
 		$meta = is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
 		$kind = (string) ( $job['kind'] ?? '' );
 		$stage = (string) ( $job['stage'] ?? '' );
+		$status = (string) ( $job['status'] ?? '' );
+		$restore_mode = 'restore' === $kind ? (string) ( $meta['restore_mode'] ?? 'restore' ) : '';
 
-		$data['stage_label'] = self::stage_label( $kind, $stage );
-		$data['status_label'] = self::status_label( (string) ( $job['status'] ?? '' ) );
-		$data['restore_mode'] = 'restore' === $kind ? (string) ( $meta['restore_mode'] ?? 'restore' ) : '';
+		$data['stage_label'] = 'completed' === $status
+			? self::completed_label( $kind, $restore_mode )
+			: self::stage_label( $kind, $stage );
+		$data['status_label'] = self::status_label( $status );
+		$data['restore_mode'] = $restore_mode;
 
 		if ( 'restore' === $kind ) {
 			[ $file_metric, $byte_metric ] = self::restore_metrics( $stage, $meta );
 			$data['file_metric'] = $file_metric;
 			$data['byte_metric'] = $byte_metric;
+			$data['current_file'] = self::restore_current_file( $stage, $meta );
+			if ( 'restore_database' === $stage ) {
+				$data['current_table'] = (string) ( $meta['db_restore_current_table'] ?? '' );
+			}
 		} else {
 			$data['file_metric'] = self::metric(
 				__( 'Files', 'core-blueprint-backups' ),
@@ -42,6 +50,15 @@ final class JobPresentation {
 		return $data;
 	}
 
+	private static function completed_label( string $kind, string $restore_mode ): string {
+		if ( 'restore' === $kind ) {
+			return 'migration' === $restore_mode
+				? __( 'Migration completed', 'core-blueprint-backups' )
+				: __( 'Restore completed', 'core-blueprint-backups' );
+		}
+		return __( 'Backup completed', 'core-blueprint-backups' );
+	}
+
 	private static function stage_label( string $kind, string $stage ): string {
 		if ( 'restore' === $kind ) {
 			return match ( $stage ) {
@@ -56,7 +73,6 @@ final class JobPresentation {
 				'commit_live'             => __( 'Applying restored website…', 'core-blueprint-backups' ),
 				'verify_live'             => __( 'Verifying restored files and runtime…', 'core-blueprint-backups' ),
 				'finalize_live'           => __( 'Running final safety checks…', 'core-blueprint-backups' ),
-				'completed'               => __( 'Migration completed', 'core-blueprint-backups' ),
 				default                   => __( 'Processing restore…', 'core-blueprint-backups' ),
 			};
 		}
@@ -67,7 +83,6 @@ final class JobPresentation {
 			'inventory' => __( 'Scanning website files…', 'core-blueprint-backups' ),
 			'package'   => __( 'Creating backup archive…', 'core-blueprint-backups' ),
 			'verify'    => __( 'Verifying backup archive…', 'core-blueprint-backups' ),
-			'completed' => __( 'Backup completed', 'core-blueprint-backups' ),
 			default     => __( 'Processing backup…', 'core-blueprint-backups' ),
 		};
 	}
@@ -139,6 +154,17 @@ final class JobPresentation {
 			self::metric( __( 'Files', 'core-blueprint-backups' ), 0, $files ),
 			self::metric( __( 'Filesystem snapshot', 'core-blueprint-backups' ), $bytes, 0 ),
 		];
+	}
+
+	/** @param array<string,mixed> $meta */
+	private static function restore_current_file( string $stage, array $meta ): string {
+		return match ( $stage ) {
+			'verify_archive' => (string) ( $meta['restore_verify_current_file'] ?? '' ),
+			'extract'        => (string) ( $meta['restore_extract_current_file'] ?? '' ),
+			'verify_stage'   => (string) ( $meta['stage_verify_current_file'] ?? '' ),
+			'verify_live'    => (string) ( $meta['live_verify_current_file'] ?? '' ),
+			default          => '',
+		};
 	}
 
 	/** @return array{label:string,done:int,total:int} */
