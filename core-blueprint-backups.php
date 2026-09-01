@@ -3,7 +3,7 @@
  * Plugin Name: Core Blueprint Backups
  * Plugin URI:  https://coreblueprint.io
  * Description: Governed database and full-site backups for Core Blueprint, with local restore/migration, scheduling, CLI and optional Beacon remote orchestration.
- * Version:     0.1.0-rc15.3
+ * Version:     0.1.0-rc15.4
  * Author:      Core Blueprint
  * Author URI:  https://coreblueprint.io
  * License:     GPL-2.0+
@@ -24,7 +24,7 @@ if ( defined( 'CB_BACKUPS_FILE' ) ) {
 	return;
 }
 
-define( 'CB_BACKUPS_VERSION', '0.1.0-rc15.3' );
+define( 'CB_BACKUPS_VERSION', '0.1.0-rc15.4' );
 define( 'CB_BACKUPS_DB_VERSION', '1.0' );
 define( 'CB_BACKUPS_FILE', __FILE__ );
 define( 'CB_BACKUPS_DIR', plugin_dir_path( __FILE__ ) );
@@ -125,11 +125,11 @@ add_action( 'plugins_loaded', static function (): void {
 	if ( $errors ) {
 		if ( is_admin() ) {
 			add_action( 'admin_notices', static function () use ( $errors ): void {
-			echo '<div class="notice notice-error"><p><strong>Core Blueprint Backups:</strong></p><ul>';
-			foreach ( $errors as $error ) {
-				echo '<li>' . esc_html( $error ) . '</li>';
-			}
-			echo '</ul></div>';
+				echo '<div class="notice notice-error"><p><strong>Core Blueprint Backups:</strong></p><ul>';
+				foreach ( $errors as $error ) {
+					echo '<li>' . esc_html( $error ) . '</li>';
+				}
+				echo '</ul></div>';
 			} );
 		}
 		return;
