@@ -179,7 +179,7 @@ final class Page implements PageContract {
 			$is_migration = '' === $preflight_error && ! empty( $preflight['requires_migration'] );
 			echo '<tr><td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td>';
 			echo '<td><code>' . esc_html( (string) ( $import['original_name'] ?? $name ) ) . '</code></td>';
-			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) ) . '</td>';
+			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) . '</td>';
 			echo '<td>';
 			if ( '' !== $preflight_error ) {
 				echo '<strong>' . esc_html__( 'Preflight unavailable', 'core-blueprint-backups' ) . '</strong><br><small>' . esc_html( $preflight_error ) . '</small>';
@@ -347,6 +347,7 @@ final class Page implements PageContract {
 					$state_label = __( 'Healthy', 'core-blueprint-backups' );
 				} else {
 					$state_label = __( 'Waiting for first run', 'core-blueprint-backups' );
+				}
 			}
 			echo '<td><strong>' . esc_html( $state_label ) . '</strong>';
 			if ( '' !== (string) ( $row['last_error'] ?? '' ) ) {
