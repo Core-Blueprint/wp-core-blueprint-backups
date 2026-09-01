@@ -57,8 +57,8 @@ namespace {
 		'schema_version' => 1,
 		'backup_type' => 'database',
 		'database' => [
-			'tables' => [ 'stg_options', 'stg_usermeta', 'stg_posts' ],
-			'table_count' => 3,
+			'tables' => [ 'stg_options', 'stg_usermeta', 'stg_posts', 'stg_cb_certificate_artwork' ],
+			'table_count' => 4,
 		],
 		'site' => [
 			'home_url' => 'https://staging.infused.academy/',
@@ -72,6 +72,7 @@ namespace {
 	smoke_assert( true === $plan['requires_migration'], 'Expected migration plan.' );
 	smoke_assert( 'wp_options' === $plan['table_map']['stg_options'], 'Options table was not remapped.' );
 	smoke_assert( 'wp_posts' === $plan['table_map']['stg_posts'], 'Posts table was not remapped.' );
+	smoke_assert( 'wp_cb_certificate_artwork' === $plan['table_map']['stg_cb_certificate_artwork'], 'Certificate artwork table was not remapped.' );
 
 	$nested_serialized = serialize( [ 'url' => 'https://staging.infused.academy/deep/path' ] );
 	$serialized = serialize( [
@@ -80,6 +81,7 @@ namespace {
 		'nested_serialized' => $nested_serialized,
 	] );
 	$json = '{"endpoint":"https:\/\/staging.infused.academy\/api"}';
+	$large_artwork = str_repeat( 'A', 1200000 ) . 'https://staging.infused.academy/certificate/artwork';
 
 	$sql = "-- Core Blueprint Backups database export\n-- Format version: 1\nSET FOREIGN_KEY_CHECKS=0;\n";
 	$sql .= "\n-- CB TABLE: stg_options\nDROP TABLE IF EXISTS `stg_options`;\nCREATE TABLE `stg_options` (`option_id` bigint, `option_name` varchar(191), `option_value` longtext);\n";
@@ -87,7 +89,9 @@ namespace {
 	$sql .= "\n-- CB TABLE: stg_usermeta\nDROP TABLE IF EXISTS `stg_usermeta`;\nCREATE TABLE `stg_usermeta` (`umeta_id` bigint, `meta_key` varchar(255), `meta_value` longtext);\n";
 	$sql .= "INSERT INTO `stg_usermeta` (`umeta_id`, `meta_key`, `meta_value`) VALUES ('1', 'stg_capabilities', 'a:1:{s:13:\"administrator\";b:1;}'), ('2', 'stg_user_level', '10');\n-- CB END TABLE: stg_usermeta\n";
 	$sql .= "\n-- CB TABLE: stg_posts\nDROP TABLE IF EXISTS `stg_posts`;\nCREATE TABLE `stg_posts` (`ID` bigint, `guid` varchar(255), `post_content` longtext);\n";
-	$sql .= "INSERT INTO `stg_posts` (`ID`, `guid`, `post_content`) VALUES ('1', 'https://staging.infused.academy/?p=1', 'Visit https://staging.infused.academy/course/test');\n-- CB END TABLE: stg_posts\nSET FOREIGN_KEY_CHECKS=1;\n";
+	$sql .= "INSERT INTO `stg_posts` (`ID`, `guid`, `post_content`) VALUES ('1', 'https://staging.infused.academy/?p=1', 'Visit https://staging.infused.academy/course/test');\n-- CB END TABLE: stg_posts\n";
+	$sql .= "\n-- CB TABLE: stg_cb_certificate_artwork\nDROP TABLE IF EXISTS `stg_cb_certificate_artwork`;\nCREATE TABLE `stg_cb_certificate_artwork` (`id` bigint, `artwork` longtext);\n";
+	$sql .= "INSERT INTO `stg_cb_certificate_artwork` (`id`, `artwork`) VALUES ('1', " . $GLOBALS['wpdb']->prepare( '%s', $large_artwork ) . ");\n-- CB END TABLE: stg_cb_certificate_artwork\nSET FOREIGN_KEY_CHECKS=1;\n";
 
 	$dir = sys_get_temp_dir() . '/cb-backups-rc15-' . bin2hex( random_bytes( 5 ) );
 	if ( ! mkdir( $dir, 0700, true ) && ! is_dir( $dir ) ) throw new \RuntimeException( 'Could not create smoke test directory.' );
@@ -107,10 +111,12 @@ namespace {
 
 	smoke_assert( str_contains( $output, '-- CB TABLE: wp_options' ), 'Migrated options boundary missing.' );
 	smoke_assert( str_contains( $output, 'INSERT INTO `wp_usermeta`' ), 'Migrated usermeta insert missing.' );
+	smoke_assert( str_contains( $output, 'INSERT INTO `wp_cb_certificate_artwork`' ), 'Large certificate artwork insert was not migrated.' );
 	smoke_assert( str_contains( $output, "'wp_user_roles'" ), 'user_roles option key was not remapped.' );
 	smoke_assert( str_contains( $output, "'wp_capabilities'" ), 'Capabilities meta key was not remapped.' );
 	smoke_assert( str_contains( $output, "'wp_user_level'" ), 'User level meta key was not remapped.' );
 	smoke_assert( str_contains( $output, 'https://infused.academy/course/test' ), 'Plain URL was not migrated.' );
+	smoke_assert( str_contains( $output, 'https://infused.academy/certificate/artwork' ), 'Large certificate artwork URL was not migrated.' );
 	$api_position = strpos( $output, "'api_json'" );
 	smoke_assert( false !== $api_position, 'JSON migration fixture is missing.' );
 	$api_fragment = substr( $output, (int) $api_position, 240 );
@@ -132,7 +138,7 @@ namespace {
 	$target_manifest = MigrationPlan::target_manifest( $manifest, $plan );
 	smoke_assert( 'wp_' === $target_manifest['site']['table_prefix'], 'Target manifest prefix is wrong.' );
 	smoke_assert( 'https://infused.academy/' === $target_manifest['site']['site_url'], 'Target manifest URL is wrong.' );
-	smoke_assert( [ 'wp_options', 'wp_usermeta', 'wp_posts' ] === $target_manifest['database']['tables'], 'Target manifest table inventory is wrong.' );
+	smoke_assert( [ 'wp_options', 'wp_usermeta', 'wp_posts', 'wp_cb_certificate_artwork' ] === $target_manifest['database']['tables'], 'Target manifest table inventory is wrong.' );
 
 	@unlink( $source ); @unlink( $target ); @rmdir( $dir );
 	echo "RC15 migration smoke: PASS\n";
