@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
+use CB\Backups\DB\SqlValueCodec;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -264,7 +265,7 @@ final class MigrationTransformer {
 		if ( 'NULL' === strtoupper( $token ) || str_starts_with( strtoupper( $token ), 'UNHEX(' ) ) return $token;
 		if ( strlen( $token ) < 2 || "'" !== $token[0] || "'" !== $token[ strlen( $token ) - 1 ] ) throw new RuntimeException( sprintf( 'Migration database contains an unsupported value token in %s.', $source_table ) );
 
-		$value = self::decode_sql_string( $token );
+		$value = SqlValueCodec::decode( $token );
 		$original = $value;
 		$source_prefix = (string) $plan['source_prefix'];
 		$target_prefix = (string) $plan['target_prefix'];
@@ -274,7 +275,7 @@ final class MigrationTransformer {
 		if ( 'guid' !== $column ) $value = self::replace_urls( $value, $plan );
 		if ( $value !== $original ) $meta['migration_replacements'] = (int) ( $meta['migration_replacements'] ?? 0 ) + 1;
 
-		return self::encode_sql_string( $value );
+		return SqlValueCodec::encode( $value );
 	}
 
 	/** @param array<string,mixed> $plan */
@@ -373,35 +374,6 @@ final class MigrationTransformer {
 		if ( $quoted || 0 !== $depth ) throw new RuntimeException( 'Migration SQL contains an unterminated value.' );
 		$parts[] = substr( $input, $start );
 		return $parts;
-	}
-
-	private static function decode_sql_string( string $token ): string {
-		$body = substr( $token, 1, -1 );
-		$out = '';
-		$length = strlen( $body );
-		for ( $i = 0; $i < $length; ++$i ) {
-			$char = $body[ $i ];
-			if ( '\\' !== $char || $i + 1 >= $length ) {
-				$out .= $char;
-				continue;
-			}
-			$next = $body[++$i];
-			$out .= match ( $next ) {
-				'0' => "\0",
-				'n' => "\n",
-				'r' => "\r",
-				'Z' => chr( 26 ),
-				default => $next,
-			};
-		}
-		return $out;
-	}
-
-	private static function encode_sql_string( string $value ): string {
-		global $wpdb;
-		$prepared = $wpdb->prepare( '%s', $value );
-		if ( ! is_string( $prepared ) || strlen( $prepared ) < 2 ) throw new RuntimeException( 'Migration database value could not be safely encoded.' );
-		return $prepared;
 	}
 
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan */

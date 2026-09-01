@@ -21,6 +21,7 @@ namespace {
 	final class SmokeWpdb {
 		public string $prefix = 'wp_';
 		public string $options = 'wp_options';
+		public function remove_placeholder_escape( string $value ): string { return str_replace( '{smoke-percent}', '%', $value ); }
 		public function prepare( string $format, mixed ...$args ): string {
 			if ( '%s' !== $format || 1 !== count( $args ) ) throw new \RuntimeException( 'Unexpected prepare call.' );
 			$value = (string) $args[0];
@@ -29,7 +30,7 @@ namespace {
 				[ "\\\\", "\\0", "\\n", "\\r", "\\'", "\\Z" ],
 				$value
 			);
-			return "'{$value}'";
+			return str_replace( '%', '{smoke-percent}', "'{$value}'" );
 		}
 	}
 	$wpdb = new SmokeWpdb();
@@ -42,6 +43,7 @@ namespace CB\Backups\DB {
 }
 
 namespace {
+	require dirname( __DIR__ ) . '/src/DB/SqlValueCodec.php';
 	require dirname( __DIR__ ) . '/src/Restore/MigrationPlan.php';
 	require dirname( __DIR__ ) . '/src/Restore/MigrationTransformer.php';
 

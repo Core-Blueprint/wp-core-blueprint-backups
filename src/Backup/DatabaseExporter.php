@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Backup;
 
+use CB\Backups\DB\SqlValueCodec;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -86,7 +87,7 @@ final class DatabaseExporter {
 			$rows = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		}
 
-		if ( ! is_array( $rows ) ) {
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new RuntimeException( sprintf( 'Could not export rows from %s.', $table ) );
 		}
 
@@ -140,12 +141,12 @@ final class DatabaseExporter {
 		global $wpdb;
 
 		$create_row = $wpdb->get_row( 'SHOW CREATE TABLE `' . self::escape_identifier( $table ) . '`', ARRAY_N ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		if ( ! is_array( $create_row ) || empty( $create_row[1] ) ) {
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $create_row ) || empty( $create_row[1] ) ) {
 			throw new RuntimeException( sprintf( 'Could not read table definition for %s.', $table ) );
 		}
 
 		$columns = $wpdb->get_results( 'SHOW FULL COLUMNS FROM `' . self::escape_identifier( $table ) . '`', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		if ( ! is_array( $columns ) || ! $columns ) {
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $columns ) || ! $columns ) {
 			throw new RuntimeException( sprintf( 'Could not read column metadata for %s.', $table ) );
 		}
 
@@ -224,7 +225,10 @@ final class DatabaseExporter {
 		$sql   = 'SELECT * FROM `' . self::escape_identifier( $table ) . '` WHERE ' . $where . ' ORDER BY ' . $identifiers . ' ASC LIMIT ' . $limit; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$query = $wpdb->prepare( $sql, ...$values );
 		$rows  = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		return is_array( $rows ) ? $rows : [];
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new RuntimeException( sprintf( 'Could not export rows from %s: %s', $table, $wpdb->last_error ) );
+		}
+		return $rows;
 	}
 
 	/** @param string[] $primary_key @return array<string,mixed> */
@@ -232,6 +236,7 @@ final class DatabaseExporter {
 		global $wpdb;
 		$order = implode( ', ', array_map( static fn ( string $column ): string => '`' . self::escape_identifier( $column ) . '` DESC', $primary_key ) );
 		$row   = $wpdb->get_row( 'SELECT * FROM `' . self::escape_identifier( $table ) . '` ORDER BY ' . $order . ' LIMIT 1', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		if ( '' !== (string) $wpdb->last_error ) throw new RuntimeException( 'Could not read database primary-key watermark: ' . $wpdb->last_error );
 		if ( ! is_array( $row ) ) {
 			return [];
 		}
@@ -246,8 +251,8 @@ final class DatabaseExporter {
 	private static function primary_key_columns( string $table ): array {
 		global $wpdb;
 		$rows = $wpdb->get_results( "SHOW KEYS FROM `" . self::escape_identifier( $table ) . "` WHERE Key_name = 'PRIMARY'", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		if ( ! is_array( $rows ) ) {
-			return [];
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new RuntimeException( 'Could not inspect primary keys: ' . $wpdb->last_error );
 		}
 		usort( $rows, static fn ( array $a, array $b ): int => (int) ( $a['Seq_in_index'] ?? 0 ) <=> (int) ( $b['Seq_in_index'] ?? 0 ) );
 		$columns = [];
@@ -280,13 +285,7 @@ final class DatabaseExporter {
 					$values = [];
 					foreach ( $columns as $column ) {
 						$value = $row[ $column ] ?? null;
-						if ( null === $value ) {
-							$values[] = 'NULL';
-						} elseif ( isset( $binary_map[ $column ] ) ) {
-							$values[] = "UNHEX('" . bin2hex( (string) $value ) . "')";
-						} else {
-							$values[] = (string) $wpdb->prepare( '%s', (string) $value );
-						}
+						$values[] = SqlValueCodec::encode( null === $value ? null : (string) $value, isset( $binary_map[ $column ] ) );
 					}
 					$values_sql[] = '(' . implode( ', ', $values ) . ')';
 				}
@@ -307,6 +306,7 @@ final class DatabaseExporter {
 		global $wpdb;
 		$like = $wpdb->esc_like( $wpdb->prefix ) . '%';
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SHOW FULL TABLES LIKE %s', $like ), ARRAY_N );
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) throw new RuntimeException( 'Could not discover database tables: ' . $wpdb->last_error );
 		$tables = [];
 		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
 			$table = isset( $row[0] ) ? (string) $row[0] : '';
@@ -323,6 +323,7 @@ final class DatabaseExporter {
 
 		$estimates = array_fill_keys( $tables, 0 );
 		$status_rows = $wpdb->get_results( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $like ), ARRAY_A );
+		if ( '' !== (string) $wpdb->last_error || ! is_array( $status_rows ) ) throw new RuntimeException( 'Could not read database table status: ' . $wpdb->last_error );
 		foreach ( is_array( $status_rows ) ? $status_rows : [] as $status ) {
 			$name = isset( $status['Name'] ) ? (string) $status['Name'] : '';
 			if ( isset( $estimates[ $name ] ) ) {
