@@ -1,0 +1,34 @@
+.cb-backups-monitor-state {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 16px 0 0;
+	padding: 12px 14px;
+	border: 1px solid var(--cb-border, #dcdcde);
+	border-radius: 6px;
+	background: var(--cb-surface-subtle, rgba(255, 255, 255, 0.03));
+}
+
+.cb-backups-monitor-state[hidden] {
+	display: none;
+}
+
+.cb-backups-monitor-state--auth {
+	border-inline-start: 4px solid #dba617;
+}
+
+.cb-backups-monitor-state--network {
+	border-inline-start: 4px solid #72aee6;
+}
+
+.cb-backups-monitor-state--error {
+	border-inline-start: 4px solid #d63638;
+}
+
+@media (max-width: 782px) {
+	.cb-backups-monitor-state {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
