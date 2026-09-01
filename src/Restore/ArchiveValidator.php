@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
-use CB\Backups\DB\Schema;
 use RuntimeException;
 use ZipArchive;
 
@@ -105,6 +104,25 @@ final class ArchiveValidator {
 				$total += $size;
 			}
 			return $total;
+		} finally {
+			$zip->close();
+		}
+	}
+
+	public static function database_payload_bytes( string $archive_path ): int {
+		if ( ! is_file( $archive_path ) || ! is_readable( $archive_path ) ) {
+			throw new RuntimeException( 'Backup archive is not readable.' );
+		}
+		$zip = new ZipArchive();
+		if ( true !== $zip->open( $archive_path, ZipArchive::CHECKCONS ) ) {
+			throw new RuntimeException( 'Backup archive could not be opened.' );
+		}
+		try {
+			$stat = $zip->statName( 'database/database.sql' );
+			if ( ! is_array( $stat ) || ! isset( $stat['size'] ) ) {
+				throw new RuntimeException( 'Database export size metadata is unavailable.' );
+			}
+			return max( 0, (int) $stat['size'] );
 		} finally {
 			$zip->close();
 		}
@@ -233,17 +251,11 @@ final class ArchiveValidator {
 		}
 		$site = is_array( $manifest['site'] ?? null ) ? $manifest['site'] : [];
 		if ( ! empty( $site['multisite'] ) || is_multisite() ) {
-			throw new RuntimeException( 'Backup format v1 does not support multisite restore.' );
+			throw new RuntimeException( 'Backup format v1 does not support multisite restore or migration.' );
 		}
-		global $wpdb;
-		if ( (string) ( $site['table_prefix'] ?? '' ) !== (string) $wpdb->prefix ) {
-			throw new RuntimeException( 'This backup uses a different WordPress table prefix. Migration is not supported in format v1.' );
-		}
-		if ( untrailingslashit( (string) ( $site['home_url'] ?? '' ) ) !== untrailingslashit( home_url( '/' ) ) ) {
-			throw new RuntimeException( 'This backup belongs to a different site URL. Migration/URL replacement is not supported in format v1.' );
-		}
-		if ( untrailingslashit( (string) ( $site['site_url'] ?? '' ) ) !== untrailingslashit( site_url( '/' ) ) ) {
-			throw new RuntimeException( 'This backup belongs to a different WordPress installation URL. Migration/URL replacement is not supported in format v1.' );
+		$source_prefix = (string) ( $site['table_prefix'] ?? '' );
+		if ( '' === $source_prefix || strlen( $source_prefix ) > 63 || ! preg_match( '/^[A-Za-z0-9_$-]+$/', $source_prefix ) ) {
+			throw new RuntimeException( 'Backup manifest contains an unsafe WordPress table prefix.' );
 		}
 
 		$database = is_array( $manifest['database'] ?? null ) ? $manifest['database'] : [];
@@ -253,13 +265,15 @@ final class ArchiveValidator {
 		}
 		foreach ( $tables as $table ) {
 			$table = (string) $table;
-			if ( '' === $table || ! str_starts_with( $table, $wpdb->prefix ) || ! preg_match( '/^[A-Za-z0-9_$-]+$/', $table ) ) {
+			if ( '' === $table || ! str_starts_with( $table, $source_prefix ) || ! preg_match( '/^[A-Za-z0-9_$-]+$/', $table ) ) {
 				throw new RuntimeException( 'Backup manifest contains an unsafe database table name.' );
 			}
-			if ( $table === Schema::table() ) {
-				throw new RuntimeException( 'Backup manifest may not include the operational backup job table.' );
-			}
 		}
+
+		// Build the destination plan during validation. This confirms that every
+		// source table can be mapped to the current single-site installation
+		// without collisions or overwriting Backups' operational job table.
+		MigrationPlan::build( $manifest );
 
 		$filesystem = is_array( $manifest['filesystem'] ?? null ) ? $manifest['filesystem'] : [];
 		$top_levels = isset( $filesystem['top_levels'] ) && is_array( $filesystem['top_levels'] ) ? $filesystem['top_levels'] : [];
@@ -333,7 +347,7 @@ final class ArchiveValidator {
 					$context = hash_init( 'sha256' );
 					hash_update_stream( $context, $payload );
 					fclose( $payload );
-					if ( ! hash_equals( $want, hash_final( $context ) ) ) {
+					if ( ! hash_equals( $want, hash_final( $context ) ) {
 						throw new RuntimeException( sprintf( 'Checksum verification failed for %s.', $path ) );
 					}
 				}
@@ -365,7 +379,6 @@ final class ArchiveValidator {
 		return $count;
 	}
 
-
 	/** @param resource $handle */
 	private static function write_all( $handle, string $data ): void {
 		$length  = strlen( $data );
@@ -378,5 +391,4 @@ final class ArchiveValidator {
 			$written += $result;
 		}
 	}
-
 }
