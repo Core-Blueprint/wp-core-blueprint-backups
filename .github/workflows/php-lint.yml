@@ -19,9 +19,15 @@ jobs:
         run: php -v
       - name: Lint PHP files
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Check job monitor JavaScript syntax
+        run: node --check assets/js/job-monitor.js && node --check assets/js/job-terminal-recovery.js
       - name: Run RC15 migration smoke test
         run: php tests/rc15-migration-smoke.php
       - name: Run RC15 filesystem policy smoke test
         run: php tests/rc15-filesystem-policy-smoke.php
       - name: Run RC15 filesystem commit policy smoke test
         run: php tests/rc15-filesystem-commit-policy-smoke.php
+      - name: Run RC15 job presentation smoke test
+        run: php tests/rc15-job-presentation-smoke.php
+      - name: Run RC15 job monitor contract smoke test
+        run: php tests/rc15-job-monitor-smoke.php
