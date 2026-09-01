@@ -90,9 +90,24 @@ final class MigrationTransformer {
 
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan */
 	private static function transform_insert( string $statement, string $source_table, string $target_table, array &$meta, array $plan ): string {
-		$quoted = preg_quote( $source_table, '/' );
-		if ( 1 !== preg_match( '/^INSERT INTO `' . $quoted . '`\s+\((.+)\)\s+VALUES\s+(.+);$/is', $statement, $matches ) ) throw new RuntimeException( sprintf( 'Migration INSERT statement is malformed for %s.', $source_table ) );
-		$column_segment = (string) $matches[1]; $values_segment = (string) $matches[2]; preg_match_all( '/`([^`]+)`/', $column_segment, $column_matches );
+		$prefix = 'INSERT INTO `' . self::escape_identifier( $source_table ) . '` (';
+		if ( ! str_starts_with( $statement, $prefix ) || ! str_ends_with( $statement, ';' ) ) {
+			throw new RuntimeException( sprintf( 'Migration INSERT statement is malformed for %s.', $source_table ) );
+		}
+
+		$values_marker = ') VALUES ';
+		$values_position = strpos( $statement, $values_marker, strlen( $prefix ) );
+		if ( false === $values_position ) {
+			throw new RuntimeException( sprintf( 'Migration INSERT statement is malformed for %s.', $source_table ) );
+		}
+
+		$column_segment = substr( $statement, strlen( $prefix ), $values_position - strlen( $prefix ) );
+		$values_segment = substr( $statement, $values_position + strlen( $values_marker ), -1 );
+		if ( false === $column_segment || false === $values_segment || '' === trim( $column_segment ) || '' === trim( $values_segment ) ) {
+			throw new RuntimeException( sprintf( 'Migration INSERT statement is malformed for %s.', $source_table ) );
+		}
+
+		preg_match_all( '/`([^`]+)`/', $column_segment, $column_matches );
 		$columns = isset( $column_matches[1] ) && is_array( $column_matches[1] ) ? array_values( $column_matches[1] ) : []; if ( ! $columns ) throw new RuntimeException( sprintf( 'Migration INSERT statement has no columns for %s.', $source_table ) );
 		$rows = self::split_top_level( $values_segment, ',' ); $encoded_rows = [];
 		foreach ( $rows as $row ) {
