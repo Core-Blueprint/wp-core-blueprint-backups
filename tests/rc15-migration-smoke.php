@@ -73,9 +73,11 @@ namespace {
 	smoke_assert( 'wp_options' === $plan['table_map']['stg_options'], 'Options table was not remapped.' );
 	smoke_assert( 'wp_posts' === $plan['table_map']['stg_posts'], 'Posts table was not remapped.' );
 
+	$nested_serialized = serialize( [ 'url' => 'https://staging.infused.academy/deep/path' ] );
 	$serialized = serialize( [
 		'url' => 'https://staging.infused.academy/course/test',
 		'nested' => [ 'https://staging.infused.academy/path' ],
+		'nested_serialized' => $nested_serialized,
 	] );
 	$json = '{"endpoint":"https:\/\/staging.infused.academy\/api"}';
 
@@ -123,6 +125,9 @@ namespace {
 	smoke_assert( is_array( $decoded ), 'Migrated serialized value is invalid.' );
 	smoke_assert( 'https://infused.academy/course/test' === $decoded['url'], 'Serialized URL was not migrated.' );
 	smoke_assert( 'https://infused.academy/path' === $decoded['nested'][0], 'Nested serialized URL was not migrated.' );
+	$decoded_nested = unserialize( (string) $decoded['nested_serialized'], [ 'allowed_classes' => false ] );
+	smoke_assert( is_array( $decoded_nested ), 'Nested serialized payload is invalid after migration.' );
+	smoke_assert( 'https://infused.academy/deep/path' === $decoded_nested['url'], 'Nested serialized payload URL was not migrated.' );
 
 	$target_manifest = MigrationPlan::target_manifest( $manifest, $plan );
 	smoke_assert( 'wp_' === $target_manifest['site']['table_prefix'], 'Target manifest prefix is wrong.' );
