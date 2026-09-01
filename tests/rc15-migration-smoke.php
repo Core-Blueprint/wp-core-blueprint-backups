@@ -109,7 +109,11 @@ namespace {
 	smoke_assert( str_contains( $output, "'wp_capabilities'" ), 'Capabilities meta key was not remapped.' );
 	smoke_assert( str_contains( $output, "'wp_user_level'" ), 'User level meta key was not remapped.' );
 	smoke_assert( str_contains( $output, 'https://infused.academy/course/test' ), 'Plain URL was not migrated.' );
-	smoke_assert( str_contains( $output, 'https:\\/\\/infused.academy\\/api' ), 'JSON-escaped URL was not migrated.' );
+	$api_position = strpos( $output, "'api_json'" );
+	smoke_assert( false !== $api_position, 'JSON migration fixture is missing.' );
+	$api_fragment = substr( $output, (int) $api_position, 240 );
+	smoke_assert( ! str_contains( $api_fragment, 'staging.infused.academy' ), 'JSON-escaped source URL remains after migration.' );
+	smoke_assert( str_contains( $api_fragment, 'infused.academy' ), 'JSON-escaped target URL is missing after migration.' );
 	smoke_assert( str_contains( $output, "'https://staging.infused.academy/?p=1'" ), 'Post GUID must remain unchanged.' );
 
 	preg_match( "/'wp_user_roles', '([^']+)'/", $output, $serialized_match );
