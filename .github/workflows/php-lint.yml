@@ -1,0 +1,23 @@
+name: PHP lint and migration smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - rc15-migration-restore-v1
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Show PHP version
+        run: php -v
+      - name: Lint PHP files
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Run RC15 migration smoke test
+        run: php tests/rc15-migration-smoke.php
