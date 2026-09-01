@@ -22,6 +22,7 @@ final class Service {
 			throw new RuntimeException( 'Another backup or restore job is already active.' );
 		}
 		$manifest = ArchiveValidator::validate( $archive_path, false );
+		$plan     = MigrationPlan::build( $manifest );
 		$type     = (string) ( $manifest['backup_type'] ?? 'database' );
 		if ( 'website' === $type ) {
 			$storage_stat = stat( dirname( $archive_path ) );
@@ -31,23 +32,37 @@ final class Service {
 			}
 		}
 		$staging_bytes = ArchiveValidator::estimate_uncompressed_bytes( $archive_path );
+		$migration_bytes = ! empty( $plan['requires_migration'] ) ? ArchiveValidator::database_payload_bytes( $archive_path ) : 0;
+		$required_bytes = $staging_bytes + $migration_bytes;
 		$free_bytes = disk_free_space( LocalStorage::base_path() );
-		$reserve_bytes = max( 104857600, (int) ceil( $staging_bytes * 0.15 ) );
-		if ( false !== $free_bytes && $free_bytes < $staging_bytes + $reserve_bytes ) {
-			throw new RuntimeException( 'Restore requires more free local disk space for verified staging.' );
+		$reserve_bytes = max( 104857600, (int) ceil( $required_bytes * 0.15 ) );
+		if ( false !== $free_bytes && $free_bytes < $required_bytes + $reserve_bytes ) {
+			throw new RuntimeException( 'Restore requires more free local disk space for verified staging and migration preparation.' );
 		}
 
-		$job      = Repository::create( 'restore', $type, $trigger, [
-			'archive_path'             => $archive_path,
-			'manifest'                 => $manifest,
-			'started_timestamp'        => time(),
-			'preflight_staging_bytes'  => $staging_bytes,
-			'preflight_free_bytes'     => false === $free_bytes ? null : (int) $free_bytes,
+		$job = Repository::create( 'restore', $type, $trigger, [
+			'archive_path'              => $archive_path,
+			'manifest'                  => $manifest,
+			'migration_plan'            => $plan,
+			'restore_mode'              => (string) $plan['mode'],
+			'started_timestamp'         => time(),
+			'preflight_staging_bytes'   => $staging_bytes,
+			'preflight_migration_bytes' => $migration_bytes,
+			'preflight_free_bytes'      => false === $free_bytes ? null : (int) $free_bytes,
 		] );
 		if ( ! $job ) {
 			throw new RuntimeException( 'Restore job could not be created.' );
 		}
-		Audit::log( 'backups.restore.started', 'warning', [ 'job_id' => $job['job_id'], 'type' => $type, 'trigger' => $trigger ] );
+		Audit::log( 'backups.restore.started', 'warning', [
+			'job_id'        => $job['job_id'],
+			'type'          => $type,
+			'trigger'       => $trigger,
+			'mode'          => (string) $plan['mode'],
+			'source_site'   => (string) $plan['source_site_url'],
+			'target_site'   => (string) $plan['target_site_url'],
+			'source_prefix' => (string) $plan['source_prefix'],
+			'target_prefix' => (string) $plan['target_prefix'],
+		] );
 		Dispatcher::dispatch( (string) $job['job_id'] );
 		wp_schedule_single_event( time() + 30, 'cb_backups_run_job', [ (string) $job['job_id'] ] );
 		return $job;
