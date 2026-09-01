@@ -2,6 +2,40 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.3 migration restore RC
+
+### rc15.3 runtime code-integrity hardening
+
+- Refreshes OPcache entries for Backups PHP files before the restore runtime boots after an update.
+- Verifies that the installed `MigrationTransformer` on disk and the class actually loaded by PHP both contain the RC15 record-reader contract.
+- Stops with an explicit code-build mismatch instead of allowing a mixed old/new restore runtime to continue.
+
+### rc15.2 multiline INSERT migration fix
+
+- Reads complete format-v1 SQL records instead of assuming every `INSERT` fits on one physical line.
+- Supports large certificate artwork, SVG, JSON and other long-text payloads containing literal line breaks and semicolons inside quoted values.
+- Checkpoints only after a complete SQL statement so resumable migration cannot restart in the middle of artwork data.
+- Regression coverage includes a >1 MiB multiline certificate-artwork payload with URL replacement.
+
+### rc15.1 large INSERT parser fix
+
+- Removes the full-payload PCRE parser from migration `INSERT` handling.
+- Prevents large long-text rows from failing because of PCRE backtrack limits.
+- Keeps deterministic column/value parsing for format-v1 database exports.
+
+### rc15 governed single-site migration restore
+
+- Extends backup format v1 from same-site restore to governed single-site migration without changing the `.cbbackup` archive schema.
+- Detects source/destination WordPress URL and table-prefix differences and builds a fingerprinted migration plan before live mutation.
+- Keeps the original archive and verified `database/database.sql` immutable; migration writes a private `database-migrated.sql` staging copy.
+- Remaps source table names to the destination prefix before the existing shadow-table/atomic-rename restore pipeline runs.
+- Rewrites source home/site URLs in normal strings, JSON-escaped strings and PHP-serialized data while repairing serialized string lengths.
+- Preserves post GUID values.
+- Remaps prefix-bound WordPress role/capability keys such as `<prefix>user_roles`, `<prefix>capabilities` and `<prefix>user_level`.
+- Rechecks destination identity before migration work starts and reserves additional disk space for the migrated SQL staging copy.
+- Multisite migration remains explicitly unsupported in format v1.
+- Prepared imports show Source → Destination URL/prefix identity and distinguish `Restore` from `Migrate & restore` before confirmation.
+
 ## v0.1.0-rc14.2 schema-contract patch
 
 - Registers the backup jobs table through Core Blueprint Base's public `Database\SchemaRegistry` boundary.
