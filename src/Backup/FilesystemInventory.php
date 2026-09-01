@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Backup;
 
 use CB\Backups\Storage\LocalStorage;
+use CB\Backups\Support\FilesystemPolicy;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -250,7 +251,7 @@ final class FilesystemInventory {
 			return true;
 		}
 		$relative = ltrim( substr( $path, strlen( $root ) ), '/' );
-		foreach ( [ 'cache', 'upgrade', 'ai1wm-backups', '.git', '.svn', '.cb-restore-work' ] as $excluded_root ) {
+		foreach ( FilesystemPolicy::excluded_top_levels() as $excluded_root ) {
 			if ( $relative === $excluded_root || str_starts_with( $relative, $excluded_root . '/' ) ) {
 				return true;
 			}
