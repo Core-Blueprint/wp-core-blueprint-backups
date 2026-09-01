@@ -16,6 +16,10 @@ final class MigrationTransformer {
 
 	/** @param array<string,mixed> $meta @param array<string,mixed> $plan @return array{done:bool,progress:int,meta:array<string,mixed>} */
 	public static function tick( string $source_sql, string $target_sql, array $meta, array $plan ): array {
+		return SqlValueCodec::with_dump_mode( static fn (): array => self::advance( $source_sql, $target_sql, $meta, $plan ) );
+	}
+
+	private static function advance( string $source_sql, string $target_sql, array $meta, array $plan ): array {
 		MigrationPlan::assert_plan( $plan );
 		ContentDigest::validate_inventory( $plan['source_tables'], $plan['source_integrity'] ?? [] );
 		$meta['migration_integrity_dir'] = dirname( $target_sql ) . '/migration-content';

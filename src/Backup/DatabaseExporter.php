@@ -14,6 +14,7 @@ final class DatabaseExporter {
 	private const MIN_ROWS_PER_CHUNK = 500;
 	private const MAX_ROWS_PER_CHUNK = 5000;
 	private const INSERT_ROWS_PER_STATEMENT = 50;
+	private const INSERT_BYTES_PER_STATEMENT = 1048576;
 
 	/**
 	 * Advance the database export by one resumable chunk.
@@ -22,6 +23,10 @@ final class DatabaseExporter {
 	 * @return array{done:bool,meta:array<string,mixed>,progress:int}
 	 */
 	public static function tick( string $work_dir, array $meta ): array {
+		return SqlValueCodec::with_dump_mode( static fn (): array => self::checkpoint_tick( $work_dir, $meta ) );
+	}
+
+	private static function checkpoint_tick( string $work_dir, array $meta ): array {
 		$file = $work_dir . '/database.sql';
 		$cursor = (int) ( $meta['db_sql_cursor'] ?? 0 );
 		$handle = fopen( $file, 'c+b' );
@@ -306,22 +311,26 @@ final class DatabaseExporter {
 		}
 
 		try {
-			foreach ( array_chunk( $rows, self::INSERT_ROWS_PER_STATEMENT ) as $batch ) {
-				$values_sql = [];
-				foreach ( $batch as $row ) {
-					$values = [];
-					foreach ( $columns as $column ) {
-						$value = $row[ $column ] ?? null;
-						$values[] = SqlValueCodec::encode( null === $value ? null : (string) $value, isset( $binary_map[ $column ] ) );
-					}
-					$values_sql[] = '(' . implode( ', ', $values ) . ')';
+			$header = 'INSERT INTO `' . self::escape_identifier( $table ) . '` (' . $column_sql . ') VALUES ';
+			$values_sql = []; $bytes = strlen( $header );
+			$flush = static function () use ( $handle, $header, &$values_sql, &$bytes ): void {
+				if ( ! $values_sql ) return;
+				$insert = $header . implode( ', ', $values_sql ) . ";\n";
+				if ( fwrite( $handle, $insert ) !== strlen( $insert ) ) throw new RuntimeException( 'Database export could not be written to disk.' );
+				$values_sql = []; $bytes = strlen( $header );
+			};
+			foreach ( $rows as $row ) {
+				$values = [];
+				foreach ( $columns as $column ) {
+					$value = $row[ $column ] ?? null;
+					$values[] = SqlValueCodec::encode( null === $value ? null : (string) $value, isset( $binary_map[ $column ] ) );
 				}
-				$insert = 'INSERT INTO `' . self::escape_identifier( $table ) . '` (' . $column_sql . ') VALUES ' . implode( ', ', $values_sql ) . ";\n";
-				if ( fwrite( $handle, $insert ) !== strlen( $insert ) ) {
-					throw new RuntimeException( 'Database export could not be written to disk.' );
-				}
+				$tuple = '(' . implode( ', ', $values ) . ')';
+				if ( $values_sql && ( count( $values_sql ) >= self::INSERT_ROWS_PER_STATEMENT || $bytes + strlen( $tuple ) + 4 > self::INSERT_BYTES_PER_STATEMENT ) ) $flush();
+				$values_sql[] = $tuple; $bytes += strlen( $tuple ) + 2;
 			}
-			fflush( $handle );
+			$flush();
+			if ( ! fflush( $handle ) ) throw new RuntimeException( 'Database export could not be flushed.' );
 		} finally {
 			flock( $handle, LOCK_UN );
 			fclose( $handle );

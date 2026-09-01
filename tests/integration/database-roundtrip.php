@@ -21,6 +21,7 @@ $values = [
 	serialize( [ 'url' => 'https://source.example.test/a', 'css' => '100%' ] ),
 	serialize( [ 'nested' => serialize( [ 'url' => 'https://source.example.test/deep', 'css' => '100%' ] ) ] ),
 	str_repeat( "https://source.example.test/large 100% 😀\n", 35000 ),
+	serialize( array_fill( 0, 8000, [ 'url' => 'https://source.example.test/large-array', 'css' => '100%' ] ) ),
 ];
 $expected_migration = $values;
 $expected_migration[8] = '{"url":"https://destination.example.test/a","width":"100%"}';
@@ -28,6 +29,7 @@ $expected_migration[9] = '{"url":"https:\\/\\/destination.example.test\\/api"}';
 $expected_migration[10] = serialize( [ 'url' => 'https://destination.example.test/a', 'css' => '100%' ] );
 $expected_migration[11] = serialize( [ 'nested' => serialize( [ 'url' => 'https://destination.example.test/deep', 'css' => '100%' ] ) ] );
 $expected_migration[12] = str_repeat( "https://destination.example.test/large 100% 😀\n", 35000 );
+$expected_migration[13] = serialize( array_fill( 0, 8000, [ 'url' => 'https://destination.example.test/large-array', 'css' => '100%' ] ) );
 $binary = implode( '', array_map( 'chr', range( 0, 255 ) ) );
 sql( 'CREATE TABLE cbtest_fidelity (id BIGINT UNSIGNED PRIMARY KEY, payload LONGTEXT NULL, raw LONGBLOB NULL) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci' );
 foreach ( $values as $i => $value ) {

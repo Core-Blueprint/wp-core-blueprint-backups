@@ -96,6 +96,7 @@ final class Page implements PageContract {
 			return;
 		}
 		$this->backup_table( $backups, false );
+		echo '<p>' . esc_html__( 'Archive verified means the stored files passed checksum checks. Before a restore replaces live data, its database contents are also compared with the recorded source values. A successful restore rehearsal is a separate check.', 'core-blueprint-backups' ) . '</p>';
 		echo '</section>';
 	}
 
@@ -406,7 +407,7 @@ final class Page implements PageContract {
 			if ( ! $restore_mode ) {
 				echo '<th scope="row" class="check-column"><input type="checkbox" name="archives[]" value="' . esc_attr( $name ) . '" form="' . esc_attr( $bulk_form_id ) . '" data-cb-backups-select aria-label="' . esc_attr( sprintf( __( 'Select backup created %s', 'core-blueprint-backups' ), $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : $name ) ) . '"></th>';
 			}
-			echo '<td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? __( 'Full website', 'core-blueprint-backups' ) : __( 'Database', 'core-blueprint-backups' ) ) . '</td><td>' . esc_html( size_format( $size ) ) . '</td><td>' . esc_html( $rows > 0 ? number_format_i18n( $rows ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? number_format_i18n( $files ) : '—' ) . '</td><td>' . esc_html( $duration > 0 ? Telemetry::format_duration( $duration ) : '—' ) . '</td><td>' . ( ! empty( $backup['verified'] ) ? '<span class="cb-backups-ok">✓ ' . esc_html__( 'Verified', 'core-blueprint-backups' ) . '</span>' : esc_html__( 'Not verified', 'core-blueprint-backups' ) ) . '</td><td><div class="cb-backups-actions">';
+			echo '<td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? __( 'Full website', 'core-blueprint-backups' ) : __( 'Database', 'core-blueprint-backups' ) ) . '</td><td>' . esc_html( size_format( $size ) ) . '</td><td>' . esc_html( $rows > 0 ? number_format_i18n( $rows ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? number_format_i18n( $files ) : '—' ) . '</td><td>' . esc_html( $duration > 0 ? Telemetry::format_duration( $duration ) : '—' ) . '</td><td>' . ( ! empty( $backup['verified'] ) ? '<span class="cb-backups-ok">✓ ' . esc_html__( 'Archive verified', 'core-blueprint-backups' ) . '</span>' : esc_html__( 'Not verified', 'core-blueprint-backups' ) ) . '</td><td><div class="cb-backups-actions">';
 			if ( $restore_mode ) {
 				$restore_body = sprintf(
 					/* translators: %s: backup archive filename. */

@@ -9,6 +9,19 @@ defined( 'ABSPATH' ) || exit;
 
 /** The format-v1 SQL literal contract. Values are never sanitized as application data. */
 final class SqlValueCodec {
+	/** Match the dump grammar even when a host enables NO_BACKSLASH_ESCAPES. */
+	public static function with_dump_mode( callable $callback ): array {
+		global $wpdb;
+		$old = $wpdb->get_var( 'SELECT @@SESSION.SQL_MODE' );
+		if ( null === $old || '' !== $wpdb->last_error ) throw new RuntimeException( 'Cannot inspect database SQL mode.' );
+		$mode = implode( ',', array_filter( explode( ',', (string) $old ), static fn ( string $flag ): bool => 'NO_BACKSLASH_ESCAPES' !== strtoupper( $flag ) ) );
+		if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $mode ) ) ) throw new RuntimeException( 'Cannot set database dump SQL mode.' );
+		try { return $callback(); }
+		finally {
+			if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $old ) ) ) throw new RuntimeException( 'Cannot restore database SQL mode.' );
+		}
+	}
+
 	public static function encode( ?string $value, bool $binary = false ): string {
 		if ( null === $value ) return 'NULL';
 		if ( $binary ) return "UNHEX('" . bin2hex( $value ) . "')";

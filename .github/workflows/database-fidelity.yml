@@ -35,12 +35,18 @@ jobs:
       CB_TEST_DB_HOST: 127.0.0.1:3306
     steps:
       - uses: actions/checkout@v4
-      - name: Install PHP database extensions
-        run: sudo apt-get update && sudo apt-get install -y php-cli php-mysql php-mbstring php-xml php-zip
+      - name: Set up supported PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli, mbstring, dom, zip
+          coverage: none
       - name: Download pinned official WordPress source
         run: |
-          curl --fail --location --retry 2 https://wordpress.org/wordpress-6.8.3.tar.gz -o /tmp/cb-wordpress.tar.gz
+          curl --fail --location --retry 2 https://wordpress.org/wordpress-7.0.tar.gz -o /tmp/cb-wordpress.tar.gz
           mkdir -p "$CB_TEST_WP_ROOT"
           tar -xzf /tmp/cb-wordpress.tar.gz -C "$CB_TEST_WP_ROOT" --strip-components=1
       - name: Real WordPress database round-trip
         run: php tests/integration/database-roundtrip.php
+      - name: Database robustness and checkpoint replay
+        run: php tests/integration/database-robustness.php

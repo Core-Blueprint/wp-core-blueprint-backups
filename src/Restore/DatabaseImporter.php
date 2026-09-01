@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Restore;
 
 use CB\Backups\DB\Schema;
+use CB\Backups\DB\SqlValueCodec;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,6 +23,10 @@ final class DatabaseImporter {
 	 * @return array{done:bool,meta:array<string,mixed>,progress:int}
 	 */
 	public static function tick( string $sql_file, array $meta, array $expected_tables, string $job_id ): array {
+		return SqlValueCodec::with_dump_mode( static fn (): array => self::advance( $sql_file, $meta, $expected_tables, $job_id ) );
+	}
+
+	private static function advance( string $sql_file, array $meta, array $expected_tables, string $job_id ): array {
 		global $wpdb;
 
 		if ( ! is_file( $sql_file ) || ! is_readable( $sql_file ) ) {
@@ -42,6 +47,8 @@ final class DatabaseImporter {
 			throw new RuntimeException( 'Database restore checkpoint is outside the SQL export.' );
 		}
 
+		$max_packet = (int) $wpdb->get_var( 'SELECT @@SESSION.max_allowed_packet' );
+		if ( '' !== $wpdb->last_error || $max_packet < 1024 ) throw new RuntimeException( 'Cannot inspect database packet limit.' );
 		$handle = fopen( $sql_file, 'rb' );
 		if ( false === $handle ) {
 			throw new RuntimeException( 'Database export could not be opened.' );
@@ -52,9 +59,7 @@ final class DatabaseImporter {
 		}
 
 		$old_foreign_key_checks = (string) $wpdb->get_var( 'SELECT @@SESSION.FOREIGN_KEY_CHECKS' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$old_sql_mode           = (string) $wpdb->get_var( 'SELECT @@SESSION.SQL_MODE' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$wpdb->query( 'SET SESSION FOREIGN_KEY_CHECKS=0' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$wpdb->query( "SET SESSION SQL_MODE=REPLACE(@@SESSION.SQL_MODE,'NO_BACKSLASH_ESCAPES','')" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		$statements = 0;
 		$bytes      = 0;
@@ -86,6 +91,7 @@ final class DatabaseImporter {
 				}
 				$shadow = self::shadow_name( $job_id, self::current_index( $meta ) );
 				$sql = self::rewrite_statement_for_shadow( $statement, $current, $shadow );
+				if ( strlen( $sql ) + 1024 > $max_packet ) throw new RuntimeException( 'Database statement exceeds the destination max_allowed_packet. Live tables remain unchanged.' );
 				$result = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- checksummed CB-generated SQL rewritten to a controlled shadow table.
 				if ( false === $result ) {
 					throw new RuntimeException( 'Database restore failed: ' . (string) $wpdb->last_error );
@@ -106,7 +112,6 @@ final class DatabaseImporter {
 		} finally {
 			fclose( $handle );
 			$wpdb->query( $wpdb->prepare( 'SET SESSION FOREIGN_KEY_CHECKS=%d', 0 === (int) $old_foreign_key_checks ? 0 : 1 ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $old_sql_mode ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		}
 
 		if ( $done ) {
