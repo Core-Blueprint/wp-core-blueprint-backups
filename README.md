@@ -2,7 +2,14 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
-## v0.1.0-rc15.3 migration restore RC
+## v0.1.0-rc15.4 migration restore RC
+
+### rc15.4 mutable runtime filesystem fix
+
+- Treats `wp-content/wflogs` as operational firewall runtime state rather than immutable website payload.
+- Future full-site backups exclude `wflogs` from the filesystem inventory and archive payload.
+- Existing format-v1 backups that still contain `wflogs` remain restorable; post-commit live checksum verification skips those mutable runtime files while continuing to verify normal restored content.
+- After a server/domain migration, re-optimize the Wordfence firewall / Extended Protection on the destination so its live WAF configuration is rebuilt for that environment.
 
 ### rc15.3 runtime code-integrity hardening
 
