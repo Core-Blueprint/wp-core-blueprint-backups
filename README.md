@@ -2,7 +2,16 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
-## v0.1.0-rc15.4 migration restore RC
+## v0.1.0-rc15.5 migration restore RC
+
+### rc15.5 managed storage-root hardening
+
+- Treats every canonical `wp-content/cb-backups-<20 hex token>` directory as operational Backups state rather than immutable website payload.
+- Future full-site backups exclude both the active Backups storage root and stale/source managed Backups storage roots from the filesystem inventory.
+- The restore commit plan preserves managed Backups storage roots and the shared operational exclusions instead of deleting or replacing them as part of the exact `wp-content` snapshot.
+- Existing format-v1 archives that contain an older managed Backups storage root remain usable; live verification ignores those operational storage payloads while continuing to verify normal restored content.
+- Custom `CB_BACKUPS_STORAGE_PATH` locations remain explicitly protected through the active LocalStorage path.
+- The shared restore-commit policy now also preserves `wflogs`, completing the rc15.4 mutable Wordfence runtime boundary during the live filesystem switch.
 
 ### rc15.4 mutable runtime filesystem fix
 
