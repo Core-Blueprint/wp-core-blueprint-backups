@@ -23,3 +23,5 @@ jobs:
         run: php tests/rc15-migration-smoke.php
       - name: Run RC15 filesystem policy smoke test
         run: php tests/rc15-filesystem-policy-smoke.php
+      - name: Run RC15 filesystem commit policy smoke test
+        run: php tests/rc15-filesystem-commit-policy-smoke.php
