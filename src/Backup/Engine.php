@@ -9,6 +9,7 @@ use CB\Backups\Schedule\Retention;
 use CB\Backups\Schedule\Scheduler;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\Audit;
+use CB\Backups\Support\SiteIdentity;
 use RuntimeException;
 use ZipArchive;
 
@@ -116,9 +117,10 @@ final class Engine {
 				throw new RuntimeException( 'Database export could not be added to the backup archive.' );
 			}
 			global $wpdb, $wp_version;
+			$identity = SiteIdentity::current();
 			$environment = [
-				'home_url'        => home_url( '/' ),
-				'site_url'        => site_url( '/' ),
+				'home_url'        => $identity['home_url'],
+				'site_url'        => $identity['site_url'],
 				'content_dir'     => 'wp-content',
 				'table_prefix'    => (string) $wpdb->prefix,
 				'wordpress'       => (string) $wp_version,

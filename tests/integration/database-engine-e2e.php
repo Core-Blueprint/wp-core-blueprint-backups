@@ -38,6 +38,7 @@ function run_job( array $job ): array {
 $backup = run_job( Repository::create( 'backup', 'database', 'manual' ) );
 $archive = LocalStorage::archive_path( $backup['archive_name'] );
 $manifest = ArchiveValidator::validate( $archive, false );
+check( ! is_ssl() && 'https://source.example.test/' === $manifest['site']['site_url'], 'Backup identity must retain configured HTTPS under CLI.' );
 check( ! empty( $manifest['database']['content_integrity']['cbtest_options'] ), 'Packaged source integrity metadata is missing.' );
 update_option( 'cb_e2e_payload', 'changed after backup' );
 $restore = run_job( Repository::create( 'restore', 'database', 'manual', [ 'archive_path' => $archive ] ) );

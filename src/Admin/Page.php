@@ -251,8 +251,9 @@ final class Page implements PageContract {
 		$source_home = untrailingslashit( (string) ( $import['source_home_url'] ?? '' ) );
 		$source_site = untrailingslashit( (string) ( $import['source_site_url'] ?? $import['site_url'] ?? '' ) );
 		$source_prefix = (string) ( $import['source_prefix'] ?? '' );
-		$target_home = untrailingslashit( home_url( '/' ) );
-		$target_site = untrailingslashit( site_url( '/' ) );
+		$identity = \CB\Backups\Support\SiteIdentity::current();
+		$target_home = untrailingslashit( $identity['home_url'] );
+		$target_site = untrailingslashit( $identity['site_url'] );
 		$target_prefix = (string) $wpdb->prefix;
 
 		if ( '' !== $source_site && '' !== $source_prefix ) {

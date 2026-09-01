@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Restore;
 
 use CB\Backups\DB\Schema;
+use CB\Backups\Support\SiteIdentity;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -12,6 +13,7 @@ final class MigrationPlan {
 	/** @param array<string,mixed> $manifest @return array<string,mixed> */
 	public static function build( array $manifest ): array {
 		global $wpdb;
+		$identity = SiteIdentity::current();
 
 		$site = is_array( $manifest['site'] ?? null ) ? $manifest['site'] : [];
 		$database = is_array( $manifest['database'] ?? null ) ? $manifest['database'] : [];
@@ -20,8 +22,8 @@ final class MigrationPlan {
 		$target_prefix = (string) $wpdb->prefix;
 		$source_home = self::normalise_url( (string) ( $site['home_url'] ?? '' ), 'Backup home URL' );
 		$source_site = self::normalise_url( (string) ( $site['site_url'] ?? '' ), 'Backup site URL' );
-		$target_home = self::normalise_url( home_url( '/' ), 'Destination home URL' );
-		$target_site = self::normalise_url( site_url( '/' ), 'Destination site URL' );
+		$target_home = self::normalise_url( $identity['home_url'], 'Destination home URL' );
+		$target_site = self::normalise_url( $identity['site_url'], 'Destination site URL' );
 
 		self::assert_prefix( $source_prefix, 'backup' );
 		self::assert_prefix( $target_prefix, 'destination' );

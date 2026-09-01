@@ -3,12 +3,15 @@ declare(strict_types=1);
 
 namespace CB\Backups\Backup;
 
+use CB\Backups\Support\SiteIdentity;
+
 defined( 'ABSPATH' ) || exit;
 
 final class Manifest {
 	/** @param array<string,mixed> $job @param array<int,array<string,mixed>>|int $checksums @param array<string,mixed> $meta @return array<string,mixed> */
 	public static function build( array $job, array|int $checksums, array $meta = [] ): array {
 		global $wpdb, $wp_version;
+		$identity = SiteIdentity::current();
 		$type = (string) ( $job['backup_type'] ?? 'database' );
 		$checksums_count = is_int( $checksums ) ? $checksums : count( $checksums );
 		return [
@@ -34,8 +37,8 @@ final class Manifest {
 				'top_levels'    => isset( $meta['top_levels'] ) && is_array( $meta['top_levels'] ) ? array_values( $meta['top_levels'] ) : [],
 			],
 			'site' => [
-				'home_url'        => home_url( '/' ),
-				'site_url'        => site_url( '/' ),
+				'home_url'        => $identity['home_url'],
+				'site_url'        => $identity['site_url'],
 				'wordpress'       => (string) $wp_version,
 				'php'             => PHP_VERSION,
 				'database_server' => (string) $wpdb->db_version(),

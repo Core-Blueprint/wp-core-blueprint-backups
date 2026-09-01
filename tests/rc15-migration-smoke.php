@@ -6,6 +6,7 @@ namespace {
 
 	function untrailingslashit( string $value ): string { return rtrim( $value, '/\\' ); }
 	function trailingslashit( string $value ): string { return untrailingslashit( $value ) . '/'; }
+	function get_option( string $name, mixed $default = false ): mixed { return in_array( $name, [ 'home', 'siteurl' ], true ) ? 'https://infused.academy' : $default; }
 	function home_url( string $path = '' ): string { return 'https://infused.academy' . ( '/' === $path ? '/' : $path ); }
 	function site_url( string $path = '' ): string { return 'https://infused.academy' . ( '/' === $path ? '/' : $path ); }
 	function wp_parse_url( string $url ): array|false { return parse_url( $url ); }
@@ -47,6 +48,7 @@ namespace CB\Backups\DB {
 }
 
 namespace {
+	require dirname( __DIR__ ) . '/src/Support/SiteIdentity.php';
 	require dirname( __DIR__ ) . '/src/DB/SqlValueCodec.php';
 	require dirname( __DIR__ ) . '/src/DB/ContentDigest.php';
 	require dirname( __DIR__ ) . '/src/Restore/MigrationPlan.php';

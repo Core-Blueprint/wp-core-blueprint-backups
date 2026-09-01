@@ -4,7 +4,7 @@ Governed database and full-site backups for the Core Blueprint suite.
 
 ## v0.1.0-rc15.6 database fidelity RC
 
-RC15.6 uses one WordPress-aware SQL value codec in export and migration, removes request-local percent placeholders before writing SQL, and fails database reads explicitly. It records source-derived content digests and row counts, then verifies the shadow snapshot before preparing or executing the live rename. Migration validates the source dump and derives target expectations before SQL re-encoding.
+RC15.6 uses one WordPress-aware SQL value codec in export and migration, removes request-local percent placeholders before writing SQL, and fails database reads explicitly. Configured site identity preserves its URL scheme across web/cron/CLI execution. It records source-derived content digests and row counts, then verifies the shadow snapshot before preparing or executing the live rename. Migration validates the source dump and derives target expectations before SQL re-encoding.
 
 This is a release candidate. PR #4 remains open. Do not use production or the golden-source staging for restore acceptance tests. Finish/cancel existing jobs before updating the runtime. Create fresh backups after installation: archives without source-derived content metadata cannot pass the new restore preflight, and previously corrupted dumps are not automatically repaired.
 
