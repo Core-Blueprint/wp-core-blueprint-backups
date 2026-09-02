@@ -114,8 +114,11 @@ async function resultUrl(page) {
     await test('Late migration re-auth confirms terminal success after sign-in', async () => {
       const f = await fixture(browser, { responses: [lateMigration, error('auth_required'), completed] });
       await waitText(f.page, 'Migrated site active. Sign in again to confirm the final migration result.');
-      await closeAuthModal(f.page); await resultUrl(f.page);
-      assert.equal(f.calls.length, 3); assert.deepEqual(f.errors, []); await f.page.close();
+      await closeAuthModal(f.page);
+      await waitText(f.page, 'Migration completed');
+      assert.equal(f.calls.length, 3);
+      assert.equal(f.calls[2].job_id, jobId);
+      assert.deepEqual(f.errors, []); await f.page.close();
     });
     await test('Terminal server card remains visible without polling or redirect', async () => {
       const f = await fixture(browser, { status: 'completed', pending: true }); await f.page.waitForTimeout(200);
