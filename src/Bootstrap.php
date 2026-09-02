@@ -18,6 +18,7 @@ use CB\Backups\Support\SiteHealth;
 use CB\Backups\Support\Capabilities;
 use CB\Core\Admin\PageRegistry;
 use CB\Core\Dashboard\CardRegistry;
+use CB\Core\ExtensionRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,10 +55,21 @@ final class Bootstrap {
 		add_action( 'cb_backups_run_job', [ Runner::class, 'scheduled_tick' ], 10, 1 );
 		add_action( 'cb_backups_scheduler_tick', [ Scheduler::class, 'run_due' ] );
 		add_filter( 'cb_core_cli_register_commands', [ self::class, 'register_cli_commands' ] );
+		add_action( 'cb_core_register_extensions', [ self::class, 'register_extension' ] );
 		add_action( 'cb_core_dashboard_register_cards', [ self::class, 'register_dashboard_shortcuts' ] );
 		add_action( 'init', [ self::class, 'register_presentation_hooks' ], 1 );
 	}
 
+	/** Register Backups with Base's canonical extension inventory. */
+	public static function register_extension(): void {
+		ExtensionRegistry::register( [
+			'id'           => 'core-blueprint-backups',
+			'plugin_file'  => CB_BACKUPS_BASENAME,
+			'requires_api' => '1.0',
+			'menu_url'     => admin_url( 'admin.php?page=core-blueprint-backups' ),
+			'status_id'    => 'backups',
+		] );
+	}
 
 	public static function register_dashboard_shortcuts(): void {
 		if ( ! class_exists( CardRegistry::class ) ) {
@@ -118,6 +130,72 @@ final class Bootstrap {
 		foreach ( self::event_labels( [] ) as $id => $label ) {
 			\CB\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
 		}
+		add_filter( 'cb_core_module_status_definitions', [ self::class, 'register_status_definition' ] );
+	}
+
+	/** @param array<string,array<string,mixed>> $definitions
+	 *  @return array<string,array<string,mixed>>
+	 */
+	public static function register_status_definition( array $definitions ): array {
+		$definitions['backups'] = [
+			'provider' => [ self::class, 'extension_status' ],
+			'label'    => __( 'Backups', 'core-blueprint-backups' ),
+			'url'      => admin_url( 'admin.php?page=core-blueprint-backups' ),
+		];
+		return $definitions;
+	}
+
+	/** @return array{state:string,detail:string,url:string} */
+	public static function extension_status(): array {
+		$url = admin_url( 'admin.php?page=core-blueprint-backups' );
+
+		try {
+			LocalStorage::ensure();
+			$storage_path = LocalStorage::base_path();
+		} catch ( \Throwable ) {
+			return [
+				'state'  => 'err',
+				'detail' => __( 'Backup storage unavailable', 'core-blueprint-backups' ),
+				'url'    => $url,
+			];
+		}
+
+		if ( ! is_writable( $storage_path ) ) {
+			return [
+				'state'  => 'err',
+				'detail' => __( 'Backup storage is not writable', 'core-blueprint-backups' ),
+				'url'    => $url,
+			];
+		}
+
+		$scheduler = Scheduler::health();
+		return match ( (string) ( $scheduler['status'] ?? '' ) ) {
+			'critical' => [
+				'state'  => 'err',
+				'detail' => __( 'Backup scheduler requires attention', 'core-blueprint-backups' ),
+				'url'    => $url,
+			],
+			'warning' => [
+				'state'  => 'warn',
+				'detail' => __( 'Backup scheduler is delayed', 'core-blueprint-backups' ),
+				'url'    => $url,
+			],
+			'healthy' => [
+				'state'  => 'ok',
+				'detail' => __( 'Automatic backup schedules are healthy', 'core-blueprint-backups' ),
+				'url'    => $url,
+			],
+			'idle' => [
+				'state'  => 'ok',
+				'detail' => __( 'Ready', 'core-blueprint-backups' ),
+				'url'    => $url,
+			],
+			default => [
+				'state'  => 'warn',
+				'detail' => __( 'Status unavailable', 'core-blueprint-backups' ),
+				'url'    => $url,
+			],
+		};
 	}
 
 	/** @param array<string,string> $labels @return array<string,string> */
