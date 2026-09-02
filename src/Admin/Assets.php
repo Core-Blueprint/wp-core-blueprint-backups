@@ -48,6 +48,12 @@ final class Assets {
 			CB_BACKUPS_VERSION
 		);
 		wp_enqueue_script_module(
+			'@cb-backups/job-handoff',
+			CB_BACKUPS_URL . 'assets/js/job-handoff.js',
+			[ '@cb-backups/job-monitor', '@cb-core/toast' ],
+			CB_BACKUPS_VERSION
+		);
+		wp_enqueue_script_module(
 			'@cb-backups/job-terminal-recovery',
 			CB_BACKUPS_URL . 'assets/js/job-terminal-recovery.js',
 			[],
@@ -125,32 +131,48 @@ final class Assets {
 	/** @return array<string,mixed> */
 	private static function job_monitor_data(): array {
 		$job_id = self::current_job_id();
+		$job = '' !== $job_id ? Repository::get( $job_id ) : null;
+		$meta = is_array( $job ) && is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
+
 		return [
 			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
 			'nonce'        => wp_create_nonce( 'cb_backups_admin' ),
 			'jobId'        => $job_id,
+			'jobKind'      => is_array( $job ) ? (string) ( $job['kind'] ?? '' ) : '',
+			'restoreMode'  => (string) ( $meta['restore_mode'] ?? '' ),
 			'reconnectUrl' => self::reconnect_url( $job_id ),
 			'labels'       => [
-				'failed'             => __( 'Failed', 'core-blueprint-backups' ),
-				'cancelled'          => __( 'Cancelled', 'core-blueprint-backups' ),
-				'cancelling'         => __( 'Cancelling…', 'core-blueprint-backups' ),
-				'cancel'             => __( 'Cancel backup', 'core-blueprint-backups' ),
-				'modalCancel'        => __( 'Cancel', 'core-blueprint-backups' ),
-				'cancelTitle'        => __( 'Cancel backup?', 'core-blueprint-backups' ),
-				'cancelConfirm'      => __( 'The current safe chunk will finish first. Incomplete backup data will then be removed.', 'core-blueprint-backups' ),
-				'cancelRequested'    => __( 'Backup cancellation requested.', 'core-blueprint-backups' ),
-				'requestFailed'      => __( 'Backup status request failed.', 'core-blueprint-backups' ),
-				'networkInterrupted' => __( 'Connection to the restore monitor was interrupted. Retrying… The restore continues on the server.', 'core-blueprint-backups' ),
-				'authRequired'       => __( 'Your WordPress session changed during migration. Sign in again to continue monitoring. The restore continues safely in the background.', 'core-blueprint-backups' ),
-				'migrationSwitching' => __( 'The migrated site is taking over. Your WordPress session may change while final safety checks finish.', 'core-blueprint-backups' ),
-				'restoreSwitching'   => __( 'The restored site is taking over. Your WordPress session may change while final safety checks finish.', 'core-blueprint-backups' ),
-				'migrationSignIn'    => __( 'The migrated site is now active. Sign in again to confirm the final migration result.', 'core-blueprint-backups' ),
-				'restoreSignIn'      => __( 'The restored site is now active. Sign in again to confirm the final restore result.', 'core-blueprint-backups' ),
-				'dismissResult'      => __( 'Dismiss', 'core-blueprint-backups' ),
-				'nonceExpired'       => __( 'Your monitoring session expired. Reload this page to continue monitoring the server-owned job.', 'core-blueprint-backups' ),
-				'signInAgain'        => __( 'Sign in again', 'core-blueprint-backups' ),
-				'reloadMonitor'      => __( 'Reload monitoring', 'core-blueprint-backups' ),
-				'reconnected'        => __( 'Restore monitoring reconnected.', 'core-blueprint-backups' ),
+				'failed'                   => __( 'Failed', 'core-blueprint-backups' ),
+				'cancelled'                => __( 'Cancelled', 'core-blueprint-backups' ),
+				'cancelling'               => __( 'Cancelling…', 'core-blueprint-backups' ),
+				'cancel'                   => __( 'Cancel backup', 'core-blueprint-backups' ),
+				'modalCancel'              => __( 'Cancel', 'core-blueprint-backups' ),
+				'cancelTitle'              => __( 'Cancel backup?', 'core-blueprint-backups' ),
+				'cancelConfirm'            => __( 'The current safe chunk will finish first. Incomplete backup data will then be removed.', 'core-blueprint-backups' ),
+				'cancelRequested'          => __( 'Backup cancellation requested.', 'core-blueprint-backups' ),
+				'requestFailed'            => __( 'Backup status request failed.', 'core-blueprint-backups' ),
+				'networkInterrupted'       => __( 'Connection to the restore monitor was interrupted. Retrying… The restore continues on the server.', 'core-blueprint-backups' ),
+				'authRequired'             => __( 'Your WordPress session changed during migration. Sign in again to continue monitoring. The restore continues safely in the background.', 'core-blueprint-backups' ),
+				'migrationSwitching'       => __( 'The migrated site is taking over. Your WordPress session may change while final safety checks finish.', 'core-blueprint-backups' ),
+				'restoreSwitching'         => __( 'The restored site is taking over. Your WordPress session may change while final safety checks finish.', 'core-blueprint-backups' ),
+				'migrationSignIn'          => __( 'The migrated site is now active. Sign in again to confirm the final migration result.', 'core-blueprint-backups' ),
+				'restoreSignIn'            => __( 'The restored site is now active. Sign in again to confirm the final restore result.', 'core-blueprint-backups' ),
+				'finalizing'               => __( 'Finalizing', 'core-blueprint-backups' ),
+				'migrationFinalizingTitle' => __( 'Finalizing migration', 'core-blueprint-backups' ),
+				'migrationFinalizingBody'  => __( 'The migrated database has been restored and is being verified. Core Blueprint will switch the website next. Your WordPress session may expire during that final switch — this is expected.', 'core-blueprint-backups' ),
+				'restoreFinalizingTitle'   => __( 'Finalizing restore', 'core-blueprint-backups' ),
+				'restoreFinalizingBody'    => __( 'The restored database has been staged and is being verified. Core Blueprint will switch the website next. Your WordPress session may expire during that final switch — this is expected.', 'core-blueprint-backups' ),
+				'migrationAppliedTitle'    => __( 'Migration applied successfully', 'core-blueprint-backups' ),
+				'migrationAppliedBody'     => __( 'The migrated site is now active. Your previous WordPress session was replaced as expected. Sign in again to complete the final verification and view the migration result.', 'core-blueprint-backups' ),
+				'restoreAppliedTitle'      => __( 'Restore applied successfully', 'core-blueprint-backups' ),
+				'restoreAppliedBody'       => __( 'The restored site is now active. Your previous WordPress session was replaced as expected. Sign in again to complete the final verification and view the restore result.', 'core-blueprint-backups' ),
+				'migrationAppliedToast'    => __( 'Migration applied successfully. Sign in again to complete final verification.', 'core-blueprint-backups' ),
+				'restoreAppliedToast'      => __( 'Restore applied successfully. Sign in again to complete final verification.', 'core-blueprint-backups' ),
+				'dismissResult'            => __( 'Dismiss', 'core-blueprint-backups' ),
+				'nonceExpired'             => __( 'Your monitoring session expired. Reload this page to continue monitoring the server-owned job.', 'core-blueprint-backups' ),
+				'signInAgain'              => __( 'Sign in again', 'core-blueprint-backups' ),
+				'reloadMonitor'            => __( 'Reload monitoring', 'core-blueprint-backups' ),
+				'reconnected'              => __( 'Restore monitoring reconnected.', 'core-blueprint-backups' ),
 			],
 		];
 	}
