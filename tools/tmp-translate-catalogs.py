@@ -49,6 +49,10 @@ def restore(text: str, replacements: dict[str, str]) -> str:
     return text
 
 
+def no_translation_found(exc: Exception) -> bool:
+    return 'No translation was found using the current translator' in str(exc)
+
+
 def translate_group(translator: GoogleTranslator, texts: list[str]) -> list[str]:
     masked: list[str] = []
     maps: list[dict[str, str]] = []
@@ -71,7 +75,9 @@ def translate_group(translator: GoogleTranslator, texts: list[str]) -> list[str]
             time.sleep(1.5 * (attempt + 1))
 
     # Safe fallback: translate each string independently rather than accepting a
-    # malformed batch. Still fail the job if any placeholder cannot be restored.
+    # malformed batch. A translator response that explicitly says no translation
+    # exists is allowed to preserve that one source term (typically product or
+    # technical vocabulary such as "Backups"). All other failures stay fatal.
     out: list[str] = []
     for value, mapping in zip(masked, maps):
         for attempt in range(4):
@@ -81,6 +87,9 @@ def translate_group(translator: GoogleTranslator, texts: list[str]) -> list[str]
                 break
             except Exception as exc:
                 last_error = exc
+                if no_translation_found(exc):
+                    out.append(restore(value, mapping))
+                    break
                 time.sleep(1.5 * (attempt + 1))
         else:
             raise RuntimeError(f'translation failed after retries: {last_error}')
