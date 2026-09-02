@@ -46,3 +46,5 @@ jobs:
           git diff --cached --check
           git commit -m 'Add Backups launch translation catalogs'
           git push origin HEAD:qc/backups-launch-readiness
+
+# Retry 2: preserve source only when the translation provider explicitly reports no translation.
