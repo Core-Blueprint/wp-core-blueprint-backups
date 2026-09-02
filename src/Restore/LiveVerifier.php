@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
+use CB\Backups\Support\FilesystemPolicy;
 use RuntimeException;
 
 \defined( 'ABSPATH' ) || exit;
@@ -102,7 +103,7 @@ final class LiveVerifier {
 			return null;
 		}
 		$relative = substr( $archive_path, strlen( $prefix ) );
-		if ( '' === $relative || FilesystemCommitter::is_runtime_protected_path( $relative ) ) {
+		if ( '' === $relative || FilesystemPolicy::is_excluded_relative_path( $relative ) || FilesystemCommitter::is_runtime_protected_path( $relative ) ) {
 			return null;
 		}
 		ArchiveValidator::assert_safe_entry( $archive_path );

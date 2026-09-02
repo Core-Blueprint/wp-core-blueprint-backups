@@ -1,0 +1,53 @@
+name: PHP lint and migration smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - rc15-migration-restore-v1
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Show PHP version
+        run: php -v
+      - name: Lint PHP files
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+      - name: Check job monitor JavaScript syntax
+        run: node --check assets/js/job-monitor.js && node --check assets/js/job-terminal-recovery.js && node --check assets/js/admin.js && node --check assets/js/restore-confirmation.js
+      - name: Run RC15 migration smoke test
+        run: php tests/rc15-migration-smoke.php
+      - name: Run RC15 filesystem policy smoke test
+        run: php tests/rc15-filesystem-policy-smoke.php
+      - name: Run RC15 filesystem commit policy smoke test
+        run: php tests/rc15-filesystem-commit-policy-smoke.php
+      - name: Run RC15 job presentation smoke test
+        run: php tests/rc15-job-presentation-smoke.php
+      - name: Run RC15 job monitor contract smoke test
+        run: php tests/rc15-job-monitor-smoke.php
+      - name: Run job result and permission regressions
+        run: php tests/job-result-regression.php
+      - name: Run restore acknowledgement and audit regressions
+        run: php tests/restore-confirmation-regression.php
+
+  job-monitor-browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test runtime
+        run: npm install --no-save --package-lock=false playwright@1.62.1 && npx playwright install --with-deps chromium
+      - name: Run monitor authentication and result regressions
+        run: node tests/job-monitor-browser.cjs
+      - name: Run required restore acknowledgement in Base modal
+        run: node tests/restore-confirmation-browser.cjs

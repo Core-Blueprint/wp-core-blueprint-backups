@@ -1,3 +1,5 @@
+import { confirmRestore } from './restore-confirmation.js';
+
 (() => {
   'use strict';
 
@@ -42,30 +44,54 @@
   document.querySelectorAll('form[data-cb-modal-confirm]:not([data-cb-chunk-upload])').forEach((form) => {
     form.addEventListener('submit', async (event) => {
       if (form.dataset.cbModalConfirmed === '1') {
+        delete form.dataset.cbModalConfirmed;
         return;
       }
 
       event.preventDefault();
+      if (form.dataset.cbModalPending === '1') return;
       if (!modal?.show) {
         showToast(config.labels?.requestFailed || 'Confirmation dialog is unavailable.', 'error', { persistent: true });
         return;
       }
 
-      const confirmed = await modal.show({
+      const options = {
         title: form.dataset.cbModalTitle || 'Confirm action',
         body: form.dataset.cbModalBody || '',
         confirmLabel: form.dataset.cbModalConfirmLabel || 'Confirm',
         cancelLabel: form.dataset.cbModalCancelLabel || config.labels?.modalCancel || 'Cancel',
         confirmVariant: form.dataset.cbModalVariant || 'primary',
-      });
+      };
+      const acknowledgement = form.querySelector('[data-cb-restore-acknowledgement]');
+      if (acknowledgement) acknowledgement.value = '';
+      form.dataset.cbModalPending = '1';
+      let confirmed = false;
+      try {
+        confirmed = acknowledgement
+          ? await confirmRestore(modal, options, acknowledgement.dataset.cbRestoreAcknowledgement)
+          : await modal.show(options);
+      } catch {
+        showToast(config.labels?.requestFailed || 'Confirmation dialog is unavailable.', 'error', { persistent: true });
+      } finally {
+        delete form.dataset.cbModalPending;
+      }
 
       if (!confirmed) return;
 
+      if (acknowledgement) acknowledgement.value = '1';
       form.dataset.cbModalConfirmed = '1';
       if (event.submitter instanceof HTMLElement) {
         event.submitter.setAttribute('aria-disabled', 'true');
       }
       form.requestSubmit(event.submitter || undefined);
+    });
+  });
+
+  window.addEventListener('pageshow', () => {
+    document.querySelectorAll('[data-cb-restore-acknowledgement]').forEach((input) => {
+      input.value = '';
+      delete input.form.dataset.cbModalConfirmed;
+      delete input.form.dataset.cbModalPending;
     });
   });
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace CB\Backups\Restore;
 
 use CB\Backups\Storage\LocalStorage;
+use CB\Backups\Support\FilesystemPolicy;
 use RuntimeException;
-
 defined( 'ABSPATH' ) || exit;
 
 final class FilesystemCommitter {
@@ -254,7 +254,7 @@ final class FilesystemCommitter {
 		sort( $names, SORT_STRING );
 		$plan = [];
 		foreach ( $names as $name ) {
-			if ( isset( $protected[ $name ] ) ) {
+			if ( isset( $protected[ $name ] ) || FilesystemPolicy::is_excluded_relative_path( $name ) ) {
 				continue;
 			}
 			if ( 'plugins' === $name ) {
@@ -329,7 +329,7 @@ final class FilesystemCommitter {
 
 	/** @return string[] */
 	private static function protected_top_levels(): array {
-		$protected = [ 'cache', 'upgrade', 'ai1wm-backups', '.git', '.svn', '.cb-restore-work' ];
+		$protected = FilesystemPolicy::excluded_top_levels();
 		$content = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
 		$storage = wp_normalize_path( LocalStorage::base_path() );
 		if ( str_starts_with( $storage, $content ) ) {

@@ -163,7 +163,7 @@ final class Actions {
 		$archive = sanitize_file_name( (string) ( isset( $_POST['archive'] ) ? wp_unslash( $_POST['archive'] ) : '' ) );
 		check_admin_referer( 'cb_backups_restore_import_' . $archive );
 		try {
-			$job = RestoreService::create( LocalStorage::import_path( $archive ), 'manual_import' );
+			$job = RestoreService::create( LocalStorage::import_path( $archive ), 'manual_import', '1' === ( $_POST['restore_acknowledged'] ?? null ) );
 			self::redirect( [ 'tab' => 'restore', 'job' => (string) $job['job_id'], 'cb_notice' => 'restore_started' ] );
 		} catch ( \Throwable $e ) {
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => $e->getMessage() ] );
@@ -186,7 +186,7 @@ final class Actions {
 		$archive = sanitize_file_name( (string) ( isset( $_POST['archive'] ) ? wp_unslash( $_POST['archive'] ) : '' ) );
 		check_admin_referer( 'cb_backups_restore_' . $archive );
 		try {
-			$job = RestoreService::create( LocalStorage::archive_path( $archive ), 'manual' );
+			$job = RestoreService::create( LocalStorage::archive_path( $archive ), 'manual', '1' === ( $_POST['restore_acknowledged'] ?? null ) );
 			self::redirect( [ 'tab' => 'restore', 'job' => (string) $job['job_id'], 'cb_notice' => 'restore_started' ] );
 		} catch ( \Throwable $e ) {
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => $e->getMessage() ] );

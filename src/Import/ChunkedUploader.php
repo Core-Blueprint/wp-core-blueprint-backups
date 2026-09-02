@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Import;
 
 use CB\Backups\Restore\ArchiveValidator;
+use CB\Backups\Restore\MigrationPlan;
 use CB\Backups\Storage\LocalStorage;
 use RuntimeException;
 
@@ -175,20 +176,30 @@ final class ChunkedUploader {
 		}
 		try {
 			$manifest = ArchiveValidator::validate( $target, false );
+			$plan = MigrationPlan::build( $manifest );
 			$database = is_array( $manifest['database'] ?? null ) ? $manifest['database'] : [];
 			$filesystem = is_array( $manifest['filesystem'] ?? null ) ? $manifest['filesystem'] : [];
 			$meta = [
-				'archive_name'      => $archive_name,
-				'original_name'     => (string) ( $state['original_name'] ?? '' ),
-				'created_timestamp' => time(),
-				'backup_type'       => (string) ( $manifest['backup_type'] ?? 'database' ),
-				'database_rows'     => (int) ( $database['row_count'] ?? 0 ),
-				'database_tables'   => isset( $database['tables'] ) && is_array( $database['tables'] ) ? count( $database['tables'] ) : 0,
-				'files'             => (int) ( $filesystem['file_count'] ?? 0 ),
-				'filesystem_bytes'  => (int) ( $filesystem['bytes'] ?? 0 ),
-				'site_url'          => (string) ( $manifest['site']['site_url'] ?? '' ),
-				'size'              => $expected,
-				'prepared'          => true,
+				'archive_name'       => $archive_name,
+				'original_name'      => (string) ( $state['original_name'] ?? '' ),
+				'created_timestamp'  => time(),
+				'backup_type'        => (string) ( $manifest['backup_type'] ?? 'database' ),
+				'database_rows'      => (int) ( $database['row_count'] ?? 0 ),
+				'database_tables'    => isset( $database['tables'] ) && is_array( $database['tables'] ) ? count( $database['tables'] ) : 0,
+				'files'              => (int) ( $filesystem['file_count'] ?? 0 ),
+				'filesystem_bytes'   => (int) ( $filesystem['bytes'] ?? 0 ),
+				'site_url'           => (string) $plan['source_site_url'],
+				'source_home_url'    => (string) $plan['source_home_url'],
+				'source_site_url'    => (string) $plan['source_site_url'],
+				'source_prefix'      => (string) $plan['source_prefix'],
+				'target_home_url'    => (string) $plan['target_home_url'],
+				'target_site_url'    => (string) $plan['target_site_url'],
+				'target_prefix'      => (string) $plan['target_prefix'],
+				'restore_mode'       => (string) $plan['mode'],
+				'requires_migration' => ! empty( $plan['requires_migration'] ),
+				'plan_fingerprint'   => (string) $plan['fingerprint'],
+				'size'               => $expected,
+				'prepared'           => true,
 			];
 			LocalStorage::write_import_meta( $archive_name, $meta );
 			$state['status'] = 'prepared';

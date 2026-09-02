@@ -1,0 +1,32 @@
+.cb-backups-monitor-state {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--cb-space-3);
+	margin: var(--cb-space-4) 0 0;
+	padding: var(--cb-space-3);
+	border: 1px solid var(--cb-border);
+	border-radius: var(--cb-radius-sm);
+	background: var(--cb-surface-0);
+	color: var(--cb-text-strong);
+}
+
+.cb-backups-monitor-state[hidden] {
+	display: none;
+}
+
+.cb-backups-monitor-state--auth,
+.cb-backups-monitor-state--network {
+	border-inline-start: 4px solid var(--cb-accent);
+}
+
+.cb-backups-monitor-state--error {
+	border-inline-start: 4px solid var(--cb-danger);
+}
+
+@media (max-width: 782px) {
+	.cb-backups-monitor-state {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}

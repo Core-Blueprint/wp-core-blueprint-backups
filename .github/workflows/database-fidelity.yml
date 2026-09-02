@@ -1,0 +1,56 @@
+name: Database fidelity
+
+on:
+  pull_request:
+  push:
+    branches: [rc15-migration-restore-v1]
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        database: ['mysql:8.0', 'mariadb:10.11']
+    services:
+      database:
+        image: ${{ matrix.database }}
+        env:
+          MYSQL_ROOT_PASSWORD: disposable-test-password
+          MYSQL_DATABASE: cb_backups_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pdisposable-test-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      CB_BACKUPS_TEST_DISPOSABLE: '1'
+      CB_TEST_WP_ROOT: /tmp/cb-wordpress
+      CB_TEST_DB_NAME: cb_backups_test
+      CB_TEST_DB_USER: root
+      CB_TEST_DB_PASSWORD: disposable-test-password
+      CB_TEST_DB_HOST: 127.0.0.1:3306
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up supported PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mysqli, mbstring, dom, zip
+          coverage: none
+      - name: Download pinned official WordPress source
+        run: |
+          curl --fail --location --retry 2 https://wordpress.org/wordpress-7.0.tar.gz -o /tmp/cb-wordpress.tar.gz
+          mkdir -p "$CB_TEST_WP_ROOT"
+          tar -xzf /tmp/cb-wordpress.tar.gz -C "$CB_TEST_WP_ROOT" --strip-components=1
+      - name: Real WordPress database round-trip
+        run: php tests/integration/database-roundtrip.php
+      - name: Database robustness and checkpoint replay
+        run: php tests/integration/database-robustness.php
+      - name: Database job and archive E2E
+        run: php tests/integration/database-engine-e2e.php
+      - name: Imported restore history and result rendering
+        run: php tests/integration/import-history.php
