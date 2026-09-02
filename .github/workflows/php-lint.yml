@@ -20,7 +20,7 @@ jobs:
       - name: Lint PHP files
         run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Check job monitor JavaScript syntax
-        run: node --check assets/js/job-monitor.js && node --check assets/js/job-terminal-recovery.js && node --check assets/js/admin.js && node --check assets/js/restore-confirmation.js
+        run: node --check assets/js/job-monitor.js && node --check assets/js/job-handoff.js && node --check assets/js/job-terminal-recovery.js && node --check assets/js/admin.js && node --check assets/js/restore-confirmation.js
       - name: Run RC15 migration smoke test
         run: php tests/rc15-migration-smoke.php
       - name: Run RC15 filesystem policy smoke test
