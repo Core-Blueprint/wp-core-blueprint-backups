@@ -84,6 +84,30 @@ namespace {
 	check_result( 'completed' === $current->invoke($page)['status'], 'Explicit terminal job must survive a page reload.' );
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
 	check_result( str_contains($html, '<aside class="success">Migration completed</aside>'), 'Completion must render without JavaScript or a toast.' );
+	// Regression from a real completed migration: extraction has two extra
+	// archive payloads plus database bytes; filesystem verification is separate.
+	$mb = 1024 * 1024;
+	$website = array_replace($job, [
+		'backup_type' => 'website', 'files_done' => 15804, 'files_total' => 15802,
+		'files_bytes_done' => 494 * $mb, 'files_bytes_total' => 463 * $mb,
+		'meta' => [
+			'restore_mode' => 'migration', 'restore_verify_total' => 15804,
+			'restore_extract_files_done' => 15804, 'restore_extract_bytes_done' => 494 * $mb,
+			'live_verify_done' => 14900, 'live_verify_total' => 14900,
+			'manifest' => ['filesystem' => ['file_count' => 15802, 'bytes' => 463 * $mb]],
+		],
+	]);
+	Repository::$jobs['restore-1'] = $website;
+	ob_start(); $render->invoke($page); $html = ob_get_clean();
+	check_result( str_contains($html, '<dt>Restored files verified</dt><dd><span id="cb-backups-files">14,900 / 14,900</span>'), 'Terminal HTML must use verified filesystem counts and their label.' );
+	check_result( str_contains($html, '<dt>Restored filesystem data</dt><dd><span id="cb-backups-file-bytes">' . (463 * $mb) . '</span>'), 'Terminal HTML must show filesystem bytes without the extraction-byte ratio.' );
+	check_result( ! str_contains($html, '15,804 / 15,802'), 'Terminal HTML mixed archive and filesystem counts.' );
+	Repository::$jobs['restore-1']['stage'] = 'extract';
+	Repository::$jobs['restore-1']['status'] = 'running';
+	ob_start(); $render->invoke($page); $html = ob_get_clean();
+	check_result( str_contains($html, '<dt>Payloads extracted</dt><dd><span id="cb-backups-files">15,804 / 15,804</span>'), 'Active server-rendered extraction must use the archive payload domain.' );
+	check_result( str_contains($html, '<dt>Data extracted</dt><dd><span id="cb-backups-file-bytes">' . (494 * $mb) . '</span>'), 'Extraction bytes must be absolute before polling starts.' );
+	Repository::$jobs['restore-1'] = $job;
 	Repository::$jobs['restore-1']['status'] = 'failed';
 	Repository::$jobs['restore-1']['error_text'] = 'Database integrity fixture failure';
 	$_GET['cb_notice'] = 'migration_completed';

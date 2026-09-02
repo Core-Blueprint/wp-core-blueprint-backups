@@ -2,6 +2,10 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.9 result metric correction
+
+The server-rendered job panel now consumes the same phase-specific file/byte metrics as the polling response. Completed restores show verified filesystem counts and filesystem bytes; extraction shows archive payload counts and extracted bytes. It no longer divides archive payloads (including SQL/metadata) by filesystem-only totals after re-login or refresh. The restore engine and stored backup contents are unchanged. `tests/job-result-regression.php` renders both completed and extracting website jobs to cover the real 15,804/15,802 and 494/463 MB regression.
+
 ## v0.1.0-rc15.8 restore completion RC
 
 Restores retain a server-rendered result panel after completion, failure or cancellation. The monitor reconnects after WordPress interim login, preserves the pending job across page/tab navigation, and reports permission loss without implying the restore failed or bypassing Base governance. Completion messages derive from the stored job, not a success query flag. The restore worker invalidates the rewrite cache so a fresh restored-site request rebuilds routes with its own registrations and locale.

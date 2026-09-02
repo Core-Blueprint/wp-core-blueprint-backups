@@ -477,8 +477,8 @@ final class Page implements PageContract {
 		$this->metric( __( 'Database rows', 'core-blueprint-backups' ), '<span id="cb-backups-rows">' . esc_html( $this->rows_label( $data ) ) . '</span>' );
 		$this->metric( __( 'Tables', 'core-blueprint-backups' ), '<span id="cb-backups-tables">' . esc_html( $this->tables_label( $data ) ) . '</span>' );
 		if ( $is_website ) {
-			$this->metric( __( 'Files', 'core-blueprint-backups' ), '<span id="cb-backups-files">' . esc_html( $this->files_label( $data ) ) . '</span>' );
-			$this->metric( __( 'Data processed', 'core-blueprint-backups' ), '<span id="cb-backups-file-bytes">' . esc_html( $this->file_bytes_label( $data ) ) . '</span>' );
+			$this->metric( (string) $data['file_metric']['label'], '<span id="cb-backups-files">' . esc_html( $this->metric_value( $data['file_metric'] ) ) . '</span>' );
+			$this->metric( (string) $data['byte_metric']['label'], '<span id="cb-backups-file-bytes">' . esc_html( $this->metric_value( $data['byte_metric'], true ) ) . '</span>' );
 			$this->metric( __( 'Throughput', 'core-blueprint-backups' ), '<span id="cb-backups-throughput">' . esc_html( $this->throughput_label( $data ) ) . '</span>' );
 		}
 		$this->metric( __( 'Elapsed', 'core-blueprint-backups' ), '<span id="cb-backups-elapsed">' . esc_html( Telemetry::format_duration( (int) $data['elapsed_seconds'] ) ) . '</span>' );
@@ -526,21 +526,17 @@ final class Page implements PageContract {
 		return $total > 0 ? number_format_i18n( $done ) . ' / ' . number_format_i18n( $total ) : '—';
 	}
 
-	/** @param array<string,mixed> $data */
-	private function files_label( array $data ): string {
-		$done  = (int) ( $data['files_done'] ?? 0 );
-		$total = (int) ( $data['files_total'] ?? 0 );
-		return $total > 0 ? number_format_i18n( $done ) . ' / ' . number_format_i18n( $total ) : ( $done > 0 ? number_format_i18n( $done ) : '—' );
-	}
-
-	/** @param array<string,mixed> $data */
-	private function file_bytes_label( array $data ): string {
-		$done  = (int) ( $data['files_bytes_done'] ?? 0 );
-		$total = (int) ( $data['files_bytes_total'] ?? 0 );
+	/** @param array{label:string,done:int,total:int} $metric */
+	private function metric_value( array $metric, bool $bytes = false ): string {
+		// Use the same phase-specific domains as the polling response. Archive
+		// payloads include SQL/metadata and cannot be divided by filesystem totals.
+		$done = (int) $metric['done'];
+		$total = (int) $metric['total'];
+		$format = $bytes ? 'size_format' : 'number_format_i18n';
 		if ( $total > 0 ) {
-			return size_format( $done ) . ' / ' . size_format( $total );
+			return $format( $done ) . ' / ' . $format( $total );
 		}
-		return $done > 0 ? size_format( $done ) : '—';
+		return $done > 0 ? $format( $done ) : '—';
 	}
 
 
