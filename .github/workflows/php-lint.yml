@@ -35,6 +35,8 @@ jobs:
         run: php tests/job-result-regression.php
       - name: Run restore acknowledgement and audit regressions
         run: php tests/restore-confirmation-regression.php
+      - name: Run dashboard extension registration regression
+        run: php tests/extension-registration-regression.php
 
   job-monitor-browser:
     runs-on: ubuntu-24.04
