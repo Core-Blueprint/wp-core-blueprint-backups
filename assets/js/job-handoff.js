@@ -53,6 +53,10 @@
 
   const isFinalWindow = () => !terminalStatuses.has(jobBox.dataset.status || '') && progress() >= 95;
   const authVisible = () => Boolean(authWrap && !authWrap.classList.contains('hidden'));
+  const setFinalizingStatus = () => {
+    const label = labels.finalizing || 'Finalizing';
+    if (statusEl && statusEl.textContent !== label) statusEl.textContent = label;
+  };
 
   const showToast = (message) => {
     if (!message || !toast || appliedNotified) return;
@@ -147,7 +151,7 @@
     } else {
       setState(ensureOwnState(), copy, 'success');
     }
-    if (statusEl) statusEl.textContent = labels.finalizing || 'Finalizing';
+    setFinalizingStatus();
     showToast(copy.toast);
     decorateAuthOverlay();
   };
@@ -171,7 +175,7 @@
     }
 
     setState(ensureOwnState(), finalizingCopy(), 'handoff');
-    if (statusEl) statusEl.textContent = labels.finalizing || 'Finalizing';
+    setFinalizingStatus();
   };
 
   const refresh = () => {
