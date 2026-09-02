@@ -1,0 +1,64 @@
+name: Temporary Backups launch QC refresh
+
+on:
+  push:
+    branches:
+      - qc/backups-launch-readiness
+    paths:
+      - '.github/workflows/tmp-backups-launch-qc-refresh.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply deterministic launch cleanup
+        run: python3 tools/tmp-launch-qc-refresh.py
+      - name: Install gettext
+        run: sudo apt-get update -qq && sudo apt-get install -y gettext
+      - name: Generate current POT
+        run: |
+          mkdir -p languages
+          find . -type f -name '*.php' \
+            -not -path './vendor/*' \
+            -not -path './tests/*' \
+            -not -path './languages/*' \
+            -not -path './.github/*' \
+            -print0 | xargs -0 xgettext \
+              --language=PHP \
+              --from-code=UTF-8 \
+              --keyword=__ \
+              --keyword=_e \
+              --keyword=esc_html__ \
+              --keyword=esc_html_e \
+              --keyword=esc_attr__ \
+              --keyword=esc_attr_e \
+              --keyword=_x:1,2c \
+              --keyword=_ex:1,2c \
+              --keyword=_n:1,2 \
+              --keyword=_nx:1,2,4c \
+              --sort-output \
+              --package-name='Core Blueprint Backups' \
+              --package-version='1.0.0-rc1' \
+              -o languages/core-blueprint-backups.pot
+          sed -i 's/^"Project-Id-Version: PACKAGE VERSION\\n"$/"Project-Id-Version: Core Blueprint Backups 1.0.0-rc1\\n"/' languages/core-blueprint-backups.pot || true
+          msgattrib --no-obsolete -o languages/core-blueprint-backups.pot languages/core-blueprint-backups.pot
+          printf 'POT_MSGIDS=' && grep -c '^msgid ' languages/core-blueprint-backups.pot
+      - name: Syntax sanity
+        run: |
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l >/tmp/php-lint.log
+          node --check assets/js/admin.js
+          node --check assets/js/job-monitor.js
+      - name: Commit refresh
+        run: |
+          git config user.name 'Core Blueprint CI'
+          git config user.email 'actions@users.noreply.github.com'
+          git add core-blueprint-backups.php assets/js/admin.js src/Admin/Actions.php src/Admin/Assets.php src/Remote/Routes.php .github/workflows/php-lint.yml .github/workflows/database-fidelity.yml .github/workflows/database-timezone-portability.yml languages/core-blueprint-backups.pot
+          git diff --cached --check
+          git commit -m 'Apply Backups launch-readiness cleanup'
+          git push origin HEAD:qc/backups-launch-readiness
