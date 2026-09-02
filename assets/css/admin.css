@@ -46,6 +46,10 @@
 	flex-shrink: 0;
 }
 
+.cb-backups-restore-acknowledgement > span {
+	font-weight: var(--cb-fw-semibold);
+}
+
 .cb-backups-job {
 	margin: var(--cb-space-5) 0;
 }
