@@ -5,11 +5,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const monitor = fs.readFileSync(path.join(__dirname, '../assets/js/job-monitor.js'), 'utf8');
+const handoff = fs.readFileSync(path.join(__dirname, '../assets/js/job-handoff.js'), 'utf8');
 const recovery = fs.readFileSync(path.join(__dirname, '../assets/js/job-terminal-recovery.js'), 'utf8');
 const jobId = 'test-restore-123';
 const storageKey = 'cb-backups:pending-job:/wp-admin/admin-ajax.php';
 const origin = 'https://monitor.test';
 const completed = { success: true, data: { job_id: jobId, kind: 'restore', restore_mode: 'migration', stage: 'completed', stage_label: 'Migration completed', status: 'completed', progress: 100 } };
+const verifyingMigration = { success: true, data: { job_id: jobId, kind: 'restore', restore_mode: 'migration', stage: 'verify_database_content', stage_label: 'Verifying restored database…', status: 'running', progress: 95 } };
 const lateMigration = { success: true, data: { job_id: jobId, kind: 'restore', restore_mode: 'migration', stage: 'commit_live', stage_label: 'Applying restored website…', status: 'running', progress: 98 } };
 const error = (code) => ({ success: false, data: { code, message: `Monitor error: ${code}` } });
 
@@ -21,6 +23,8 @@ async function fixture(browser, options = {}) {
   const config = {
     ajaxUrl: `${origin}/wp-admin/admin-ajax.php`, nonce: 'old-nonce',
     jobId: options.noId ? '' : jobId,
+    jobKind: options.jobKind ?? 'restore',
+    restoreMode: options.restoreMode ?? 'migration',
     reconnectUrl: `${origin}/wp-admin/admin.php?page=core-blueprint-backups&job=${jobId}&cb_monitor_reconnect=1`,
     labels: {
       networkInterrupted: 'Network interrupted; result unconfirmed.',
@@ -28,6 +32,17 @@ async function fixture(browser, options = {}) {
       restoreSwitching: 'Restore switch in progress; final checks are still running.',
       migrationSignIn: 'Migrated site active. Sign in again to confirm the final migration result.',
       restoreSignIn: 'Restored site active. Sign in again to confirm the final restore result.',
+      finalizing: 'Finalizing',
+      migrationFinalizingTitle: 'Finalizing migration',
+      migrationFinalizingBody: 'Migrated database verified or being verified; session switch expected.',
+      restoreFinalizingTitle: 'Finalizing restore',
+      restoreFinalizingBody: 'Restored database verified or being verified; session switch expected.',
+      migrationAppliedTitle: 'Migration applied successfully',
+      migrationAppliedBody: 'Migrated site active; sign in to complete final verification.',
+      restoreAppliedTitle: 'Restore applied successfully',
+      restoreAppliedBody: 'Restored site active; sign in to complete final verification.',
+      migrationAppliedToast: 'Migration applied successfully. Sign in again to complete final verification.',
+      restoreAppliedToast: 'Restore applied successfully. Sign in again to complete final verification.',
       dismissResult: 'Dismiss',
     },
   };
@@ -45,15 +60,24 @@ async function fixture(browser, options = {}) {
     if (documents > 1) return route.fulfill({ contentType: 'text/html', body: '<p id="fresh-page">Fresh authenticated request</p>' });
     const initialStorage = options.pending ? `sessionStorage.setItem(${JSON.stringify(storageKey)}, ${JSON.stringify(jobId)});` : '';
     const denyStorage = options.denyStorage ? `Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('Storage disabled'); } });` : '';
-    const card = options.noCard ? '' : `<section id="cb-backups-job" data-status="${options.status || 'running'}"><span id="cb-backups-status">Running</span><span id="cb-backups-progress-value">95%</span><span id="cb-backups-progress-bar"></span><span id="cb-backups-stage"></span><p id="cb-backups-job-error"></p></section>`;
-    await route.fulfill({ contentType: 'text/html', body: `<!doctype html><div class="cb-backups">${card}</div><div id="wp-auth-check-wrap" class="hidden"></div><script>${initialStorage}${denyStorage}</script><script id="wp-script-module-data-@cb-backups/job-monitor" type="application/json">${JSON.stringify(config)}</script><script>${monitor}</script><script>${recovery}</script>` });
+    const initialProgress = options.progress ?? 50;
+    const card = options.noCard ? '' : `<section id="cb-backups-job" data-status="${options.status || 'running'}"><span id="cb-backups-status">Running</span><span id="cb-backups-progress-value">${initialProgress}%</span><span id="cb-backups-progress-bar"></span><span id="cb-backups-stage"></span><p id="cb-backups-job-error"></p></section>`;
+    const core = `window.__toasts=[];window.cbCore={toast:{success:(message)=>window.__toasts.push({variant:'success',message}),error:(message)=>window.__toasts.push({variant:'error',message}),info:(message)=>window.__toasts.push({variant:'info',message}),warning:(message)=>window.__toasts.push({variant:'warning',message})}};`;
+    const auth = '<div id="wp-auth-check-wrap" class="hidden"><div id="wp-auth-check"><div id="wp-auth-check-form"></div></div></div>';
+    await route.fulfill({ contentType: 'text/html', body: `<!doctype html><div class="cb-backups">${card}</div>${auth}<script>${initialStorage}${denyStorage}${core}</script><script id="wp-script-module-data-@cb-backups/job-monitor" type="application/json">${JSON.stringify(config)}</script><script>${monitor}</script><script>${handoff}</script><script>${recovery}</script>` });
   });
   await page.goto(`${origin}/wp-admin/admin.php?page=core-blueprint-backups${options.returned ? '&cb_monitor_reconnect=1' : ''}`);
   return { page, calls, errors };
 }
-async function closeAuthModal(page) {
+async function showAuthModal(page) {
   await page.evaluate(() => document.getElementById('wp-auth-check-wrap').classList.remove('hidden'));
+}
+async function hideAuthModal(page) {
   await page.evaluate(() => document.getElementById('wp-auth-check-wrap').classList.add('hidden'));
+}
+async function closeAuthModal(page) {
+  await showAuthModal(page);
+  await hideAuthModal(page);
 }
 async function waitError(page, code) {
   await page.waitForFunction(c => document.body.textContent.includes(`Monitor error: ${c}`), code);
@@ -103,6 +127,14 @@ async function resultUrl(page) {
       const f = await fixture(browser, { responses: ['html', completed] }); await resultUrl(f.page);
       assert.equal(f.calls.length, 2); assert.deepEqual(f.errors, []); await f.page.close();
     });
+    await test('Final migration window prepares user for expected session handoff', async () => {
+      const f = await fixture(browser, { progress: 95, responses: [verifyingMigration] });
+      await waitText(f.page, 'Finalizing migration');
+      const stateText = await f.page.locator('#cb-backups-handoff-state').textContent();
+      assert.equal(stateText.includes('session switch expected'), true);
+      assert.equal(await f.page.locator('#cb-backups-status').textContent(), 'Finalizing');
+      assert.deepEqual(f.errors, []); await f.page.close();
+    });
     await test('Late migration transport loss is presented as site switch, not failure', async () => {
       const f = await fixture(browser, { responses: [lateMigration, 'html'] });
       await waitText(f.page, 'Migration switch in progress; final checks are still running.');
@@ -111,10 +143,21 @@ async function resultUrl(page) {
       assert.equal(stateText.includes('Network interrupted; result unconfirmed.'), false);
       assert.deepEqual(f.errors, []); await f.page.close();
     });
-    await test('Late migration re-auth confirms terminal success after sign-in', async () => {
-      const f = await fixture(browser, { responses: [lateMigration, error('auth_required'), completed] });
-      await waitText(f.page, 'Migrated site active. Sign in again to confirm the final migration result.');
-      await closeAuthModal(f.page);
+    await test('95 percent migration re-auth clearly communicates applied success before final confirmation', async () => {
+      const f = await fixture(browser, { responses: [verifyingMigration, error('auth_required'), completed] });
+      await waitText(f.page, 'Migration applied successfully');
+      const state = f.page.locator('.cb-backups-monitor-state--success:not([hidden])');
+      assert.equal((await state.textContent()).includes('sign in to complete final verification'), true);
+      const toasts = await f.page.evaluate(() => window.__toasts);
+      assert.equal(toasts.some(item => item.variant === 'success' && item.message.includes('Migration applied successfully')), true);
+
+      await showAuthModal(f.page);
+      const context = f.page.locator('#cb-backups-auth-context');
+      await context.waitFor();
+      assert.equal((await context.textContent()).includes('Migration applied successfully'), true);
+      assert.equal((await context.textContent()).includes('sign in to complete final verification'), true);
+
+      await hideAuthModal(f.page);
       await waitText(f.page, 'Migration completed');
       assert.equal(f.calls.length, 3);
       assert.equal(f.calls[2].job_id, jobId);
