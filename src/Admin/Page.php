@@ -468,6 +468,14 @@ final class Page implements PageContract {
 				'variant' => 'completed' === $status ? Notice::SUCCESS : ( 'failed' === $status ? Notice::ERROR : Notice::WARNING ),
 				'message' => $message,
 			] );
+			if ( 'completed' === $status && 'restore' === $job['kind'] && 'migration' === ( $job['meta']['restore_mode'] ?? '' ) ) {
+				echo '<div class="cb-backups-next-steps">';
+				echo '<p><strong>' . esc_html__( 'Recommended after migration', 'core-blueprint-backups' ) . '</strong></p>';
+				echo '<ol><li>' . esc_html__( 'Open Settings → Permalinks and click Save Changes without changing your permalink structure.', 'core-blueprint-backups' ) . '</li>';
+				echo '<li>' . esc_html__( 'Clear any page-cache plugin, hosting/server and CDN caches you use, then refresh your browser.', 'core-blueprint-backups' ) . '</li></ol>';
+				echo '<p><a class="button cb-core-button" href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Open permalink settings', 'core-blueprint-backups' ) . '</a></p>';
+				echo '</div>';
+			}
 		}
 		echo '<div class="cb-backups-job-heading"><h2>' . esc_html( 'restore' === $job['kind'] ? __( 'Restore progress', 'core-blueprint-backups' ) : __( 'Backup progress', 'core-blueprint-backups' ) ) . '</h2><span id="cb-backups-status" class="cb-backups-status">' . esc_html( ucfirst( $status ) ) . '</span></div>';
 		echo '<div class="cb-backups-progress"><span id="cb-backups-progress-bar" style="width:' . esc_attr( (string) $job['progress'] ) . '%"></span></div>';

@@ -31,6 +31,8 @@ namespace {
 	function esc_html__( string $text, string $domain = '' ): string { return htmlspecialchars( $text ); }
 	function esc_attr( string $text ): string { return htmlspecialchars( $text ); }
 	function esc_html( string $text ): string { return htmlspecialchars( $text ); }
+	function esc_url( string $url ): string { return htmlspecialchars( $url ); }
+	function admin_url( string $path = '' ): string { return 'https://destination.test/wordpress/wp-admin/' . $path; }
 	function sanitize_text_field( string $text ): string { return $text; }
 	function wp_unslash( string $text ): string { return $text; }
 	function wp_kses( string $text, array $tags ): string { return $text; }
@@ -84,6 +86,14 @@ namespace {
 	check_result( 'completed' === $current->invoke($page)['status'], 'Explicit terminal job must survive a page reload.' );
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
 	check_result( str_contains($html, '<aside class="success">Migration completed</aside>'), 'Completion must render without JavaScript or a toast.' );
+	check_result( str_contains($html, 'Recommended after migration') && str_contains($html, 'without changing your permalink structure') && str_contains($html, 'CDN caches'), 'Completed migrations must retain actionable permalink and cache guidance after reload.' );
+	check_result( str_contains($html, 'href="https://destination.test/wordpress/wp-admin/options-permalink.php"'), 'Permalink action must use the destination admin URL, including subdirectory installations.' );
+	foreach ( [array_replace($job, ['kind' => 'backup']), array_replace($job, ['meta' => ['restore_mode' => 'restore']]), array_replace($job, ['status' => 'cancelled'])] as $other_job ) {
+		Repository::$jobs['restore-1'] = $other_job;
+		ob_start(); $render->invoke($page); $other_html = ob_get_clean();
+		check_result( ! str_contains($other_html, 'cb-backups-next-steps'), 'Migration follow-up must not appear for backups, same-site restores or cancelled jobs.' );
+	}
+	Repository::$jobs['restore-1'] = $job;
 	// Regression from a real completed migration: extraction has two extra
 	// archive payloads plus database bytes; filesystem verification is separate.
 	$mb = 1024 * 1024;
@@ -107,12 +117,14 @@ namespace {
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
 	check_result( str_contains($html, '<dt>Payloads extracted</dt><dd><span id="cb-backups-files">15,804 / 15,804</span>'), 'Active server-rendered extraction must use the archive payload domain.' );
 	check_result( str_contains($html, '<dt>Data extracted</dt><dd><span id="cb-backups-file-bytes">' . (494 * $mb) . '</span>'), 'Extraction bytes must be absolute before polling starts.' );
+	check_result( ! str_contains($html, 'cb-backups-next-steps'), 'Follow-up guidance must not invite navigation before migration completes.' );
 	Repository::$jobs['restore-1'] = $job;
 	Repository::$jobs['restore-1']['status'] = 'failed';
 	Repository::$jobs['restore-1']['error_text'] = 'Database integrity fixture failure';
 	$_GET['cb_notice'] = 'migration_completed';
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
 	check_result( ! str_contains($html, '<aside class="success">') && str_contains($html, 'Database integrity fixture failure'), 'URL notice must not override the stored failure.' );
+	check_result( ! str_contains($html, 'cb-backups-next-steps'), 'Failed migrations must not show completion guidance, even with a success URL flag.' );
 	$_GET = [];
 	check_result( null === $current->invoke($page), 'Historical results must not reopen without an explicit job.' );
 	Repository::$jobs['active-2'] = array_replace($job, ['job_id'=>'active-2','status'=>'running']);

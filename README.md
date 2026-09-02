@@ -2,6 +2,10 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.10 migration follow-up guidance
+
+Completed migrations show persistent recommended next steps beneath the success notice: save permalink settings without changing the structure, and clear any page-plugin, hosting/server or CDN caches in use. A direct link opens the destination site's permalink settings. This guidance appears only for a stored completed migration, including after re-login or reload; upload preparation, running/failed jobs, backups and same-site restores do not show it. The existing automatic object-cache flush and deferred rewrite-cache regeneration remain in place. RC15.9's corrected result counters are included.
+
 ## v0.1.0-rc15.9 result metric correction
 
 The server-rendered job panel now consumes the same phase-specific file/byte metrics as the polling response. Completed restores show verified filesystem counts and filesystem bytes; extraction shows archive payload counts and extracted bytes. It no longer divides archive payloads (including SQL/metadata) by filesystem-only totals after re-login or refresh. The restore engine and stored backup contents are unchanged. `tests/job-result-regression.php` renders both completed and extracting website jobs to cover the real 15,804/15,802 and 494/463 MB regression.
