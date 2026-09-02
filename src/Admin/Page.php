@@ -9,6 +9,7 @@ use CB\Backups\Restore\MigrationPlan;
 use CB\Backups\Schedule\Scheduler;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\Capabilities;
+use CB\Backups\Support\SiteIdentity;
 use CB\Backups\Support\Telemetry;
 use CB\Core\Admin\Page as PageContract;
 use CB\Core\UI\Notice;
@@ -215,7 +216,7 @@ final class Page implements PageContract {
 				} else {
 					$restore_body = sprintf(
 						/* translators: 1: imported backup filename, 2: destination URL, 3: destination prefix. */
-						__( 'Restore %1$s to %2$s (prefix %3$s)? The source and destination identity match. The archive will be fully verified first; if verification succeeds, live site files and database data will be replaced.', 'core-blueprint-backups' ),
+						__( 'Restore %1$s to %2$s (prefix %3$s)? The source and destination identity match. The archive will be fully verified before replacing the destination data covered by this backup.', 'core-blueprint-backups' ),
 						(string) ( $import['original_name'] ?? $name ),
 						(string) $preflight['target_site_url'],
 						(string) $preflight['target_prefix']
@@ -227,6 +228,7 @@ final class Page implements PageContract {
 				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr( $modal_title ) . '" data-cb-modal-body="' . esc_attr( $restore_body ) . '" data-cb-modal-confirm-label="' . esc_attr( $confirm_label ) . '" data-cb-modal-variant="danger">';
 				echo '<input type="hidden" name="action" value="cb_backups_restore_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
 				wp_nonce_field( 'cb_backups_restore_import_' . $name );
+				$this->restore_acknowledgement( (string) ( $import['backup_type'] ?? 'database' ), (string) $preflight['target_site_url'] );
 				echo '<button type="submit" class="button cb-core-button cb-core-button--warning">' . esc_html( $button_label ) . '</button></form>';
 			}
 
@@ -417,6 +419,7 @@ final class Page implements PageContract {
 				);
 				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr__( 'Restore backup?', 'core-blueprint-backups' ) . '" data-cb-modal-body="' . esc_attr( $restore_body ) . '" data-cb-modal-confirm-label="' . esc_attr__( 'Restore backup', 'core-blueprint-backups' ) . '" data-cb-modal-variant="danger"><input type="hidden" name="action" value="cb_backups_restore"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
 				wp_nonce_field( 'cb_backups_restore_' . $name );
+				$this->restore_acknowledgement( $type, SiteIdentity::current()['site_url'] );
 				echo '<button type="submit" class="button cb-core-button cb-core-button--warning">' . esc_html__( 'Restore', 'core-blueprint-backups' ) . '</button>';
 				echo '</form>';
 			} else {
@@ -442,6 +445,14 @@ final class Page implements PageContract {
 		}
 		echo '</tbody></table>';
 		echo '</div>';
+	}
+
+	private function restore_acknowledgement( string $type, string $target ): void {
+		/* translators: %s: destination website URL whose data will be replaced. */
+		$template = 'website' === $type
+			? __( 'I understand that this action replaces the current database and site files on %s. Changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' )
+			: __( 'I understand that this action replaces the current database on %s. Database changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' );
+		echo '<input type="hidden" name="restore_acknowledged" value="" data-cb-restore-acknowledgement="' . esc_attr( sprintf( $template, $target ) ) . '">';
 	}
 
 	private function job_progress(): void {

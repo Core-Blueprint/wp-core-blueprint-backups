@@ -8,6 +8,7 @@ use CB\Backups\Jobs\Repository;
 use CB\Backups\Jobs\Runner;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Restore\ArchiveValidator;
+use CB\Backups\Restore\Service as RestoreService;
 
 // This exercises real database jobs/archive I/O. It does not mock Base or claim
 // full-site, UI, Beacon or Hub coverage; the Base activation hook is not invoked.
@@ -42,7 +43,13 @@ $manifest = ArchiveValidator::validate( $archive, false );
 check( ! is_ssl() && 'https://source.example.test/' === $manifest['site']['site_url'], 'Backup identity must retain configured HTTPS under CLI.' );
 check( ! empty( $manifest['database']['content_integrity']['cbtest_options'] ), 'Packaged source integrity metadata is missing.' );
 update_option( 'cb_e2e_payload', 'changed after backup' );
-$restore = run_job( Repository::create( 'restore', 'database', 'manual', [ 'archive_path' => $archive ] ) );
+wp_set_current_user( (int) get_user_by( 'login', 'test-admin' )->ID );
+// Drive the real worker synchronously; do not send loopback requests to fixture hosts.
+add_filter( 'pre_http_request', static fn() => new WP_Error( 'test_loopback', 'Test runner drives the worker.' ) );
+$created_restore = RestoreService::create( $archive, 'manual', true );
+$confirmation = $created_restore['meta']['restore_confirmation'];
+$restore = run_job( $created_restore );
+check( $confirmation === $restore['meta']['restore_confirmation'] && true === $confirmation['accepted'], 'Same-site restore lost the persisted acknowledgement.' );
 check( $source === get_option( 'cb_e2e_payload' ), 'Engine same-site restore did not recover the source value.' );
 check( ! empty( $restore['meta']['db_content_verified'] ), 'Engine completed without content proof.' );
 check( ! is_file( ABSPATH . '.maintenance' ), 'Same-site restore left maintenance enabled.' );
@@ -55,7 +62,10 @@ Schema::install();
 sql( 'CREATE TABLE cbe2etarget_options LIKE cbtest_options' );
 sql( $wpdb->prepare( "INSERT INTO cbe2etarget_options (option_name,option_value,autoload) VALUES ('home',%s,'yes'),('siteurl',%s,'yes')", 'https://destination.example.test', 'https://destination.example.test' ) );
 wp_cache_flush();
-$restore = run_job( Repository::create( 'restore', 'database', 'manual', [ 'archive_path' => $archive ] ) );
+$created_restore = RestoreService::create( $archive, 'manual_import', true );
+$confirmation = $created_restore['meta']['restore_confirmation'];
+$restore = run_job( $created_restore );
+check( $confirmation === $restore['meta']['restore_confirmation'] && 'https://destination.example.test' === $confirmation['target_site'], 'Migration lost the original acknowledgement or destination.' );
 check( 'migration' === $restore['meta']['restore_mode'], 'Engine did not select migration.' );
 check( $expected === get_option( 'cb_e2e_payload' ), 'Engine migration did not produce independently expected values.' );
 check( $source_guid === $wpdb->get_var( $wpdb->prepare( 'SELECT guid FROM cbe2etarget_posts WHERE ID=%d', $post_id ) ), 'Migration changed the post GUID.' );

@@ -154,7 +154,7 @@ final class Engine {
 		// Let WordPress regenerate the cache on a fresh restored-site request.
 		delete_option( 'rewrite_rules' );
 		$completed = time(); $meta['completed_timestamp'] = $completed; $meta['duration_seconds'] = max( 0, $completed - (int) ( $meta['started_timestamp'] ?? $completed ) ); Repository::update( $job_id, [ 'meta' => $meta ] ); Repository::complete( $job_id ); if ( $critical ) CriticalRecovery::disarm( $job_id ); Maintenance::deactivate();
-		Audit::log( 'backups.restore.completed', 'warning', [ 'job_id' => $job_id, 'type' => $type, 'trigger' => (string) $job['trigger_source'], 'duration' => $meta['duration_seconds'], 'mode' => (string) ( $meta['restore_mode'] ?? 'restore' ), 'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ), 'runtime_preserved' => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [] ] );
+		Audit::log( 'backups.restore.completed', 'warning', [ 'confirmation' => $meta['restore_confirmation'] ?? [], 'job_id' => $job_id, 'type' => $type, 'trigger' => (string) $job['trigger_source'], 'duration' => $meta['duration_seconds'], 'mode' => (string) ( $meta['restore_mode'] ?? 'restore' ), 'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ), 'runtime_preserved' => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [] ] );
 		try { DatabaseImporter::cleanup_recovery( $meta, $tables, $job_id ); } catch ( \Throwable $e ) { Audit::log( 'backups.restore.cleanup.warning', 'warning', [ 'job_id' => $job_id, 'error' => $e->getMessage() ] ); }
 		LocalStorage::remove_tree( LocalStorage::work_dir( $job_id ) );
 	}

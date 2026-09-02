@@ -35,6 +35,17 @@
 	margin: var(--cb-space-5) 0;
 }
 
+.cb-backups-restore-acknowledgement {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--cb-space-2);
+	margin-top: var(--cb-space-4);
+}
+
+.cb-backups-restore-acknowledgement input {
+	flex-shrink: 0;
+}
+
 .cb-backups-job {
 	margin: var(--cb-space-5) 0;
 }

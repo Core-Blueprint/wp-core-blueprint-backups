@@ -2,6 +2,14 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.11 required restore acknowledgement
+
+Local and imported restores/migrations require an unchecked acknowledgement in the existing Base modal. The final action remains disabled until checked and becomes disabled again when unchecked. Cancel, Escape and browser-back do not retain agreement. The text identifies the destination and distinguishes database-only from full-site replacement. Uploading/preparing a backup does not start this flow.
+
+Both authenticated admin POST handlers require the exact acknowledgement value in addition to the existing capability and nonce checks. Restore Service rejects missing agreement before creating or dispatching a job. A server-generated receipt records the authenticated user ID/login, UTC time, statement version, archive, type, mode, source and target. It is stored in the operational job metadata and included in `backups.restore.started` and `backups.restore.completed`; re-recording on completion preserves the acknowledgement in the restored site's audit log after the old audit table is replaced. Existing Base audit delivery/retention applies; this is an operational acknowledgement, not a digital signature. No tokens, passwords or SQL are added to the log.
+
+Validation: `php tests/restore-confirmation-regression.php` exercises the real handlers, service and completion audit with boundary doubles. `node tests/restore-confirmation-browser.cjs` uses the shipped Backups scripts and a pinned actual Base modal snapshot in Chromium. Real WordPress database E2E also checks that acknowledgement metadata survives same-site and migration completion. Base itself needs no update for this change.
+
 ## v0.1.0-rc15.10 migration follow-up guidance
 
 Completed migrations show persistent recommended next steps beneath the success notice: save permalink settings without changing the structure, and clear any page-plugin, hosting/server or CDN caches in use. A direct link opens the destination site's permalink settings. This guidance appears only for a stored completed migration, including after re-login or reload; upload preparation, running/failed jobs, backups and same-site restores do not show it. The existing automatic object-cache flush and deferred rewrite-cache regeneration remain in place. RC15.9's corrected result counters are included.

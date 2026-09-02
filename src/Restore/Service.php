@@ -13,7 +13,10 @@ defined( 'ABSPATH' ) || exit;
 
 final class Service {
 	/** @return array<string,mixed> */
-	public static function create( string $archive_path, string $trigger = 'manual' ): array {
+	public static function create( string $archive_path, string $trigger = 'manual', bool $acknowledged = false ): array {
+		if ( ! $acknowledged || get_current_user_id() < 1 ) {
+			throw new RuntimeException( __( 'Confirm that you understand the destination data will be replaced before starting a restore or migration.', 'core-blueprint-backups' ) );
+		}
 		$archive_path = wp_normalize_path( $archive_path );
 		if ( ! LocalStorage::is_inside_storage( $archive_path ) || ! is_file( $archive_path ) ) {
 			throw new RuntimeException( 'Restore archive is not available in Core Blueprint backup storage.' );
@@ -40,7 +43,20 @@ final class Service {
 			throw new RuntimeException( 'Restore requires more free local disk space for verified staging and migration preparation.' );
 		}
 
+		$confirmation = [
+			'accepted'     => true,
+			'version'      => 'replace-live-data-v1',
+			'user_id'      => get_current_user_id(),
+			'user_login'   => (string) wp_get_current_user()->user_login,
+			'confirmed_at' => gmdate( 'c' ),
+			'archive'      => basename( $archive_path ),
+			'type'         => $type,
+			'mode'         => (string) $plan['mode'],
+			'source_site'  => (string) $plan['source_site_url'],
+			'target_site'  => (string) $plan['target_site_url'],
+		];
 		$job = Repository::create( 'restore', $type, $trigger, [
+			'restore_confirmation'      => $confirmation,
 			'archive_path'              => $archive_path,
 			'manifest'                  => $manifest,
 			'migration_plan'            => $plan,
@@ -54,6 +70,7 @@ final class Service {
 			throw new RuntimeException( 'Restore job could not be created.' );
 		}
 		Audit::log( 'backups.restore.started', 'warning', [
+			'confirmation'  => $confirmation,
 			'job_id'        => $job['job_id'],
 			'type'          => $type,
 			'trigger'       => $trigger,

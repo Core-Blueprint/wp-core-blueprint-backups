@@ -80,6 +80,12 @@ namespace {
 	check_result( 401 === $r->status && 'auth_required' === $r->data['code'], 'Logged-out request must require authentication.' );
 
 	$page = new Page();
+	$ack = new ReflectionMethod(Page::class, 'restore_acknowledgement');
+	foreach (['database', 'website'] as $type) {
+		ob_start(); $ack->invoke($page, $type, 'https://target.test'); $ack_html = ob_get_clean();
+		check_result(str_contains($ack_html, 'value=""') && str_contains($ack_html, 'https://target.test'), 'Restore acknowledgement must start empty and identify the destination.');
+		check_result(('website' === $type) === str_contains($ack_html, 'site files'), 'Database-only consent must not claim files are replaced.');
+	}
 	$current = new ReflectionMethod(Page::class, 'current_job');
 	$render = new ReflectionMethod(Page::class, 'job_progress');
 	$_GET = ['job' => 'restore-1'];
