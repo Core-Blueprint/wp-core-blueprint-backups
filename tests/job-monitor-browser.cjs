@@ -106,7 +106,9 @@ async function resultUrl(page) {
     await test('Late migration transport loss is presented as site switch, not failure', async () => {
       const f = await fixture(browser, { responses: [lateMigration, 'html'] });
       await waitText(f.page, 'Migration switch in progress; final checks are still running.');
-      assert.equal((await f.page.locator('body').textContent()).includes('Network interrupted; result unconfirmed.'), false);
+      const stateText = await f.page.locator('.cb-backups-monitor-state:not([hidden])').textContent();
+      assert.equal(stateText.includes('Migration switch in progress; final checks are still running.'), true);
+      assert.equal(stateText.includes('Network interrupted; result unconfirmed.'), false);
       assert.deepEqual(f.errors, []); await f.page.close();
     });
     await test('Late migration re-auth confirms terminal success after sign-in', async () => {
