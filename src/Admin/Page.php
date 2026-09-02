@@ -481,10 +481,16 @@ final class Page implements PageContract {
 			] );
 			if ( 'completed' === $status && 'restore' === $job['kind'] && 'migration' === ( $job['meta']['restore_mode'] ?? '' ) ) {
 				echo '<div class="cb-backups-next-steps">';
-				echo '<p><strong>' . esc_html__( 'Recommended after migration', 'core-blueprint-backups' ) . '</strong></p>';
-				echo '<ol><li>' . esc_html__( 'Open Settings → Permalinks and click Save Changes without changing your permalink structure.', 'core-blueprint-backups' ) . '</li>';
-				echo '<li>' . esc_html__( 'Clear any page-cache plugin, hosting/server and CDN caches you use, then refresh your browser.', 'core-blueprint-backups' ) . '</li></ol>';
-				echo '<p><a class="button cb-core-button" href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Open permalink settings', 'core-blueprint-backups' ) . '</a></p>';
+				echo Notice::render( [
+					'variant' => Notice::WARNING,
+					'title'   => __( 'Next steps: save permalinks and clear caches', 'core-blueprint-backups' ),
+					'message' => __( 'Recommended before using the migrated site:', 'core-blueprint-backups' ),
+					'items'   => [
+						__( 'Open Settings → Permalinks and click Save Changes without changing your permalink structure.', 'core-blueprint-backups' ),
+						__( 'Clear any page-cache plugin, hosting/server and CDN caches you use, then refresh your browser.', 'core-blueprint-backups' ),
+					],
+				] );
+				echo '<p><a class="button button-primary cb-core-button cb-core-button--primary" href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Open permalink settings', 'core-blueprint-backups' ) . '</a></p>';
 				echo '</div>';
 			}
 		}

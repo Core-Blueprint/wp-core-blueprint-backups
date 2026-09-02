@@ -2,6 +2,10 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.12 prominent migration follow-up
+
+Completed migrations now show the permalink/cache steps in a persistent Base warning notice immediately below the green completion notice, with an explicit action heading and a Base primary button for permalink settings. The notice inherits Base's icon, attention colors and light/dark tokens. The stored completion status and recommended nature of the steps are retained; this display change requires no new restore or Base update.
+
 ## v0.1.0-rc15.11 required restore acknowledgement
 
 Local and imported restores/migrations require an unchecked acknowledgement in the existing Base modal. The final action remains disabled until checked and becomes disabled again when unchecked. Cancel, Escape and browser-back do not retain agreement. The text identifies the destination and distinguishes database-only from full-site replacement. Uploading/preparing a backup does not start this flow.
