@@ -59,7 +59,7 @@ async function waitError(page, code) {
   await page.waitForFunction(c => document.body.textContent.includes(`Monitor error: ${c}`), code);
 }
 async function waitText(page, text) {
-  await page.waitForFunction(value => document.body.textContent.includes(value), text);
+  await page.locator('.cb-backups-monitor-state:not([hidden])').filter({ hasText: text }).waitFor();
 }
 async function resultUrl(page) {
   await page.waitForSelector('#fresh-page');
