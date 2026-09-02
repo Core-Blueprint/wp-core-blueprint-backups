@@ -54,7 +54,7 @@ final class DatabaseContentVerifier {
 	public static function assert_verified( array $meta, array $tables, string $job_id ): void {
 		$inventory = $meta['manifest']['database']['content_integrity'] ?? [];
 		ContentDigest::validate_inventory( $tables, $inventory );
-		if ( ! hash_equals( self::fingerprint( $tables, $inventory, $job_id ), (string) ( $meta['db_content_verified'] ?? '' ) ) throw new RuntimeException( 'Database content must be verified before live commit.' );
+		if ( ! hash_equals( self::fingerprint( $tables, $inventory, $job_id ), (string) ( $meta['db_content_verified'] ?? '' ) ) ) throw new RuntimeException( 'Database content must be verified before live commit.' );
 	}
 
 	private static function fingerprint( array $tables, array $inventory, string $job_id ): string {
