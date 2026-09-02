@@ -52,3 +52,5 @@ jobs:
         run: php tests/integration/database-robustness.php
       - name: Database job and archive E2E
         run: php tests/integration/database-engine-e2e.php
+      - name: Imported restore history and result rendering
+        run: php tests/integration/import-history.php

@@ -2,6 +2,12 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.13 prepared import execution history
+
+Prepared imports display the latest restore job for their exact storage path, including jobs from before this update. Successful rows show Migrated/Restored successfully and the last completion time in the WordPress site timezone; Imported retains the upload time. View result becomes the primary action, with Migrate again/Restore again as a secondary action that still requires a fresh acknowledgement. Queued/running imports show View progress and do not offer rerun/delete in the row. Later failed, queued or running attempts replace earlier success in the display.
+
+The history lookup reads matching jobs in one query, chooses the greatest job ID sequence per case-sensitive archive path and projects only presentation fields. It does not match on the user-supplied display filename or restrict results to a recent-job window. A failed history query shows Status unavailable and offers no restore action. No schema or restore-engine change is needed. `tests/integration/import-history.php` covers the real MySQL/MariaDB query and WordPress-rendered table, including exact identity, retries, summer/winter timezone conversion, result links and read failures.
+
 ## v0.1.0-rc15.12 prominent migration follow-up
 
 Completed migrations now show the permalink/cache steps in a persistent Base warning notice immediately below the green completion notice, with an explicit action heading and a Base primary button for permalink settings. The notice inherits Base's icon, attention colors and light/dark tokens. The stored completion status and recommended nature of the steps are retained; this display change requires no new restore or Base update.

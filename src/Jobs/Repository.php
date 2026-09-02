@@ -124,6 +124,41 @@ final class Repository {
 		return array_map( [ self::class, 'normalise' ], is_array( $rows ) ? $rows : [] );
 	}
 
+	/**
+	 * Latest attempt for each exact archive path, including already completed imports.
+	 * Project only presentation fields; restore metadata can contain large digests.
+	 * @param string[] $archive_paths
+	 * @return array<string,array<string,mixed>>
+	 */
+	public static function latest_restores_for_archives( array $archive_paths ): array {
+		global $wpdb;
+		$paths = array_values( array_unique( array_filter( array_map( 'wp_normalize_path', $archive_paths ) ) ) );
+		if ( ! $paths ) return [];
+		$table = Schema::table();
+		$document = "CASE WHEN JSON_VALID(meta) THEN meta ELSE '{}' END";
+		// Filesystem identity is case-sensitive, regardless of the table collation.
+		$path = "CAST(JSON_UNQUOTE(JSON_EXTRACT({$document}, '$.archive_path')) AS BINARY)";
+		$mode = "JSON_UNQUOTE(JSON_EXTRACT({$document}, '$.restore_mode'))";
+		$placeholders = implode( ',', array_fill( 0, count( $paths ), '%s' ) );
+		$sql = "SELECT job_id, status, progress, created_at, completed_at,
+			{$path} AS restore_archive_path, {$mode} AS restore_mode
+			FROM {$table} WHERE id IN (
+				SELECT MAX(id) FROM {$table}
+				WHERE kind = 'restore' AND {$path} IN ({$placeholders})
+				GROUP BY {$path}
+			)";
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$paths ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		if ( ! is_array( $rows ) || '' !== (string) $wpdb->last_error ) {
+			throw new \RuntimeException( 'Restore history could not be read.' );
+		}
+		$latest = [];
+		foreach ( $rows as $row ) {
+			$row['progress'] = (int) $row['progress'];
+			$latest[ (string) $row['restore_archive_path'] ] = $row;
+		}
+		return $latest;
+	}
+
 	/** @param array<string,mixed> $row @return array<string,mixed> */
 	private static function normalise( array $row ): array {
 		$meta = [];

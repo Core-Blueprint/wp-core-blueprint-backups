@@ -220,6 +220,18 @@
 	font-weight: var(--cb-fw-semibold);
 }
 
+.cb-backups-prepared-status--error {
+	color: var(--cb-danger);
+}
+
+.cb-backups-prepared-status--active {
+	color: var(--cb-accent);
+}
+
+.cb-backups-prepared-status--neutral {
+	color: var(--cb-text-muted);
+}
+
 @media (max-width: 782px) {
 	.cb-backups-import-controls {
 		align-items: stretch;

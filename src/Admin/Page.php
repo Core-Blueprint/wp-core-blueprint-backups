@@ -160,6 +160,19 @@ final class Page implements PageContract {
 
 	/** @param array<int,array<string,mixed>> $imports */
 	private function prepared_import_table( array $imports ): void {
+		$paths = [];
+		foreach ( $imports as $import ) {
+			$name = sanitize_file_name( (string) ( $import['archive_name'] ?? '' ) );
+			if ( '' !== $name ) $paths[] = LocalStorage::import_path( $name );
+		}
+		$history_available = true;
+		try {
+			$latest_jobs = Repository::latest_restores_for_archives( $paths );
+		} catch ( \RuntimeException $e ) {
+			$latest_jobs = [];
+			$history_available = false;
+			echo '<p class="cb-backups-error" role="alert">' . esc_html__( 'Could not load restore history. Refresh this page before trying again.', 'core-blueprint-backups' ) . '</p>';
+		}
 		echo '<div class="cb-core-panel cb-core-panel--table cb-backups-table-scroll">';
 		echo '<table class="widefat striped cb-backups-import-table"><thead><tr>';
 		echo '<th>' . esc_html__( 'Imported', 'core-blueprint-backups' ) . '</th>';
@@ -179,6 +192,9 @@ final class Page implements PageContract {
 			$preflight = $this->import_preflight( $import, $name );
 			$preflight_error = (string) ( $preflight['error'] ?? '' );
 			$is_migration = '' === $preflight_error && ! empty( $preflight['requires_migration'] );
+			$job = $latest_jobs[ LocalStorage::import_path( $name ) ] ?? null;
+			$job_active = $job && in_array( (string) $job['status'], [ 'queued', 'running', 'cancelling' ], true );
+			$job_terminal = $job && in_array( (string) $job['status'], [ 'completed', 'failed', 'cancelled' ], true );
 			echo '<tr><td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td>';
 			echo '<td><code>' . esc_html( (string) ( $import['original_name'] ?? $name ) ) . '</code></td>';
 			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) ) . '</td>';
@@ -191,15 +207,24 @@ final class Page implements PageContract {
 				echo '<strong>' . esc_html__( 'Destination', 'core-blueprint-backups' ) . '</strong><br><code>' . esc_html( (string) $preflight['target_site_url'] ) . '</code><br><small>' . esc_html__( 'Table prefix:', 'core-blueprint-backups' ) . ' <code>' . esc_html( (string) $preflight['target_prefix'] ) . '</code></small>';
 			}
 			echo '</td>';
-			if ( '' !== $preflight_error ) {
-				echo '<td><span class="cb-backups-prepared-status">⚠ ' . esc_html__( 'Needs review', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			if ( ! $history_available ) {
+				echo '<td><span class="cb-backups-prepared-status cb-backups-prepared-status--error">' . esc_html__( 'Status unavailable', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+			} elseif ( $job ) {
+				echo '<td>' . $this->import_execution_status( $job ) . '</td><td><div class="cb-backups-actions">';
+			} elseif ( '' !== $preflight_error ) {
+				echo '<td><span class="cb-backups-prepared-status cb-backups-prepared-status--error">⚠ ' . esc_html__( 'Needs review', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
 			} elseif ( $is_migration ) {
 				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Migration ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
 			} else {
 				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Restore ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
 			}
 
-			if ( '' === $preflight_error ) {
+			if ( $job ) {
+				$result_url = add_query_arg( [ 'page' => $this->slug(), 'tab' => 'restore', 'job' => (string) $job['job_id'] ], admin_url( 'admin.php' ) );
+				echo '<a class="button button-primary cb-core-button cb-core-button--primary" href="' . esc_url( $result_url ) . '">' . esc_html( $job_active ? __( 'View progress', 'core-blueprint-backups' ) : __( 'View result', 'core-blueprint-backups' ) ) . '</a>';
+			}
+
+			if ( $history_available && '' === $preflight_error && ( ! $job || $job_terminal ) ) {
 				if ( $is_migration ) {
 					$restore_body = sprintf(
 						/* translators: 1: imported backup filename, 2: source URL, 3: source prefix, 4: destination URL, 5: destination prefix. */
@@ -225,26 +250,80 @@ final class Page implements PageContract {
 					$confirm_label = __( 'Restore backup', 'core-blueprint-backups' );
 					$button_label = __( 'Restore', 'core-blueprint-backups' );
 				}
+				if ( $job_terminal ) {
+					$button_label = $is_migration ? __( 'Migrate again', 'core-blueprint-backups' ) : __( 'Restore again', 'core-blueprint-backups' );
+					$confirm_label = $button_label;
+				}
+				$button_variant = $job_terminal ? 'secondary' : 'warning';
 				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr( $modal_title ) . '" data-cb-modal-body="' . esc_attr( $restore_body ) . '" data-cb-modal-confirm-label="' . esc_attr( $confirm_label ) . '" data-cb-modal-variant="danger">';
 				echo '<input type="hidden" name="action" value="cb_backups_restore_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
 				wp_nonce_field( 'cb_backups_restore_import_' . $name );
 				$this->restore_acknowledgement( (string) ( $import['backup_type'] ?? 'database' ), (string) $preflight['target_site_url'] );
-				echo '<button type="submit" class="button cb-core-button cb-core-button--warning">' . esc_html( $button_label ) . '</button></form>';
+				echo '<button type="submit" class="button cb-core-button cb-core-button--' . esc_attr( $button_variant ) . '">' . esc_html( $button_label ) . '</button></form>';
 			}
 
-			$delete_body = sprintf(
-				/* translators: %s: imported backup filename. */
-				__( 'Delete the prepared import %s? The uploaded archive will be removed from private import storage.', 'core-blueprint-backups' ),
-				(string) ( $import['original_name'] ?? $name )
-			);
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr__( 'Delete prepared import?', 'core-blueprint-backups' ) . '" data-cb-modal-body="' . esc_attr( $delete_body ) . '" data-cb-modal-confirm-label="' . esc_attr__( 'Delete import', 'core-blueprint-backups' ) . '" data-cb-modal-variant="danger">';
-			echo '<input type="hidden" name="action" value="cb_backups_delete_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
-			wp_nonce_field( 'cb_backups_delete_import_' . $name );
-			echo '<button type="submit" class="button cb-core-button cb-core-button--danger">' . esc_html__( 'Delete', 'core-blueprint-backups' ) . '</button></form>';
+			if ( $history_available && ( ! $job || $job_terminal ) ) {
+				$delete_body = sprintf(
+					/* translators: %s: imported backup filename. */
+					__( 'Delete the prepared import %s? The uploaded archive will be removed from private import storage.', 'core-blueprint-backups' ),
+					(string) ( $import['original_name'] ?? $name )
+				);
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-cb-modal-confirm="1" data-cb-modal-title="' . esc_attr__( 'Delete prepared import?', 'core-blueprint-backups' ) . '" data-cb-modal-body="' . esc_attr( $delete_body ) . '" data-cb-modal-confirm-label="' . esc_attr__( 'Delete import', 'core-blueprint-backups' ) . '" data-cb-modal-variant="danger">';
+				echo '<input type="hidden" name="action" value="cb_backups_delete_import"><input type="hidden" name="archive" value="' . esc_attr( $name ) . '">';
+				wp_nonce_field( 'cb_backups_delete_import_' . $name );
+				echo '<button type="submit" class="button cb-core-button cb-core-button--danger">' . esc_html__( 'Delete', 'core-blueprint-backups' ) . '</button></form>';
+			}
 			echo '</div></td></tr>';
 		}
 		echo '</tbody></table>';
 		echo '</div>';
+	}
+
+	/** @param array<string,mixed> $job */
+	private function import_execution_status( array $job ): string {
+		$migration = 'migration' === ( $job['restore_mode'] ?? '' );
+		$status = (string) ( $job['status'] ?? '' );
+		$variant = 'neutral';
+		$date_label = __( 'Last attempt: %s', 'core-blueprint-backups' );
+		$date = (string) ( $job['completed_at'] ?? '' );
+		switch ( $status ) {
+			case 'completed':
+				$label = $migration ? __( 'Migrated successfully', 'core-blueprint-backups' ) : __( 'Restored successfully', 'core-blueprint-backups' );
+				$date_label = $migration ? __( 'Last migrated: %s', 'core-blueprint-backups' ) : __( 'Last restored: %s', 'core-blueprint-backups' );
+				$variant = 'success';
+				break;
+			case 'failed':
+				$label = $migration ? __( 'Migration failed', 'core-blueprint-backups' ) : __( 'Restore failed', 'core-blueprint-backups' );
+				$variant = 'error';
+				break;
+			case 'cancelled':
+				$label = $migration ? __( 'Migration cancelled', 'core-blueprint-backups' ) : __( 'Restore cancelled', 'core-blueprint-backups' );
+				break;
+			case 'queued':
+				$label = $migration ? __( 'Migration queued', 'core-blueprint-backups' ) : __( 'Restore queued', 'core-blueprint-backups' );
+				$variant = 'active';
+				break;
+			case 'running':
+				$label = $migration ? __( 'Migrating…', 'core-blueprint-backups' ) : __( 'Restoring…', 'core-blueprint-backups' );
+				$label .= ' ' . max( 0, min( 100, (int) ( $job['progress'] ?? 0 ) ) ) . '%';
+				$variant = 'active';
+				break;
+			case 'cancelling':
+				$label = __( 'Cancelling…', 'core-blueprint-backups' );
+				$variant = 'active';
+				break;
+			default:
+				$label = __( 'Status unavailable', 'core-blueprint-backups' );
+				$variant = 'error';
+				$date = '';
+		}
+		$html = '<span class="cb-backups-prepared-status cb-backups-prepared-status--' . esc_attr( $variant ) . '">' . esc_html( $label ) . '</span>';
+		// Repository timestamps are UTC; wp_date applies the site's configured timezone.
+		$timestamp = '' !== $date ? strtotime( $date . ' UTC' ) : false;
+		if ( false !== $timestamp ) {
+			$html .= '<br><small>' . esc_html( sprintf( $date_label, wp_date( 'Y-m-d H:i:s', $timestamp ) ) ) . '</small>';
+		}
+		return $html;
 	}
 
 	/** @param array<string,mixed> $import @return array<string,mixed> */
