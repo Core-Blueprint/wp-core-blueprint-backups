@@ -22,12 +22,15 @@ namespace {
 	final class SmokeWpdb {
 		public string $prefix = 'wp_';
 		public string $last_error = '';
-		public function get_var( string $query ): string { return ''; }
+		public function get_var( string $query ): string {
+			return 'SELECT @@SESSION.time_zone' === $query ? '+02:00' : '';
+		}
 		public function query( string $query ): int { return 0; }
 		public string $options = 'wp_options';
 		public function remove_placeholder_escape( string $value ): string { return str_replace( '{smoke-percent}', '%', $value ); }
 		public function prepare( string $format, mixed ...$args ): string {
 			if ( 'SET SESSION SQL_MODE=%s' === $format ) return "SET SESSION SQL_MODE=''";
+			if ( 'SET SESSION time_zone=%s' === $format && 1 === count( $args ) ) return "SET SESSION time_zone='" . (string) $args[0] . "'";
 			if ( '%s' !== $format || 1 !== count( $args ) ) throw new \RuntimeException( 'Unexpected prepare call.' );
 			$value = (string) $args[0];
 			$value = str_replace(

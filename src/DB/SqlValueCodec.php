@@ -9,16 +9,50 @@ defined( 'ABSPATH' ) || exit;
 
 /** The format-v1 SQL literal contract. Values are never sanitized as application data. */
 final class SqlValueCodec {
-	/** Match the dump grammar even when a host enables NO_BACKSLASH_ESCAPES. */
+	/**
+	 * Run one resumable dump/import tick with deterministic SQL semantics.
+	 *
+	 * TIMESTAMP values are converted by MySQL/MariaDB through the current
+	 * session time zone. For portable backups both export reads and restore
+	 * writes therefore run in UTC, independent of the source/destination host.
+	 * The caller's SQL mode and time zone are restored before returning.
+	 */
 	public static function with_dump_mode( callable $callback ): array {
 		global $wpdb;
-		$old = $wpdb->get_var( 'SELECT @@SESSION.SQL_MODE' );
-		if ( null === $old || '' !== $wpdb->last_error ) throw new RuntimeException( 'Cannot inspect database SQL mode.' );
-		$mode = implode( ',', array_filter( explode( ',', (string) $old ), static fn ( string $flag ): bool => 'NO_BACKSLASH_ESCAPES' !== strtoupper( $flag ) ) );
-		if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $mode ) ) ) throw new RuntimeException( 'Cannot set database dump SQL mode.' );
-		try { return $callback(); }
-		finally {
-			if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $old ) ) ) throw new RuntimeException( 'Cannot restore database SQL mode.' );
+
+		$old_mode = $wpdb->get_var( 'SELECT @@SESSION.SQL_MODE' );
+		if ( null === $old_mode || '' !== $wpdb->last_error ) throw new RuntimeException( 'Cannot inspect database SQL mode.' );
+
+		$old_time_zone = $wpdb->get_var( 'SELECT @@SESSION.time_zone' );
+		if ( null === $old_time_zone || '' !== $wpdb->last_error ) throw new RuntimeException( 'Cannot inspect database time zone.' );
+
+		$mode = implode( ',', array_filter( explode( ',', (string) $old_mode ), static fn ( string $flag ): bool => 'NO_BACKSLASH_ESCAPES' !== strtoupper( $flag ) ) );
+		$mode_changed = false;
+		$time_zone_changed = false;
+
+		try {
+			if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', $mode ) ) ) {
+				throw new RuntimeException( 'Cannot set database dump SQL mode.' );
+			}
+			$mode_changed = true;
+
+			if ( false === $wpdb->query( $wpdb->prepare( 'SET SESSION time_zone=%s', '+00:00' ) ) ) {
+				throw new RuntimeException( 'Cannot set database dump time zone to UTC.' );
+			}
+			$time_zone_changed = true;
+
+			return $callback();
+		} finally {
+			$restore_errors = [];
+			if ( $time_zone_changed && false === $wpdb->query( $wpdb->prepare( 'SET SESSION time_zone=%s', (string) $old_time_zone ) ) ) {
+				$restore_errors[] = 'time zone';
+			}
+			if ( $mode_changed && false === $wpdb->query( $wpdb->prepare( 'SET SESSION SQL_MODE=%s', (string) $old_mode ) ) ) {
+				$restore_errors[] = 'SQL mode';
+			}
+			if ( $restore_errors ) {
+				throw new RuntimeException( 'Cannot restore database session ' . implode( ' and ', $restore_errors ) . '.' );
+			}
 		}
 	}
 
