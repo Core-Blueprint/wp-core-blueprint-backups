@@ -19,6 +19,8 @@ jobs:
           fetch-depth: 0
       - name: Apply deterministic launch cleanup
         run: python3 tools/tmp-launch-qc-refresh.py
+      - name: Discard deferred permanent CI edits
+        run: git checkout -- .github/workflows/php-lint.yml .github/workflows/database-fidelity.yml .github/workflows/database-timezone-portability.yml
       - name: Install gettext
         run: sudo apt-get update -qq && sudo apt-get install -y gettext
       - name: Generate current POT
@@ -46,7 +48,6 @@ jobs:
               --package-name='Core Blueprint Backups' \
               --package-version='1.0.0-rc1' \
               -o languages/core-blueprint-backups.pot
-          sed -i 's/^"Project-Id-Version: PACKAGE VERSION\\n"$/"Project-Id-Version: Core Blueprint Backups 1.0.0-rc1\\n"/' languages/core-blueprint-backups.pot || true
           msgattrib --no-obsolete -o languages/core-blueprint-backups.pot languages/core-blueprint-backups.pot
           printf 'POT_MSGIDS=' && grep -c '^msgid ' languages/core-blueprint-backups.pot
       - name: Syntax sanity
@@ -58,7 +59,7 @@ jobs:
         run: |
           git config user.name 'Core Blueprint CI'
           git config user.email 'actions@users.noreply.github.com'
-          git add core-blueprint-backups.php assets/js/admin.js src/Admin/Actions.php src/Admin/Assets.php src/Remote/Routes.php .github/workflows/php-lint.yml .github/workflows/database-fidelity.yml .github/workflows/database-timezone-portability.yml languages/core-blueprint-backups.pot
+          git add core-blueprint-backups.php assets/js/admin.js src/Admin/Actions.php src/Admin/Assets.php src/Remote/Routes.php languages/core-blueprint-backups.pot
           git diff --cached --check
           git commit -m 'Apply Backups launch-readiness cleanup'
           git push origin HEAD:qc/backups-launch-readiness
