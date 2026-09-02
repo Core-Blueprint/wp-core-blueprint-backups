@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace CB\Backups\Restore;
 
 use CB\Backups\DB\ContentDigest;
+use CB\Backups\DB\SqlValueCodec;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -11,6 +12,10 @@ defined( 'ABSPATH' ) || exit;
 /** Re-read the immutable shadow snapshot before any live table is renamed. */
 final class DatabaseContentVerifier {
 	public static function tick( string $work, array $meta, array $tables, array $inventory, string $job_id ): array {
+		return SqlValueCodec::with_dump_mode( static fn (): array => self::checkpoint_tick( $work, $meta, $tables, $inventory, $job_id ) );
+	}
+
+	private static function checkpoint_tick( string $work, array $meta, array $tables, array $inventory, string $job_id ): array {
 		global $wpdb;
 		ContentDigest::validate_inventory( $tables, $inventory );
 		if ( empty( $meta['db_import_finished'] ) ) throw new RuntimeException( 'Cannot verify an incomplete shadow snapshot.' );
