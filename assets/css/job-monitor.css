@@ -15,18 +15,65 @@
 	display: none;
 }
 
+.cb-backups-monitor-state__content {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--cb-space-1);
+}
+
+.cb-backups-monitor-state__title {
+	font-weight: var(--cb-fw-semibold);
+}
+
 .cb-backups-monitor-state--auth,
-.cb-backups-monitor-state--network {
+.cb-backups-monitor-state--network,
+.cb-backups-monitor-state--handoff {
 	border-inline-start: 4px solid var(--cb-accent);
+}
+
+.cb-backups-monitor-state--success {
+	border-inline-start: 4px solid var(--cb-success);
+}
+
+.cb-backups-monitor-state--success .cb-backups-monitor-state__title {
+	color: var(--cb-success);
 }
 
 .cb-backups-monitor-state--error {
 	border-inline-start: 4px solid var(--cb-danger);
 }
 
+/* Context added to WordPress' native interim-login overlay during the
+ * expected final restore/migration handoff. The login form remains native. */
+#wp-auth-check .cb-backups-auth-context {
+	display: flex;
+	box-sizing: border-box;
+	flex-direction: column;
+	gap: 6px;
+	margin: 16px 20px 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--cb-border, #c3c4c7);
+	border-inline-start: 4px solid var(--cb-success, #00a32a);
+	border-radius: var(--cb-radius-sm, 4px);
+	background: var(--cb-surface-0, #fff);
+	color: var(--cb-text-strong, #1d2327);
+	line-height: 1.45;
+}
+
+#wp-auth-check .cb-backups-auth-context__title {
+	color: var(--cb-success, #00a32a);
+	font-weight: 600;
+}
+
 @media (max-width: 782px) {
 	.cb-backups-monitor-state {
 		align-items: flex-start;
 		flex-direction: column;
+	}
+
+	#wp-auth-check .cb-backups-auth-context {
+		margin-inline: 12px;
 	}
 }
