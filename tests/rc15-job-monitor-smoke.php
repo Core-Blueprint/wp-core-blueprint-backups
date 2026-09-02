@@ -31,8 +31,8 @@ monitor_contract_assert( str_contains( $monitor, 'config.reconnectUrl' ), 'Auth 
 monitor_contract_assert( str_contains( $monitor, "event.persisted" ) && str_contains( $monitor, 'window.location.reload()' ), 'BFCache restoration must refresh stale job/nonces.' );
 
 monitor_contract_assert( str_contains( $terminal, "if (document.getElementById('cb-backups-job')) return;" ), 'Terminal probe must never compete with the active job monitor.' );
-monitor_contract_assert( str_contains( $terminal, "job.status === 'completed'" ), 'Terminal probe must recover a Completed job after re-login.' );
-monitor_contract_assert( str_contains( $terminal, "job.restore_mode === 'migration'" ), 'Terminal probe must preserve migration completion semantics.' );
+monitor_contract_assert( str_contains( $terminal, "'completed', 'failed', 'cancelled'" ), 'Terminal probe must recover every terminal outcome after re-login.' );
+monitor_contract_assert( str_contains( $terminal, "url.searchParams.set('job', jobId)" ), 'Terminal probe must preserve the job for the server-rendered result.' );
 monitor_contract_assert( str_contains( $terminal, "action: 'cb_backups_job_monitor'" ), 'Terminal probe must fetch fresh server status with the new nonce.' );
 
 echo "RC15 job monitor smoke: PASS\n";

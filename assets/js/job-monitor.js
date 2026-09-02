@@ -12,6 +12,19 @@
   const jobBox = document.getElementById('cb-backups-job');
   if (!config.ajaxUrl || !config.jobId || !jobBox) return;
 
+  const pendingKey = `cb-backups:pending-job:${new URL(config.ajaxUrl, window.location.href).pathname}`;
+  const rememberJob = () => {
+    try { window.sessionStorage.setItem(pendingKey, config.jobId); } catch { /* Storage can be disabled. */ }
+    const url = new URL(window.location.href);
+    url.searchParams.set('job', config.jobId);
+    window.history.replaceState(window.history.state, '', url.toString());
+  };
+  const forgetJob = () => {
+    try {
+      if (window.sessionStorage.getItem(pendingKey) === config.jobId) window.sessionStorage.removeItem(pendingKey);
+    } catch { /* Storage can be disabled. */ }
+  };
+
   const toast = window.cbCore?.toast;
   const modal = window.cbCore?.modal;
   const showToast = (message, variant = 'info', options = {}) => {
@@ -54,6 +67,9 @@
   let completionHandled = false;
   let failureNotified = false;
   let monitorState = null;
+  let waitingForSession = false;
+  let reconnecting = false;
+  const returnedFromReconnect = new URL(window.location.href).searchParams.get('cb_monitor_reconnect') === '1';
 
   const number = (value) => new Intl.NumberFormat().format(Math.max(0, Number(value) || 0));
   const formatDuration = (seconds) => {
@@ -285,14 +301,11 @@
 
   const completionUrl = (job) => {
     const url = new URL(window.location.href);
-    url.searchParams.delete('job');
+    url.searchParams.set('job', config.jobId);
     url.searchParams.delete('cb_error');
+    url.searchParams.delete('cb_notice');
     url.searchParams.delete('cb_monitor_reconnect');
-    if (job.kind === 'restore' && job.restore_mode === 'migration') {
-      url.searchParams.set('cb_notice', 'migration_completed');
-    } else {
-      url.searchParams.set('cb_notice', job.kind === 'restore' ? 'restore_completed' : 'backup_completed');
-    }
+    url.searchParams.set('tab', job.kind === 'restore' ? 'restore' : 'backups');
     return url.toString();
   };
 
@@ -300,12 +313,28 @@
     stopTimer();
     pollingStopped = true;
     if (pollTimer) window.clearTimeout(pollTimer);
-    jobBox.hidden = true;
-    const url = new URL(window.location.href);
-    url.searchParams.delete('job');
-    url.searchParams.delete('cb_error');
-    url.searchParams.delete('cb_monitor_reconnect');
-    window.history.replaceState({}, '', url.toString());
+  };
+
+  const reloadSession = () => {
+    if (reconnecting || !config.reconnectUrl) return;
+    reconnecting = true;
+    window.location.replace(config.reconnectUrl);
+  };
+
+  // A modal closing is only a hint. Verify authentication/permissions before
+  // navigating: dismissing the login form must never imply restore success.
+  const reconnectSession = async () => {
+    if (!waitingForSession || reconnecting) return;
+    reconnecting = true;
+    try {
+      await request('cb_backups_job_monitor');
+      reconnecting = false;
+      reloadSession();
+    } catch (error) {
+      reconnecting = false;
+      if (error.code === 'nonce_expired') reloadSession();
+      else if (error.code !== 'auth_required') handleMonitorError(error);
+    }
   };
 
   const handleMonitorError = (error) => {
@@ -313,6 +342,7 @@
 
     if (code === 'auth_required') {
       pollingStopped = true;
+      waitingForSession = true;
       stopTimer();
       showMonitorState(
         error.message || config.labels?.authRequired,
@@ -324,7 +354,12 @@
 
     if (code === 'nonce_expired') {
       pollingStopped = true;
+      waitingForSession = true;
       stopTimer();
+      if (!returnedFromReconnect) {
+        reloadSession();
+        return;
+      }
       showMonitorState(
         error.message || config.labels?.nonceExpired,
         'auth',
@@ -335,8 +370,9 @@
 
     if (code === 'capability_required' || code === 'job_not_found') {
       pollingStopped = true;
+      waitingForSession = false;
       stopTimer();
-      showMonitorState(error.message, 'error');
+      showMonitorState(error.message, 'error', config.labels?.reloadMonitor || 'Reload monitoring');
       return;
     }
 
@@ -368,11 +404,13 @@
           showToast(job.error || config.labels?.failed, 'error', { persistent: true });
         }
         dismissTerminalJob();
+        window.location.replace(completionUrl(job));
         return;
       }
       if (job.status === 'cancelled') {
         showToast(config.labels?.cancelled, 'info');
         dismissTerminalJob();
+        window.location.replace(completionUrl(job));
         return;
       }
       schedulePoll(1200);
@@ -429,8 +467,28 @@
     if (event.persisted) window.location.reload();
   });
 
+  // WordPress interim login changes this wrapper instead of reloading wp-admin.
+  // MutationObserver keeps this integration independent of WordPress' jQuery.
+  const authWrap = document.getElementById('wp-auth-check-wrap');
+  if (authWrap) {
+    let wasVisible = !authWrap.classList.contains('hidden');
+    new MutationObserver(() => {
+      const visible = !authWrap.classList.contains('hidden');
+      if (wasVisible && !visible) reconnectSession();
+      wasVisible = visible;
+    }).observe(authWrap, { attributes: true, attributeFilter: ['class'] });
+  }
+  window.addEventListener('focus', reconnectSession);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reconnectSession();
+  });
+
   if (!terminalStatuses.has(jobBox.dataset.status || '')) {
+    rememberJob();
     startTimer();
     schedulePoll(100);
+  } else {
+    forgetJob();
+    stopTimer();
   }
 })();

@@ -175,9 +175,6 @@ final class Assets {
 			'backup_deleted'      => [ __( 'Backup deleted.', 'core-blueprint-backups' ), 'success' ],
 			'backup_verified'     => [ __( 'Backup integrity verified successfully.', 'core-blueprint-backups' ), 'success' ],
 			'schedules_saved'     => [ __( 'Backup schedules saved.', 'core-blueprint-backups' ), 'success' ],
-			'backup_completed'    => [ __( 'Backup completed successfully.', 'core-blueprint-backups' ), 'success' ],
-			'restore_completed'   => [ __( 'Restore completed successfully.', 'core-blueprint-backups' ), 'success' ],
-			'migration_completed' => [ __( 'Migration completed. The restored database and files passed integrity verification.', 'core-blueprint-backups' ), 'success' ],
 			'import_prepared'     => [ __( 'Backup imported and prepared for restore.', 'core-blueprint-backups' ), 'success' ],
 			'import_deleted'      => [ __( 'Prepared import deleted.', 'core-blueprint-backups' ), 'success' ],
 		];

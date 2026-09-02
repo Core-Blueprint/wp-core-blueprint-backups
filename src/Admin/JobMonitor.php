@@ -16,22 +16,24 @@ final class JobMonitor {
 	}
 
 	public static function status(): void {
+		// Permission loss must remain visible after re-login, even when the old
+		// page nonce also expired. No job data is read before both checks pass.
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			wp_send_json_error(
+				[
+					'code'    => 'capability_required',
+					'message' => __( 'Your account currently lacks permission to view this job. Core Blueprint privileged access review may be required. The server job is not cancelled; its result cannot be confirmed from this session.', 'core-blueprint-backups' ),
+				],
+				403
+			);
+		}
+
 		$nonce = sanitize_text_field( (string) ( isset( $_POST['nonce'] ) ? wp_unslash( $_POST['nonce'] ) : '' ) );
 		if ( false === wp_verify_nonce( $nonce, 'cb_backups_admin' ) ) {
 			wp_send_json_error(
 				[
 					'code'    => 'nonce_expired',
 					'message' => __( 'Your monitoring session expired. Reload this page to continue monitoring the server-owned job.', 'core-blueprint-backups' ),
-				],
-				403
-			);
-		}
-
-		if ( ! current_user_can( Capabilities::MANAGE ) ) {
-			wp_send_json_error(
-				[
-					'code'    => 'capability_required',
-					'message' => __( 'Your current WordPress account is not allowed to monitor Core Blueprint Backups.', 'core-blueprint-backups' ),
 				],
 				403
 			);

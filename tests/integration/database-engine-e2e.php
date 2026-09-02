@@ -20,6 +20,7 @@ Schema::install();
 $source = serialize( [ 'url' => 'https://source.example.test/course', 'css' => 'calc(100% - 20px)', 'nested' => serialize( [ 'percent' => '100%' ] ) ] );
 $expected = serialize( [ 'url' => 'https://destination.example.test/course', 'css' => 'calc(100% - 20px)', 'nested' => serialize( [ 'percent' => '100%' ] ) ] );
 update_option( 'cb_e2e_payload', $source );
+update_option( 'rewrite_rules', [ '^source-route/?$' => 'index.php?source_route=1' ] );
 $post_id = wp_insert_post( [ 'post_title' => 'Fidelity E2E', 'post_status' => 'publish', 'post_content' => '100% https://source.example.test/course', 'guid' => 'https://source.example.test/?e2e=1' ], true );
 check( ! is_wp_error( $post_id ), 'Cannot create WordPress post fixture.' );
 $source_guid = $wpdb->get_var( $wpdb->prepare( 'SELECT guid FROM cbtest_posts WHERE ID=%d', $post_id ) );
@@ -45,6 +46,7 @@ $restore = run_job( Repository::create( 'restore', 'database', 'manual', [ 'arch
 check( $source === get_option( 'cb_e2e_payload' ), 'Engine same-site restore did not recover the source value.' );
 check( ! empty( $restore['meta']['db_content_verified'] ), 'Engine completed without content proof.' );
 check( ! is_file( ABSPATH . '.maintenance' ), 'Same-site restore left maintenance enabled.' );
+check( false === get_option( 'rewrite_rules' ), 'Restore must invalidate rewrite cache without persisting the worker registrations.' );
 echo "Database engine same-site E2E: create -> archive -> verify -> stage -> shadow proof -> live -> Completed: PASS\n";
 
 $wpdb->set_prefix( 'cbe2etarget_' );
@@ -60,4 +62,5 @@ check( $source_guid === $wpdb->get_var( $wpdb->prepare( 'SELECT guid FROM cbe2et
 check( 1 === (int) $wpdb->get_var( "SELECT COUNT(*) FROM cbe2etarget_options WHERE option_name='cbe2etarget_user_roles'" ), 'Role option prefix was not migrated.' );
 check( 0 < (int) $wpdb->get_var( "SELECT COUNT(*) FROM cbe2etarget_usermeta WHERE meta_key='cbe2etarget_capabilities'" ), 'User capability prefix was not migrated.' );
 check( ! is_file( ABSPATH . '.maintenance' ), 'Migration left maintenance enabled.' );
+check( false === get_option( 'rewrite_rules' ), 'Migration must defer rewrite generation to the restored-site runtime.' );
 echo "Database engine migration E2E with URL/prefix, serialized values, GUID and role keys: PASS\n";

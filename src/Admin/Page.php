@@ -449,7 +449,7 @@ final class Page implements PageContract {
 		if ( ! $job ) {
 			return;
 		}
-		$data      = Actions::public_job( $job );
+		$data      = JobPresentation::present( $job, Actions::public_job( $job ) );
 		$job_id    = (string) $job['job_id'];
 		$is_backup = 'backup' === (string) $job['kind'];
 		$is_website = 'website' === (string) $job['backup_type'];
@@ -457,9 +457,21 @@ final class Page implements PageContract {
 		$active    = in_array( $status, [ 'queued', 'running', 'cancelling' ], true );
 
 		echo '<section class="cb-core-panel cb-backups-job" id="cb-backups-job" data-job-id="' . esc_attr( $job_id ) . '" data-status="' . esc_attr( $status ) . '">';
+		if ( ! $active ) {
+			$message = (string) $data['stage_label'];
+			if ( 'failed' === $status ) {
+				$message = __( 'Restore or backup failed. Review the job error below.', 'core-blueprint-backups' );
+			} elseif ( 'cancelled' === $status ) {
+				$message = __( 'Backup cancelled.', 'core-blueprint-backups' );
+			}
+			echo Notice::render( [
+				'variant' => 'completed' === $status ? Notice::SUCCESS : ( 'failed' === $status ? Notice::ERROR : Notice::WARNING ),
+				'message' => $message,
+			] );
+		}
 		echo '<div class="cb-backups-job-heading"><h2>' . esc_html( 'restore' === $job['kind'] ? __( 'Restore progress', 'core-blueprint-backups' ) : __( 'Backup progress', 'core-blueprint-backups' ) ) . '</h2><span id="cb-backups-status" class="cb-backups-status">' . esc_html( ucfirst( $status ) ) . '</span></div>';
 		echo '<div class="cb-backups-progress"><span id="cb-backups-progress-bar" style="width:' . esc_attr( (string) $job['progress'] ) . '%"></span></div>';
-		echo '<p class="cb-backups-progress-line"><strong id="cb-backups-progress-value">' . esc_html( (string) $job['progress'] ) . '%</strong> · <span id="cb-backups-stage">' . esc_html( (string) $job['stage'] ) . '</span></p>';
+		echo '<p class="cb-backups-progress-line"><strong id="cb-backups-progress-value">' . esc_html( (string) $job['progress'] ) . '%</strong> · <span id="cb-backups-stage">' . esc_html( (string) $data['stage_label'] ) . '</span></p>';
 
 		echo '<dl class="cb-backups-metrics">';
 		$this->metric( __( 'Database rows', 'core-blueprint-backups' ), '<span id="cb-backups-rows">' . esc_html( $this->rows_label( $data ) ) . '</span>' );
@@ -558,11 +570,11 @@ final class Page implements PageContract {
 
 	/** @return array<string,mixed>|null */
 	private function current_job(): ?array {
-		$active_statuses = [ 'queued', 'running', 'cancelling' ];
 		$job_id = isset( $_GET['job'] ) ? sanitize_text_field( (string) wp_unslash( $_GET['job'] ) ) : '';
 		if ( '' !== $job_id ) {
 			$job = Repository::get( $job_id );
-			if ( $job && in_array( (string) $job['status'], $active_statuses, true ) ) {
+			// Keep an explicitly requested result visible after authentication or reload.
+			if ( $job ) {
 				return $job;
 			}
 		}

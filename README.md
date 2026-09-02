@@ -2,6 +2,12 @@
 
 Governed database and full-site backups for the Core Blueprint suite.
 
+## v0.1.0-rc15.8 restore completion RC
+
+Restores retain a server-rendered result panel after completion, failure or cancellation. The monitor reconnects after WordPress interim login, preserves the pending job across page/tab navigation, and reports permission loss without implying the restore failed or bypassing Base governance. Completion messages derive from the stored job, not a success query flag. The restore worker invalidates the rewrite cache so a fresh restored-site request rebuilds routes with its own registrations and locale.
+
+Run `php tests/job-result-regression.php` for result-rendering and permission boundaries. Browser regressions use `npm install --no-save --package-lock=false playwright@1.62.1`, `npx playwright install --with-deps chromium`, then `node tests/job-monitor-browser.cjs`. These exercise the actual monitor scripts in Chromium with simulated server responses; they do not replace a disposable real WordPress login/restore acceptance test. See [RC15.8 validation](docs/rc15.8-validation.md).
+
 ## v0.1.0-rc15.6 database fidelity RC
 
 RC15.6 uses one WordPress-aware SQL value codec in export and migration, removes request-local percent placeholders before writing SQL, and fails database reads explicitly. Configured site identity preserves its URL scheme across web/cron/CLI execution. It records source-derived content digests and row counts, then verifies the shadow snapshot before preparing or executing the live rename. Migration validates the source dump and derives target expectations before SQL re-encoding.
