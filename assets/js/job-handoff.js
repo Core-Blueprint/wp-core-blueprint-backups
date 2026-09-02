@@ -94,6 +94,7 @@
     title.className = 'cb-backups-monitor-state__title';
     title.textContent = copy.title;
     const body = document.createElement('span');
+    body.className = 'cb-backups-monitor-state__body';
     body.textContent = copy.body;
     content.append(title, body);
     node.appendChild(content);
@@ -136,6 +137,7 @@
     title.className = 'cb-backups-auth-context__title';
     title.textContent = copy.title;
     const body = document.createElement('span');
+    body.className = 'cb-backups-auth-context__body';
     body.textContent = copy.body;
     notice.append(title, body);
   };
@@ -170,7 +172,13 @@
 
     const existingMonitorState = jobBox.querySelector('.cb-backups-monitor-state:not([hidden]):not(#cb-backups-handoff-state)');
     if (existingMonitorState) {
-      clearOwnState();
+      if (existingMonitorState.classList.contains('cb-backups-monitor-state--network')) {
+        setState(existingMonitorState, finalizingCopy(), 'handoff');
+        clearOwnState();
+        setFinalizingStatus();
+      } else {
+        clearOwnState();
+      }
       return;
     }
 
