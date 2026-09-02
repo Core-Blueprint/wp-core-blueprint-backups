@@ -58,6 +58,7 @@
 
   const terminalStatuses = new Set(['completed', 'failed', 'cancelled']);
   const terminalMonitorErrors = new Set(['auth_required', 'nonce_expired', 'capability_required', 'job_not_found']);
+  const liveRestoreStages = new Set(['commit_live', 'verify_live', 'finalize_live']);
   let elapsedBase = 0;
   let elapsedUpdatedAt = performance.now();
   let typicalDuration = 0;
@@ -69,6 +70,7 @@
   let monitorState = null;
   let waitingForSession = false;
   let reconnecting = false;
+  let lastJob = null;
   const returnedFromReconnect = new URL(window.location.href).searchParams.get('cb_monitor_reconnect') === '1';
 
   const number = (value) => new Intl.NumberFormat().format(Math.max(0, Number(value) || 0));
@@ -197,7 +199,21 @@
     }
   };
 
+  const isLiveRestoreTransition = () => lastJob?.kind === 'restore' && liveRestoreStages.has(lastJob.stage || '');
+  const liveRestoreMessage = (signInRequired = false) => {
+    const migration = lastJob?.restore_mode === 'migration';
+    if (signInRequired) {
+      return migration
+        ? (config.labels?.migrationSignIn || 'The migrated site is now active. Sign in again to confirm the final migration result.')
+        : (config.labels?.restoreSignIn || 'The restored site is now active. Sign in again to confirm the final restore result.');
+    }
+    return migration
+      ? (config.labels?.migrationSwitching || 'The migrated site is taking over. Your WordPress session may change while final safety checks finish.')
+      : (config.labels?.restoreSwitching || 'The restored site is taking over. Your WordPress session may change while final safety checks finish.');
+  };
+
   const render = (job) => {
+    lastJob = job;
     const progress = Math.max(0, Math.min(100, Number(job.progress) || 0));
     jobBox.dataset.status = job.status || '';
     if (elements.bar) elements.bar.style.width = `${progress}%`;
@@ -315,6 +331,31 @@
     if (pollTimer) window.clearTimeout(pollTimer);
   };
 
+  const installTerminalDismiss = () => {
+    if (!terminalStatuses.has(jobBox.dataset.status || '') || document.getElementById('cb-backups-dismiss-result')) return;
+    const actions = document.createElement('div');
+    actions.className = 'cb-backups-job-actions';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'cb-backups-dismiss-result';
+    button.className = 'button';
+    button.textContent = config.labels?.dismissResult || 'Dismiss';
+    button.addEventListener('click', () => {
+      forgetJob();
+      dismissTerminalJob();
+      const url = new URL(window.location.href);
+      url.searchParams.delete('job');
+      url.searchParams.delete('cb_monitor_reconnect');
+      url.searchParams.delete('cb_error');
+      url.searchParams.delete('cb_notice');
+      window.history.replaceState(window.history.state, '', url.toString());
+      jobBox.remove();
+    });
+    actions.appendChild(button);
+    const heading = jobBox.querySelector('.cb-backups-job-heading');
+    jobBox.insertBefore(actions, heading || jobBox.firstChild);
+  };
+
   const reloadSession = () => {
     if (reconnecting || !config.reconnectUrl) return;
     reconnecting = true;
@@ -327,8 +368,22 @@
     if (!waitingForSession || reconnecting) return;
     reconnecting = true;
     try {
-      await request('cb_backups_job_monitor');
+      const job = await request('cb_backups_job_monitor');
       reconnecting = false;
+      waitingForSession = false;
+      if (terminalStatuses.has(job.status)) {
+        clearMonitorState();
+        render(job);
+        if (job.status === 'completed') {
+          const completedLabel = job.stage_label || (job.restore_mode === 'migration' ? 'Migration completed' : 'Restore completed');
+          showMonitorState(completedLabel, 'auth');
+          showToast(completedLabel, 'success');
+          window.setTimeout(() => window.location.replace(completionUrl(job)), 700);
+        } else {
+          window.location.replace(completionUrl(job));
+        }
+        return;
+      }
       reloadSession();
     } catch (error) {
       reconnecting = false;
@@ -345,7 +400,7 @@
       waitingForSession = true;
       stopTimer();
       showMonitorState(
-        error.message || config.labels?.authRequired,
+        isLiveRestoreTransition() ? liveRestoreMessage(true) : (error.message || config.labels?.authRequired),
         'auth',
         config.labels?.signInAgain || 'Sign in again'
       );
@@ -373,6 +428,12 @@
       waitingForSession = false;
       stopTimer();
       showMonitorState(error.message, 'error', config.labels?.reloadMonitor || 'Reload monitoring');
+      return;
+    }
+
+    if (isLiveRestoreTransition()) {
+      showMonitorState(liveRestoreMessage(false), 'auth');
+      schedulePoll(1500);
       return;
     }
 
@@ -490,5 +551,6 @@
   } else {
     forgetJob();
     stopTimer();
+    installTerminalDismiss();
   }
 })();

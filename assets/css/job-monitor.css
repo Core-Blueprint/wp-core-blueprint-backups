@@ -9,24 +9,85 @@
 	border-radius: var(--cb-radius-sm);
 	background: var(--cb-surface-0);
 	color: var(--cb-text-strong);
+	line-height: 1.45;
 }
 
 .cb-backups-monitor-state[hidden] {
 	display: none;
 }
 
+.cb-backups-monitor-state__content {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	gap: var(--cb-space-1);
+}
+
+.cb-backups-monitor-state__title,
+.cb-backups-monitor-state__body {
+	display: block;
+}
+
+.cb-backups-monitor-state__title {
+	font-weight: var(--cb-fw-semibold);
+}
+
 .cb-backups-monitor-state--auth,
-.cb-backups-monitor-state--network {
+.cb-backups-monitor-state--network,
+.cb-backups-monitor-state--handoff {
 	border-inline-start: 4px solid var(--cb-accent);
+}
+
+.cb-backups-monitor-state--success {
+	border-color: color-mix(in srgb, var(--cb-success) 45%, var(--cb-border));
+	border-inline-start: 4px solid var(--cb-success);
+	background: color-mix(in srgb, var(--cb-success) 10%, var(--cb-surface-0));
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cb-success) 12%, transparent);
+}
+
+.cb-backups-monitor-state--success .cb-backups-monitor-state__title {
+	color: var(--cb-success);
 }
 
 .cb-backups-monitor-state--error {
 	border-inline-start: 4px solid var(--cb-danger);
 }
 
+/* Context added to WordPress' native interim-login overlay during the
+ * expected final restore/migration handoff. The login form remains native. */
+#wp-auth-check .cb-backups-auth-context {
+	display: flex;
+	box-sizing: border-box;
+	flex-direction: column;
+	gap: 6px;
+	margin: 16px 20px 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--cb-border, #c3c4c7);
+	border-inline-start: 4px solid var(--cb-success, #00a32a);
+	border-radius: var(--cb-radius-sm, 4px);
+	background: color-mix(in srgb, var(--cb-success, #00a32a) 10%, var(--cb-surface-0, #fff));
+	color: var(--cb-text-strong, #1d2327);
+	line-height: 1.45;
+}
+
+#wp-auth-check .cb-backups-auth-context__title,
+#wp-auth-check .cb-backups-auth-context__body {
+	display: block;
+}
+
+#wp-auth-check .cb-backups-auth-context__title {
+	color: var(--cb-success, #00a32a);
+	font-weight: 600;
+}
+
 @media (max-width: 782px) {
 	.cb-backups-monitor-state {
 		align-items: flex-start;
 		flex-direction: column;
+	}
+
+	#wp-auth-check .cb-backups-auth-context {
+		margin-inline: 12px;
 	}
 }
