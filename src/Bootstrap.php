@@ -24,6 +24,21 @@ defined( 'ABSPATH' ) || exit;
 
 final class Bootstrap {
 	private static bool $booted = false;
+	private static bool $suite_integration_registered = false;
+
+	/**
+	 * Attach lightweight first-party identity and health hooks before feature
+	 * runtime dependencies are evaluated.
+	 */
+	public static function register_suite_integration(): void {
+		if ( self::$suite_integration_registered ) {
+			return;
+		}
+		self::$suite_integration_registered = true;
+
+		add_action( 'cb_core_register_extensions', [ self::class, 'register_extension' ] );
+		add_action( 'init', [ self::class, 'register_presentation_hooks' ], 1 );
+	}
 
 	public static function boot(): void {
 		if ( self::$booted ) {
@@ -55,9 +70,7 @@ final class Bootstrap {
 		add_action( 'cb_backups_run_job', [ Runner::class, 'scheduled_tick' ], 10, 1 );
 		add_action( 'cb_backups_scheduler_tick', [ Scheduler::class, 'run_due' ] );
 		add_filter( 'cb_core_cli_register_commands', [ self::class, 'register_cli_commands' ] );
-		add_action( 'cb_core_register_extensions', [ self::class, 'register_extension' ] );
 		add_action( 'cb_core_dashboard_register_cards', [ self::class, 'register_dashboard_shortcuts' ] );
-		add_action( 'init', [ self::class, 'register_presentation_hooks' ], 1 );
 	}
 
 	/** Register Backups with Base's canonical extension inventory. */
@@ -127,8 +140,10 @@ final class Bootstrap {
 	}
 
 	public static function register_presentation_hooks(): void {
-		foreach ( self::event_labels( [] ) as $id => $label ) {
-			\CB\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
+		if ( class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
+			foreach ( self::event_labels( [] ) as $id => $label ) {
+				\CB\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
+			}
 		}
 		add_filter( 'cb_core_module_status_definitions', [ self::class, 'register_status_definition' ] );
 	}
@@ -149,10 +164,16 @@ final class Bootstrap {
 	public static function extension_status(): array {
 		$url = admin_url( 'admin.php?page=core-blueprint-backups' );
 
-		try {
-			LocalStorage::ensure();
-			$storage_path = LocalStorage::base_path();
-		} catch ( \Throwable ) {
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			return [
+				'state'  => 'err',
+				'detail' => __( 'Core Blueprint Backups requires the PHP ZIP extension.', 'core-blueprint-backups' ),
+				'url'    => $url,
+			];
+		}
+
+		$storage_path = LocalStorage::health_path();
+		if ( null === $storage_path || ! is_dir( $storage_path ) ) {
 			return [
 				'state'  => 'err',
 				'detail' => __( 'Backup storage unavailable', 'core-blueprint-backups' ),
@@ -192,7 +213,7 @@ final class Bootstrap {
 			],
 			default => [
 				'state'  => 'warn',
-				'detail' => __( 'Status unavailable', 'core-blueprint-backups' ),
+				'detail' => __( 'Backup scheduler requires attention', 'core-blueprint-backups' ),
 				'url'    => $url,
 			],
 		};

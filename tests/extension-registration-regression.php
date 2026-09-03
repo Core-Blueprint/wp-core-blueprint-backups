@@ -5,12 +5,31 @@ namespace {
 	defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
 	defined( 'CB_BACKUPS_BASENAME' ) || define( 'CB_BACKUPS_BASENAME', 'core-blueprint-backups/core-blueprint-backups.php' );
 
+	/** @var array<string,array<int,array{callback:mixed,priority:int}>> */
+	$GLOBALS['cb_backups_test_actions'] = [];
+	/** @var array<string,array<int,array{callback:mixed,priority:int}>> */
+	$GLOBALS['cb_backups_test_filters'] = [];
+
+	function add_action( string $hook, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool {
+		$GLOBALS['cb_backups_test_actions'][ $hook ][] = [ 'callback' => $callback, 'priority' => $priority ];
+		return true;
+	}
+
+	function add_filter( string $hook, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool {
+		$GLOBALS['cb_backups_test_filters'][ $hook ][] = [ 'callback' => $callback, 'priority' => $priority ];
+		return true;
+	}
+
 	function admin_url( string $path = '' ): string {
 		return 'https://example.test/wp-admin/' . ltrim( $path, '/' );
 	}
 
 	function __( string $text, string $domain = 'default' ): string {
 		return $text;
+	}
+
+	if ( ! class_exists( 'ZipArchive' ) ) {
+		class ZipArchive {}
 	}
 }
 
@@ -28,19 +47,11 @@ namespace CB\Core {
 }
 
 namespace CB\Backups\Storage {
-	use RuntimeException;
-
 	final class LocalStorage {
-		public static bool $fail = false;
+		public static ?string $path = null;
 
-		public static function ensure(): void {
-			if ( self::$fail ) {
-				throw new RuntimeException( 'storage unavailable' );
-			}
-		}
-
-		public static function base_path(): string {
-			return sys_get_temp_dir();
+		public static function health_path(): ?string {
+			return self::$path ?? sys_get_temp_dir();
 		}
 	}
 }
@@ -71,6 +82,17 @@ namespace CB\Backups {
 		exit( 1 );
 	}
 
+	Bootstrap::register_suite_integration();
+	Bootstrap::register_suite_integration();
+
+	$extension_hooks = $GLOBALS['cb_backups_test_actions']['cb_core_register_extensions'] ?? [];
+	$init_hooks      = $GLOBALS['cb_backups_test_actions']['init'] ?? [];
+	expect( 1 === count( $extension_hooks ), 'Suite integration must attach ExtensionRegistry registration exactly once.' );
+	expect( [ Bootstrap::class, 'register_extension' ] === $extension_hooks[0]['callback'], 'Suite integration must attach the canonical extension registration callback.' );
+	expect( 1 === count( $init_hooks ), 'Suite integration must attach presentation/status registration exactly once.' );
+	expect( [ Bootstrap::class, 'register_presentation_hooks' ] === $init_hooks[0]['callback'], 'Suite integration must attach the presentation/status callback.' );
+	expect( 1 === $init_hooks[0]['priority'], 'Presentation/status registration must run at the existing init priority.' );
+
 	Bootstrap::register_extension();
 	$definition = ExtensionRegistry::$registered;
 	expect( is_array( $definition ), 'Backups must register with the canonical ExtensionRegistry.' );
@@ -95,9 +117,13 @@ namespace CB\Backups {
 	$status = Bootstrap::extension_status();
 	expect( 'err' === $status['state'], 'Broken scheduler must surface a dashboard error.' );
 
-	LocalStorage::$fail = true;
+	Scheduler::$status = 'unexpected';
 	$status = Bootstrap::extension_status();
-	expect( 'err' === $status['state'] && 'Backup storage unavailable' === $status['detail'], 'Unavailable storage must fail the dashboard health check.' );
+	expect( 'warn' === $status['state'] && 'Backup scheduler requires attention' === $status['detail'], 'Unknown scheduler state must degrade to an intentional Backups warning.' );
+
+	LocalStorage::$path = '/definitely/not/a/real/backups/path';
+	$status = Bootstrap::extension_status();
+	expect( 'err' === $status['state'] && 'Backup storage unavailable' === $status['detail'], 'Unavailable storage must fail the dashboard health check without creating storage.' );
 
 	echo "Extension registration and dashboard health: PASS\n";
 }

@@ -8,16 +8,28 @@ use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
 final class LocalStorage {
-	public static function base_path(): string {
+	/** Return the configured storage path without creating options or directories. */
+	public static function health_path(): ?string {
 		if ( defined( 'CB_BACKUPS_STORAGE_PATH' ) && is_string( CB_BACKUPS_STORAGE_PATH ) && '' !== trim( CB_BACKUPS_STORAGE_PATH ) ) {
 			return untrailingslashit( wp_normalize_path( CB_BACKUPS_STORAGE_PATH ) );
 		}
 
 		$token = (string) get_option( 'cb_backups_storage_token', '' );
 		if ( '' === $token ) {
-			$token = bin2hex( random_bytes( 10 ) );
-			update_option( 'cb_backups_storage_token', $token, false );
+			return null;
 		}
+
+		return untrailingslashit( wp_normalize_path( WP_CONTENT_DIR . '/cb-backups-' . $token ) );
+	}
+
+	public static function base_path(): string {
+		$configured = self::health_path();
+		if ( null !== $configured ) {
+			return $configured;
+		}
+
+		$token = bin2hex( random_bytes( 10 ) );
+		update_option( 'cb_backups_storage_token', $token, false );
 		return untrailingslashit( wp_normalize_path( WP_CONTENT_DIR . '/cb-backups-' . $token ) );
 	}
 
