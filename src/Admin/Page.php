@@ -199,7 +199,7 @@ final class Page implements PageContract {
 			$job_terminal = $job && in_array( (string) $job['status'], [ 'completed', 'failed', 'cancelled' ], true );
 			echo '<tr><td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td>';
 			echo '<td><code>' . esc_html( (string) ( $import['original_name'] ?? $name ) ) . '</code></td>';
-			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) . '</td>';
+			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) ) . '</td>';
 			echo '<td>';
 			if ( '' !== $preflight_error ) {
 				echo '<strong>' . esc_html__( 'Preflight unavailable', 'core-blueprint-backups' ) . '</strong><br><small>' . esc_html( $preflight_error ) . '</small>';
