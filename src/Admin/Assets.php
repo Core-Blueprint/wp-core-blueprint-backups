@@ -38,19 +38,19 @@ final class Assets {
 		wp_enqueue_script_module(
 			'@cb-backups/admin',
 			CB_BACKUPS_URL . 'assets/js/admin.js',
-			[ '@cb-core/modal', '@cb-core/toast' ],
+			[],
 			CB_BACKUPS_VERSION
 		);
 		wp_enqueue_script_module(
 			'@cb-backups/job-monitor',
 			CB_BACKUPS_URL . 'assets/js/job-monitor.js',
-			[ '@cb-core/modal', '@cb-core/toast' ],
+			[],
 			CB_BACKUPS_VERSION
 		);
 		wp_enqueue_script_module(
 			'@cb-backups/job-handoff',
 			CB_BACKUPS_URL . 'assets/js/job-handoff.js',
-			[ '@cb-backups/job-monitor', '@cb-core/toast' ],
+			[ '@cb-backups/job-monitor' ],
 			CB_BACKUPS_VERSION
 		);
 		wp_enqueue_script_module(
