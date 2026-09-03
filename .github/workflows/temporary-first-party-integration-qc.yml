@@ -1,0 +1,38 @@
+name: Temporary Backups First-Party Integration QC
+
+on:
+  push:
+    branches:
+      - fix/backups-first-party-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integration-qc:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: zip
+          coverage: none
+      - name: Lint changed PHP
+        run: |
+          php -l core-blueprint-backups.php
+          php -l src/Bootstrap.php
+          php -l src/Storage/LocalStorage.php
+          php -l tests/extension-registration-regression.php
+          php -l tests/first-party-integration-lifecycle-regression.php
+      - name: Run extension integration regressions
+        run: |
+          php tests/extension-registration-regression.php
+          php tests/first-party-integration-lifecycle-regression.php
+      - name: Run storage regressions
+        run: |
+          php tests/rc15-filesystem-policy-smoke.php
+          php tests/rc15-filesystem-commit-policy-smoke.php
+      - name: Verify reused translation contract
+        run: grep -Fq 'msgid "Core Blueprint Backups requires the PHP ZIP extension."' languages/core-blueprint-backups.pot
