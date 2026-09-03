@@ -43,6 +43,10 @@ spl_autoload_register( static function ( string $class ): void {
 	}
 } );
 
+// Attach the lightweight first-party inventory/health integration before any
+// feature-runtime dependency can stop the Backups boot sequence.
+\CB\Backups\Bootstrap::register_suite_integration();
+
 register_activation_hook( __FILE__, [ \CB\Backups\Bootstrap::class, 'activate' ] );
 register_deactivation_hook( __FILE__, [ \CB\Backups\Bootstrap::class, 'deactivate' ] );
 
