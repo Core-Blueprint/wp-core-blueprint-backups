@@ -52,9 +52,6 @@ add_action( 'init', static function (): void {
 
 add_action( 'plugins_loaded', static function (): void {
 	$errors = [];
-	if ( defined( 'CB_BACKUPS_CODE_INTEGRITY_ERROR' ) ) {
-		$errors[] = (string) CB_BACKUPS_CODE_INTEGRITY_ERROR;
-	}
 	if ( version_compare( PHP_VERSION, '8.4', '<' ) ) {
 		$errors[] = sprintf( 'PHP 8.4 or newer is required; this server runs PHP %s.', PHP_VERSION );
 	}
