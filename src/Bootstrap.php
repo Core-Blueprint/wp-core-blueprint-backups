@@ -62,7 +62,15 @@ final class Bootstrap {
 				new Page(),
 				[
 					'foundations' => [ 'modal', 'toast', 'time-picker' ],
-					'components'  => [ 'nav-tabs', 'panels', 'notices', 'form-controls' ],
+					'components'  => [
+						'nav-tabs',
+						'panels',
+						'notices',
+						'form-controls',
+						'metric-tiles',
+						'state-badges',
+						'kv-table',
+					],
 				]
 			);
 		} );
