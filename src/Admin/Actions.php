@@ -31,8 +31,6 @@ final class Actions {
 		add_action( 'admin_post_cb_backups_bulk_delete', [ self::class, 'bulk_delete' ] );
 		add_action( 'admin_post_cb_backups_verify', [ self::class, 'verify' ] );
 		add_action( 'admin_post_cb_backups_save_schedules', [ self::class, 'save_schedules' ] );
-		add_action( 'wp_ajax_cb_backups_tick_job', [ self::class, 'job_status' ] ); // Backward-compatible alias.
-		add_action( 'wp_ajax_cb_backups_job_status', [ self::class, 'job_status' ] );
 		add_action( 'wp_ajax_cb_backups_cancel_job', [ self::class, 'cancel_job' ] );
 		add_action( 'wp_ajax_cb_backups_import_init', [ self::class, 'import_init' ] );
 		add_action( 'wp_ajax_cb_backups_import_chunk', [ self::class, 'import_chunk' ] );
@@ -316,17 +314,6 @@ final class Actions {
 		$input = isset( $_POST['schedules'] ) && is_array( $_POST['schedules'] ) ? wp_unslash( $_POST['schedules'] ) : [];
 		Scheduler::save( $input );
 		self::redirect( [ 'tab' => 'schedules', 'cb_notice' => 'schedules_saved' ] );
-	}
-
-	public static function job_status(): void {
-		self::authorize();
-		check_ajax_referer( 'cb_backups_admin', 'nonce' );
-		$job_id = sanitize_text_field( (string) ( isset( $_POST['job_id'] ) ? wp_unslash( $_POST['job_id'] ) : '' ) );
-		$job    = Repository::get( $job_id );
-		if ( ! $job ) {
-			wp_send_json_error( [ 'message' => 'Backup job not found.' ], 404 );
-		}
-		wp_send_json_success( self::public_job( $job ) );
 	}
 
 	public static function cancel_job(): void {

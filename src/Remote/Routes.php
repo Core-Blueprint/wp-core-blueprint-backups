@@ -24,8 +24,7 @@ final class Routes {
 	private const PREFIX = '/backups';
 
 	public static function boot(): void {
-		add_action( 'cb_core_beacon_register_remote_routes', [ self::class, 'register' ], 10, 1 );
-		add_filter( 'cb_core_beacon_remote_route_prefixes', [ self::class, 'legacy_route_prefixes' ] );
+		add_action( 'cb_core_beacon_register_remote_routes', [ self::class, 'register' ], 10, 0 );
 		add_filter( 'cb_core_beacon_status_extensions', [ self::class, 'status_extension' ], 10, 2 );
 	}
 
@@ -39,22 +38,16 @@ final class Routes {
 		return $extensions;
 	}
 
-	/** @param string[] $prefixes @return string[] */
-	public static function legacy_route_prefixes( array $prefixes ): array {
-		$prefixes[] = self::PREFIX;
-		return array_values( array_unique( $prefixes ) );
-	}
-
-	public static function register( ?callable $legacy_permission_callback = null ): void {
+	public static function register(): void {
 		self::control_route( '/backups/status', [
 			'methods'  => WP_REST_Server::READABLE,
 			'callback' => [ self::class, 'status' ],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups', [
 			'methods'  => WP_REST_Server::READABLE,
 			'callback' => [ self::class, 'list_backups' ],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/jobs', [
 			'methods'  => WP_REST_Server::CREATABLE,
@@ -63,22 +56,22 @@ final class Routes {
 				'schema_version' => [ 'required' => true, 'type' => 'integer', 'enum' => [ Contract::SCHEMA_VERSION ] ],
 				'type'           => [ 'required' => true, 'type' => 'string', 'enum' => [ 'database', 'website' ] ],
 			],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/jobs/(?P<job_id>[a-f0-9-]{36})', [
 			'methods'  => WP_REST_Server::READABLE,
 			'callback' => [ self::class, 'job' ],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/jobs/(?P<job_id>[a-f0-9-]{36})/cancel', [
 			'methods'  => WP_REST_Server::CREATABLE,
 			'callback' => [ self::class, 'cancel' ],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/(?P<backup_id>[A-Za-z0-9._-]+\.cbbackup)/verify', [
 			'methods'  => WP_REST_Server::CREATABLE,
 			'callback' => [ self::class, 'verify' ],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/schedules', [
 			[
@@ -89,12 +82,12 @@ final class Routes {
 				'methods'  => WP_REST_Server::CREATABLE,
 				'callback' => [ self::class, 'update_schedules' ],
 			],
-		], $legacy_permission_callback );
+		] );
 
 		self::control_route( '/backups/(?P<backup_id>[A-Za-z0-9._-]+\.cbbackup)/download-ticket', [
 			'methods'  => WP_REST_Server::CREATABLE,
 			'callback' => [ self::class, 'download_ticket' ],
-		], $legacy_permission_callback );
+		] );
 
 		// Browser-direct file delivery cannot carry Hub's Bearer header. The
 		// callback therefore consumes Beacon's short-lived single-use ticket.
@@ -345,25 +338,10 @@ final class Routes {
 	}
 
 	/** @param array<string,mixed> $args */
-	private static function control_route( string $route, array $args, ?callable $legacy_permission_callback ): void {
+	private static function control_route( string $route, array $args ): void {
 		if ( class_exists( RemoteRouteRegistry::class ) ) {
 			RemoteRouteRegistry::register( $route, $args, self::PREFIX );
-			return;
 		}
-		if ( null === $legacy_permission_callback ) {
-			return;
-		}
-		if ( array_is_list( $args ) && isset( $args[0] ) && is_array( $args[0] ) ) {
-			foreach ( $args as &$endpoint ) {
-				if ( is_array( $endpoint ) ) {
-					$endpoint['permission_callback'] = $legacy_permission_callback;
-				}
-			}
-			unset( $endpoint );
-		} else {
-			$args['permission_callback'] = $legacy_permission_callback;
-		}
-		register_rest_route( 'core-blueprint/v1', $route, $args );
 	}
 
 	/** @return array<string,string> */
