@@ -13,6 +13,7 @@ use CB\Backups\Support\SiteIdentity;
 use CB\Backups\Support\Telemetry;
 use CB\Core\Admin\Page as PageContract;
 use CB\Core\UI\Notice;
+use CB\Core\UI\StateBadge;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -48,6 +49,7 @@ final class Page implements PageContract {
 		}
 		echo '<div class="wrap cb-core-wrap cb-backups">';
 		echo '<h1 class="cb-core-title">' . esc_html__( 'Backups', 'core-blueprint-backups' ) . '</h1>';
+		echo '<p class="cb-core-intro">' . esc_html__( 'Create backup', 'core-blueprint-backups' ) . ' · ' . esc_html__( 'Import & Restore', 'core-blueprint-backups' ) . ' · ' . esc_html__( 'Schedules', 'core-blueprint-backups' ) . '</p>';
 		$this->tabs( $tab );
 		$this->job_progress();
 		switch ( $tab ) {
@@ -197,7 +199,7 @@ final class Page implements PageContract {
 			$job_terminal = $job && in_array( (string) $job['status'], [ 'completed', 'failed', 'cancelled' ], true );
 			echo '<tr><td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td>';
 			echo '<td><code>' . esc_html( (string) ( $import['original_name'] ?? $name ) ) . '</code></td>';
-			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) ) . '</td>';
+			echo '<td>' . esc_html( $type ) . '</td><td>' . esc_html( size_format( (int) ( $import['size'] ?? 0 ) ) . '</td>';
 			echo '<td>';
 			if ( '' !== $preflight_error ) {
 				echo '<strong>' . esc_html__( 'Preflight unavailable', 'core-blueprint-backups' ) . '</strong><br><small>' . esc_html( $preflight_error ) . '</small>';
@@ -208,15 +210,15 @@ final class Page implements PageContract {
 			}
 			echo '</td>';
 			if ( ! $history_available ) {
-				echo '<td><span class="cb-backups-prepared-status cb-backups-prepared-status--error">' . esc_html__( 'Status unavailable', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+				echo '<td>' . StateBadge::render( __( 'Status unavailable', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( $job ) {
 				echo '<td>' . $this->import_execution_status( $job ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( '' !== $preflight_error ) {
-				echo '<td><span class="cb-backups-prepared-status cb-backups-prepared-status--error">⚠ ' . esc_html__( 'Needs review', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+				echo '<td>' . StateBadge::render( __( 'Needs review', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( $is_migration ) {
-				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Migration ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+				echo '<td>' . StateBadge::render( __( 'Migration ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) . '</td><td><div class="cb-backups-actions">';
 			} else {
-				echo '<td><span class="cb-backups-prepared-status">✓ ' . esc_html__( 'Restore ready', 'core-blueprint-backups' ) . '</span></td><td><div class="cb-backups-actions">';
+				echo '<td>' . StateBadge::render( __( 'Restore ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) . '</td><td><div class="cb-backups-actions">';
 			}
 
 			if ( $job ) {
@@ -283,41 +285,41 @@ final class Page implements PageContract {
 	private function import_execution_status( array $job ): string {
 		$migration = 'migration' === ( $job['restore_mode'] ?? '' );
 		$status = (string) ( $job['status'] ?? '' );
-		$variant = 'neutral';
+		$variant = StateBadge::NEUTRAL;
 		$date_label = __( 'Last attempt: %s', 'core-blueprint-backups' );
 		$date = (string) ( $job['completed_at'] ?? '' );
 		switch ( $status ) {
 			case 'completed':
 				$label = $migration ? __( 'Migrated successfully', 'core-blueprint-backups' ) : __( 'Restored successfully', 'core-blueprint-backups' );
 				$date_label = $migration ? __( 'Last migrated: %s', 'core-blueprint-backups' ) : __( 'Last restored: %s', 'core-blueprint-backups' );
-				$variant = 'success';
+				$variant = StateBadge::SUCCESS;
 				break;
 			case 'failed':
 				$label = $migration ? __( 'Migration failed', 'core-blueprint-backups' ) : __( 'Restore failed', 'core-blueprint-backups' );
-				$variant = 'error';
+				$variant = StateBadge::ERROR;
 				break;
 			case 'cancelled':
 				$label = $migration ? __( 'Migration cancelled', 'core-blueprint-backups' ) : __( 'Restore cancelled', 'core-blueprint-backups' );
 				break;
 			case 'queued':
 				$label = $migration ? __( 'Migration queued', 'core-blueprint-backups' ) : __( 'Restore queued', 'core-blueprint-backups' );
-				$variant = 'active';
+				$variant = StateBadge::INFO;
 				break;
 			case 'running':
 				$label = $migration ? __( 'Migrating…', 'core-blueprint-backups' ) : __( 'Restoring…', 'core-blueprint-backups' );
 				$label .= ' ' . max( 0, min( 100, (int) ( $job['progress'] ?? 0 ) ) ) . '%';
-				$variant = 'active';
+				$variant = StateBadge::INFO;
 				break;
 			case 'cancelling':
 				$label = __( 'Cancelling…', 'core-blueprint-backups' );
-				$variant = 'active';
+				$variant = StateBadge::WARNING;
 				break;
 			default:
 				$label = __( 'Status unavailable', 'core-blueprint-backups' );
-				$variant = 'error';
+				$variant = StateBadge::ERROR;
 				$date = '';
 		}
-		$html = '<span class="cb-backups-prepared-status cb-backups-prepared-status--' . esc_attr( $variant ) . '">' . esc_html( $label ) . '</span>';
+		$html = StateBadge::render( $label, [ 'variant' => $variant ] );
 		// Repository timestamps are UTC; wp_date applies the site's configured timezone.
 		$timestamp = '' !== $date ? strtotime( $date . ' UTC' ) : false;
 		if ( false !== $timestamp ) {
@@ -373,7 +375,7 @@ final class Page implements PageContract {
 		}
 
 		echo '<section class="cb-core-panel"><h2>' . esc_html__( 'Scheduler health', 'core-blueprint-backups' ) . '</h2>';
-		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<table class="widefat cb-core-kv"><tbody>';
 		$last_tick = (int) ( $health['last_tick'] ?? 0 );
 		$next_global = (int) ( $health['next_run'] ?? 0 );
 		$health_label = match ( $status ) {
@@ -382,12 +384,12 @@ final class Page implements PageContract {
 			'critical' => __( 'Scheduler not running', 'core-blueprint-backups' ),
 			default => __( 'Idle — no automatic schedules enabled', 'core-blueprint-backups' ),
 		};
-		echo '<tr><th>' . esc_html__( 'Status', 'core-blueprint-backups' ) . '</th><td><strong>' . esc_html( $health_label ) . '</strong></td></tr>';
-		echo '<tr><th>' . esc_html__( 'Last scheduler tick', 'core-blueprint-backups' ) . '</th><td>' . ( $last_tick > 0 ? esc_html( wp_date( 'Y-m-d H:i:s', $last_tick ) . ' · ' . (string) ( $health['last_tick_source'] ?? '' ) ) : '&mdash;' ) . '</td></tr>';
-		echo '<tr><th>' . esc_html__( 'Next automatic backup', 'core-blueprint-backups' ) . '</th><td>' . ( $next_global > 0 ? esc_html( wp_date( 'Y-m-d H:i', $next_global ) ) : '&mdash;' ) . '</td></tr>';
-		echo '<tr><th>' . esc_html__( 'Execution', 'core-blueprint-backups' ) . '</th><td>' . esc_html( ! empty( $health['wp_cron_disabled'] ) ? __( 'WP-Cron disabled — use server cron / CLI for schedule triggering.', 'core-blueprint-backups' ) : __( 'WP-Cron enabled; server cron / CLI may also call the same scheduler safely.', 'core-blueprint-backups' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Status', 'core-blueprint-backups' ) . '</th><td><strong>' . esc_html( $health_label ) . '</strong></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Last scheduler tick', 'core-blueprint-backups' ) . '</th><td>' . ( $last_tick > 0 ? esc_html( wp_date( 'Y-m-d H:i:s', $last_tick ) . ' · ' . (string) ( $health['last_tick_source'] ?? '' ) ) : '&mdash;' ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Next automatic backup', 'core-blueprint-backups' ) . '</th><td>' . ( $next_global > 0 ? esc_html( wp_date( 'Y-m-d H:i', $next_global ) ) : '&mdash;' ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Execution', 'core-blueprint-backups' ) . '</th><td>' . esc_html( ! empty( $health['wp_cron_disabled'] ) ? __( 'WP-Cron disabled — use server cron / CLI for schedule triggering.', 'core-blueprint-backups' ) : __( 'WP-Cron enabled; server cron / CLI may also call the same scheduler safely.', 'core-blueprint-backups' ) ) . '</td></tr>';
 		if ( '' !== (string) ( $health['last_error'] ?? '' ) ) {
-			echo '<tr><th>' . esc_html__( 'Last scheduler error', 'core-blueprint-backups' ) . '</th><td><code>' . esc_html( (string) $health['last_error'] ) . '</code></td></tr>';
+			echo '<tr><th scope="row">' . esc_html__( 'Last scheduler error', 'core-blueprint-backups' ) . '</th><td><code>' . esc_html( (string) $health['last_error'] ) . '</code></td></tr>';
 		}
 		echo '</tbody></table></section>';
 
@@ -449,12 +451,12 @@ final class Page implements PageContract {
 		$path           = LocalStorage::base_path();
 		$inside_content = str_starts_with( wp_normalize_path( $path ), trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) ) );
 		echo '<section class="cb-core-panel cb-backups-settings-panel">';
-		echo '<table class="form-table" role="presentation"><tbody>';
-		echo '<tr><th>' . esc_html__( 'Storage', 'core-blueprint-backups' ) . '</th><td><code>' . esc_html( $path ) . '</code><p class="description">' . esc_html__( 'Archives use random filenames and the directory includes Apache and IIS deny rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a writable directory outside the public web root.', 'core-blueprint-backups' ) . '</p></td></tr>';
-		echo '<tr><th>' . esc_html__( 'Storage location', 'core-blueprint-backups' ) . '</th><td>' . ( $inside_content ? '<span class="dashicons dashicons-warning"></span> ' . esc_html__( 'Inside wp-content; protected where the web server honours supplied deny rules.', 'core-blueprint-backups' ) : '<span class="dashicons dashicons-yes-alt"></span> ' . esc_html__( 'Outside wp-content.', 'core-blueprint-backups' ) ) . '</td></tr>';
-		echo '<tr><th>' . esc_html__( 'PHP ZIP', 'core-blueprint-backups' ) . '</th><td>' . ( class_exists( 'ZipArchive' ) ? esc_html__( 'Available', 'core-blueprint-backups' ) : esc_html__( 'Missing', 'core-blueprint-backups' ) ) . '</td></tr>';
-		echo '<tr><th>' . esc_html__( 'Background execution', 'core-blueprint-backups' ) . '</th><td>' . esc_html__( 'Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser is only a monitor and may be closed during backups.', 'core-blueprint-backups' ) . '</td></tr>';
-		echo '<tr><th>' . esc_html__( 'WP-Cron', 'core-blueprint-backups' ) . '</th><td>' . ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ? esc_html__( 'Disabled — the loopback worker still runs started jobs; use a server cron/CLI runner as watchdog and for schedules.', 'core-blueprint-backups' ) : esc_html__( 'Enabled', 'core-blueprint-backups' ) ) . '</td></tr>';
+		echo '<table class="widefat cb-core-kv"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Storage', 'core-blueprint-backups' ) . '</th><td><code>' . esc_html( $path ) . '</code><p class="description">' . esc_html__( 'Archives use random filenames and the directory includes Apache and IIS deny rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a writable directory outside the public web root.', 'core-blueprint-backups' ) . '</p></td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Storage location', 'core-blueprint-backups' ) . '</th><td>' . ( $inside_content ? '<span class="dashicons dashicons-warning"></span> ' . esc_html__( 'Inside wp-content; protected where the web server honours supplied deny rules.', 'core-blueprint-backups' ) : '<span class="dashicons dashicons-yes-alt"></span> ' . esc_html__( 'Outside wp-content.', 'core-blueprint-backups' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'PHP ZIP', 'core-blueprint-backups' ) . '</th><td>' . ( class_exists( 'ZipArchive' ) ? esc_html__( 'Available', 'core-blueprint-backups' ) : esc_html__( 'Missing', 'core-blueprint-backups' ) ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'Background execution', 'core-blueprint-backups' ) . '</th><td>' . esc_html__( 'Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser is only a monitor and may be closed during backups.', 'core-blueprint-backups' ) . '</td></tr>';
+		echo '<tr><th scope="row">' . esc_html__( 'WP-Cron', 'core-blueprint-backups' ) . '</th><td>' . ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ? esc_html__( 'Disabled — the loopback worker still runs started jobs; use a server cron/CLI runner as watchdog and for schedules.', 'core-blueprint-backups' ) : esc_html__( 'Enabled', 'core-blueprint-backups' ) ) . '</td></tr>';
 		echo '</tbody></table>';
 		echo '</section>';
 	}
@@ -577,7 +579,7 @@ final class Page implements PageContract {
 		echo '<div class="cb-backups-progress"><span id="cb-backups-progress-bar" style="width:' . esc_attr( (string) $job['progress'] ) . '%"></span></div>';
 		echo '<p class="cb-backups-progress-line"><strong id="cb-backups-progress-value">' . esc_html( (string) $job['progress'] ) . '%</strong> · <span id="cb-backups-stage">' . esc_html( (string) $data['stage_label'] ) . '</span></p>';
 
-		echo '<dl class="cb-backups-metrics">';
+		echo '<dl class="cb-core-tiles cb-backups-metrics">';
 		$this->metric( __( 'Database rows', 'core-blueprint-backups' ), '<span id="cb-backups-rows">' . esc_html( $this->rows_label( $data ) ) . '</span>' );
 		$this->metric( __( 'Tables', 'core-blueprint-backups' ), '<span id="cb-backups-tables">' . esc_html( $this->tables_label( $data ) ) . '</span>' );
 		if ( $is_website ) {
@@ -665,7 +667,7 @@ final class Page implements PageContract {
 	}
 
 	private function metric( string $label, string $value_html ): void {
-		echo '<div class="cb-backups-metric"><dt>' . esc_html( $label ) . '</dt><dd>' . wp_kses( $value_html, [ 'span' => [ 'id' => true ] ] ) . '</dd></div>';
+		echo '<div class="cb-core-tile cb-core-tile--metric cb-core-tile--neutral cb-backups-metric"><dt class="cb-core-tile__label">' . esc_html( $label ) . '</dt><dd class="cb-core-tile__value">' . wp_kses( $value_html, [ 'span' => [ 'id' => true ] ] ) . '</dd></div>';
 	}
 
 	/** @return array<string,mixed>|null */
