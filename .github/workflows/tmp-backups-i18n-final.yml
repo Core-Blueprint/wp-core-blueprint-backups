@@ -1,0 +1,162 @@
+name: Temporary Backups final i18n QC
+
+on:
+  push:
+    branches:
+      - qc/backups-launch-readiness
+    paths:
+      - '.github/workflows/tmp-backups-i18n-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  i18n:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install catalog tooling
+        run: |
+          python -m pip install --disable-pip-version-check polib deep-translator
+          sudo apt-get update -qq && sudo apt-get install -y gettext
+      - name: Build protected launch catalogs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          import time
+          from pathlib import Path
+          import polib
+          from deep_translator import GoogleTranslator
+          from deep_translator.exceptions import TranslationNotFound
+
+          pot = polib.pofile('languages/core-blueprint-backups.pot')
+          entries = [entry for entry in pot if entry.msgid and not entry.obsolete]
+          locales = {
+              'nl_NL': ('nl', 'nplurals=2; plural=(n != 1);'),
+              'de_DE': ('de', 'nplurals=2; plural=(n != 1);'),
+              'fr_FR': ('fr', 'nplurals=2; plural=(n > 1);'),
+              'es_ES': ('es', 'nplurals=2; plural=(n != 1);'),
+              'it_IT': ('it', 'nplurals=2; plural=(n != 1);'),
+              'pt_PT': ('pt', 'nplurals=2; plural=(n != 1);'),
+          }
+          token_re = re.compile(r'%(?:\d+\$)?[-+0 #]*(?:\d+)?(?:\.\d+)?[bcdeEfFgGosuxX]|\{[A-Za-z0-9_.:-]+\}|<[^>]+>|\[[A-Za-z0-9_.:/-]+\]')
+          printf_re = re.compile(r'%(?:\d+\$)?[-+0 #]*(?:\d+)?(?:\.\d+)?[bcdeEfFgGosuxX]')
+          brace_re = re.compile(r'\{[A-Za-z0-9_.:-]+\}')
+          html_re = re.compile(r'<[^>]+>')
+
+          def signature(value):
+              return (printf_re.findall(value), brace_re.findall(value), html_re.findall(value))
+
+          def translate_text(translator, value):
+              if not value.strip():
+                  return value
+              last = None
+              for attempt in range(3):
+                  try:
+                      translated = translator.translate(value)
+                      return translated or value
+                  except TranslationNotFound:
+                      return value
+                  except Exception as exc:
+                      last = exc
+                      time.sleep(1 + attempt)
+              raise RuntimeError(f'translation failed: {last}')
+
+          def translate_preserving(translator, source):
+              out = []
+              pos = 0
+              for match in token_re.finditer(source):
+                  out.append(translate_text(translator, source[pos:match.start()]))
+                  out.append(match.group(0))
+                  pos = match.end()
+              out.append(translate_text(translator, source[pos:]))
+              result = ''.join(out)
+              if signature(source) != signature(result):
+                  raise RuntimeError(f'placeholder mismatch: {source!r} -> {result!r}')
+              return result
+
+          unique = []
+          seen = set()
+          for entry in entries:
+              for value in (entry.msgid, entry.msgid_plural):
+                  if value and value not in seen:
+                      seen.add(value)
+                      unique.append(value)
+
+          for locale, (target, plural_forms) in locales.items():
+              translator = GoogleTranslator(source='en', target=target)
+              translated = {}
+              for index, source in enumerate(unique, 1):
+                  translated[source] = translate_preserving(translator, source)
+                  if index % 50 == 0:
+                      print(f'{locale}: translated {index}/{len(unique)}')
+
+              po = polib.POFile()
+              po.metadata = {
+                  'Project-Id-Version': 'Core Blueprint Backups 1.0.0-rc1',
+                  'PO-Revision-Date': time.strftime('%Y-%m-%d %H:%M+0000', time.gmtime()),
+                  'Last-Translator': 'Core Blueprint',
+                  'Language-Team': locale,
+                  'Language': locale,
+                  'MIME-Version': '1.0',
+                  'Content-Type': 'text/plain; charset=UTF-8',
+                  'Content-Transfer-Encoding': '8bit',
+                  'Plural-Forms': plural_forms,
+              }
+              for source_entry in entries:
+                  entry = polib.POEntry(
+                      msgid=source_entry.msgid,
+                      msgctxt=source_entry.msgctxt,
+                      occurrences=list(source_entry.occurrences),
+                      comment=source_entry.comment,
+                      tcomment=source_entry.tcomment,
+                      flags=list(source_entry.flags),
+                  )
+                  if source_entry.msgid_plural:
+                      entry.msgid_plural = source_entry.msgid_plural
+                      entry.msgstr_plural[0] = translated[source_entry.msgid]
+                      entry.msgstr_plural[1] = translated[source_entry.msgid_plural]
+                  else:
+                      entry.msgstr = translated[source_entry.msgid]
+                  po.append(entry)
+              po_path = Path('languages') / f'core-blueprint-backups-{locale}.po'
+              mo_path = Path('languages') / f'core-blueprint-backups-{locale}.mo'
+              po.save(str(po_path))
+              po.save_as_mofile(str(mo_path))
+              print(f'{locale}_ENTRIES={len(entries)}')
+          PY
+          for locale in nl_NL de_DE fr_FR es_ES it_IT pt_PT; do
+            po="languages/core-blueprint-backups-${locale}.po"
+            mo="languages/core-blueprint-backups-${locale}.mo"
+            test -s "$po" && test -s "$mo"
+            msgfmt --check --check-format -o "/tmp/${locale}.mo" "$po"
+            missing=$(msgattrib --untranslated "$po" | grep -c '^msgid ' || true)
+            echo "${locale}_UNTRANSLATED=${missing}"
+            test "$missing" -eq 0
+          done
+      - name: PHP and contract sanity
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l >/tmp/backups-php-lint.log
+          grep -q "Text Domain: core-blueprint-backups" core-blueprint-backups.php
+          grep -q "Domain Path: /languages" core-blueprint-backups.php
+          grep -q "load_plugin_textdomain( 'core-blueprint-backups'" core-blueprint-backups.php
+          grep -q 'RemoteRouteRegistry' src/Integration/Beacon.php
+      - name: Commit catalogs
+        shell: bash
+        run: |
+          git config user.name 'Core Blueprint CI'
+          git config user.email 'actions@users.noreply.github.com'
+          git add languages/
+          git diff --cached --check
+          git commit -m 'Add Backups launch translation catalogs'
+          git push origin HEAD:qc/backups-launch-readiness
