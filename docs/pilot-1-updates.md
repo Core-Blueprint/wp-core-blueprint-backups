@@ -15,7 +15,7 @@ Backups itself does **not** own license activation, update discovery, package de
 - License Product key: `core-blueprint-backups`
 - Marketplace software UUID: **not hard-coded in this plugin**
 
-The License Product key is a bootstrap/transport identifier only. During the first successful licensed update handshake, Marketplace resolves that Product key through the public License Manager Product Catalog + Product Identity contracts and returns the canonical Marketplace software UUID. Core Blueprint Updates stores and uses that UUID for subsequent update checks.
+The License Product key is a bootstrap/transport identifier only. Backups advertises that key to the central Updates client; it is displayed read-only and cannot be replaced in the connection form. During the first successful licensed update handshake, Marketplace resolves that Product key through the public License Manager Product Catalog + Product Identity contracts and returns the canonical Marketplace software UUID. Core Blueprint Updates verifies the returned Marketplace software slug/type against the installed plugin before storing and using that UUID for subsequent update checks.
 
 ## Dependency boundary
 
@@ -43,7 +43,7 @@ It must never:
 4. Create/confirm the Marketplace Backups software entry and bind its immutable Marketplace software UUID to that License Product through Marketplace licensing.
 5. Publish the reviewed Backups `1.0.0-rc2` ZIP through the Core Blueprint Repository provider so Marketplace records the exact immutable Repository release reference and SHA-256.
 6. Install/activate the approved Core Blueprint Updates rc2 client on Infused Academy.
-7. In Core Blueprint Updates, connect Backups using the real license key and Product key `core-blueprint-backups`.
+7. In Core Blueprint Updates, confirm Backups displays Product key `core-blueprint-backups`, enter the real Backups license key and connect. The Product key itself is not editable.
 8. Confirm the license key is not persisted and an activation credential is stored locally instead.
 9. Trigger/check WordPress plugin updates. Backups rc1 must receive rc2 metadata from the native WordPress updater surface.
 10. Run **Update now**. Core Blueprint Updates must obtain a fresh short-lived Marketplace package grant, download from `https://coreblueprint.io`, verify the package SHA-256 and hand the verified ZIP to the native upgrader.
@@ -55,7 +55,8 @@ It must never:
 Before declaring PILOT-1 complete, verify at least:
 
 - invalid/revoked activation: no update package;
-- wrong Product key: activation/update authorization denied;
+- the registered Product key has no matching License Product or Marketplace binding: activation/update authorization fails closed;
+- a mismatched Marketplace software slug/type is returned: the Updates client refuses the identity;
 - suspended Marketplace publisher or retired software: no update distribution;
 - unavailable Repository delivery: metadata may report an update, but no installable package URL is issued;
 - altered package bytes/checksum mismatch: Core Blueprint Updates refuses the ZIP;
