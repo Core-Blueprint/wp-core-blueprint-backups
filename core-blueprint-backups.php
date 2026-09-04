@@ -2,8 +2,9 @@
 /**
  * Plugin Name: Core Blueprint Backups
  * Plugin URI:  https://coreblueprint.io
+ * Update URI:  https://coreblueprint.io/
  * Description: Governed database and full-site backups for Core Blueprint, with local restore/migration, scheduling, CLI and optional Beacon remote orchestration.
- * Version:     1.0.0-rc2
+ * Version:     1.0.0-rc3
  * Author:      Core Blueprint
  * Author URI:  https://coreblueprint.io
  * License:     GPL-2.0+
@@ -24,7 +25,7 @@ if ( defined( 'CB_BACKUPS_FILE' ) ) {
 	return;
 }
 
-define( 'CB_BACKUPS_VERSION', '1.0.0-rc2' );
+define( 'CB_BACKUPS_VERSION', '1.0.0-rc3' );
 define( 'CB_BACKUPS_DB_VERSION', '1.0' );
 define( 'CB_BACKUPS_FILE', __FILE__ );
 define( 'CB_BACKUPS_DIR', plugin_dir_path( __FILE__ ) );
