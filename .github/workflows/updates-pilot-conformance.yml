@@ -1,0 +1,42 @@
+name: Backups Updates pilot conformance
+
+on:
+  push:
+    paths:
+      - 'core-blueprint-backups.php'
+      - 'src/Integration/Updates.php'
+      - 'tests/updates-pilot-regression.php'
+      - 'docs/pilot-1-updates.md'
+      - '.github/workflows/updates-pilot-conformance.yml'
+  pull_request:
+    paths:
+      - 'core-blueprint-backups.php'
+      - 'src/Integration/Updates.php'
+      - 'tests/updates-pilot-regression.php'
+      - 'docs/pilot-1-updates.md'
+      - '.github/workflows/updates-pilot-conformance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Lint pilot PHP surface
+        run: |
+          php -l core-blueprint-backups.php
+          php -l src/Integration/Updates.php
+          php -l tests/updates-pilot-regression.php
+
+      - name: Run Updates registration regression
+        run: php tests/updates-pilot-regression.php
