@@ -1,6 +1,6 @@
 # PILOT-1 — Core Blueprint Backups licensed update acceptance
 
-Status: implementation candidate / Backups `1.0.0-rc2`
+Status: implementation candidate / Backups `1.0.0-rc3`
 
 ## Purpose
 
@@ -11,11 +11,14 @@ Backups itself does **not** own license activation, update discovery, package de
 ## Canonical pilot identity
 
 - Plugin basename: `core-blueprint-backups/core-blueprint-backups.php`
-- Installed release candidate: `1.0.0-rc2`
+- Installed release candidate: `1.0.0-rc3`
+- WordPress Update URI: `https://coreblueprint.io/`
 - License Product key: `core-blueprint-backups`
 - Marketplace software UUID: **not hard-coded in this plugin**
 
-The License Product key is a bootstrap/transport identifier only. Backups advertises that key to the central Updates client; it is displayed read-only and cannot be replaced in the connection form. During the first successful licensed update handshake, Marketplace resolves that Product key through the public License Manager Product Catalog + Product Identity contracts and returns the canonical Marketplace software UUID. Core Blueprint Updates verifies the returned Marketplace software slug/type against the installed plugin before storing and using that UUID for subsequent update checks.
+The Update URI prevents WordPress from treating wordpress.org as the update authority for this premium plugin. Actual licensed update metadata and package delivery remain owned by Core Blueprint Updates and coreblueprint.io.
+
+The License Product key is a bootstrap/transport identifier only. Backups advertises that key to the central Updates client; it is displayed read-only and cannot be replaced in the connection form. During the first successful licensed update handshake, Marketplace resolves that Product key through the public License Manager Product Catalog + Product Identity contracts and returns the canonical Marketplace software UUID. Core Blueprint Updates verifies the returned Marketplace software slug/type against the installed plugin before storing the UUID. After that first successful bootstrap the UUID is pinned: a missing, malformed or different UUID fails closed and cannot silently replace the established software identity.
 
 ## Dependency boundary
 
@@ -38,17 +41,18 @@ It must never:
 ## Infused Academy acceptance sequence
 
 1. Keep the currently installed Backups `1.0.0-rc1` available as the old-version baseline.
-2. Merge and package this Backups `1.0.0-rc2` candidate without renaming the plugin root folder.
-3. On `coreblueprint.io`, create or confirm a License Product whose Product key is exactly `core-blueprint-backups`.
-4. Create/confirm the Marketplace Backups software entry and bind its immutable Marketplace software UUID to that License Product through Marketplace licensing.
-5. Publish the reviewed Backups `1.0.0-rc2` ZIP through the Core Blueprint Repository provider so Marketplace records the exact immutable Repository release reference and SHA-256.
-6. Install/activate the approved Core Blueprint Updates rc2 client on Infused Academy.
-7. In Core Blueprint Updates, confirm Backups displays Product key `core-blueprint-backups`, enter the real Backups license key and connect. The Product key itself is not editable.
-8. Confirm the license key is not persisted and an activation credential is stored locally instead.
-9. Trigger/check WordPress plugin updates. Backups rc1 must receive rc2 metadata from the native WordPress updater surface.
-10. Run **Update now**. Core Blueprint Updates must obtain a fresh short-lived Marketplace package grant, download from `https://coreblueprint.io`, verify the package SHA-256 and hand the verified ZIP to the native upgrader.
-11. Confirm Backups remains active after the update and reports `1.0.0-rc2`.
-12. Re-run a normal Backups database backup and verify operation still succeeds.
+2. Merge and package this Backups `1.0.0-rc3` candidate without renaming the plugin root folder.
+3. Confirm the packaged plugin header contains `Update URI: https://coreblueprint.io/`.
+4. On `coreblueprint.io`, create or confirm a License Product whose Product key is exactly `core-blueprint-backups`.
+5. Create/confirm the Marketplace Backups software entry and bind its immutable Marketplace software UUID to that License Product through Marketplace licensing.
+6. Publish the reviewed Backups `1.0.0-rc3` ZIP through the Core Blueprint Repository provider so Marketplace records the exact immutable Repository release reference and SHA-256.
+7. Install/activate the approved Core Blueprint Updates `0.1.0-rc3` client on Infused Academy.
+8. In Core Blueprint Updates, confirm Backups displays Product key `core-blueprint-backups`, enter the real Backups license key and connect. The Product key itself is not editable.
+9. Confirm the license key is not persisted and an activation credential is stored locally instead.
+10. Trigger/check WordPress plugin updates. Backups rc1 must receive rc3 metadata from the native WordPress updater surface.
+11. Run **Update now**. Core Blueprint Updates must obtain a fresh short-lived Marketplace package grant, download from `https://coreblueprint.io`, verify the package SHA-256 and hand the verified ZIP to the native upgrader.
+12. Confirm Backups remains active after the update and reports `1.0.0-rc3`.
+13. Re-run a normal Backups database backup and verify operation still succeeds.
 
 ## Fail-closed acceptance cases
 
@@ -57,9 +61,11 @@ Before declaring PILOT-1 complete, verify at least:
 - invalid/revoked activation: no update package;
 - the registered Product key has no matching License Product or Marketplace binding: activation/update authorization fails closed;
 - a mismatched Marketplace software slug/type is returned: the Updates client refuses the identity;
+- first authorized response omits a valid Marketplace UUID: refused;
+- after UUID bootstrap, a different valid Marketplace UUID is returned for the same slug/type: refused without replacing the pinned local UUID;
 - suspended Marketplace publisher or retired software: no update distribution;
 - unavailable Repository delivery: metadata may report an update, but no installable package URL is issued;
 - altered package bytes/checksum mismatch: Core Blueprint Updates refuses the ZIP;
 - expired package grant: a fresh check is performed before download rather than trusting stale transient metadata.
 
-PILOT-1 is complete only after the real Infused Academy rc1 → rc2 native update passes this matrix.
+PILOT-1 is complete only after the real Infused Academy rc1 → rc3 native update passes this matrix.
