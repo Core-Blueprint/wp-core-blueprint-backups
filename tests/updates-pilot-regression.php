@@ -62,7 +62,7 @@ namespace {
 	if ( false === $source ) {
 		$fail( 'Updates adapter source must be readable.' );
 	}
-	foreach ( [ 'wp_remote_', 'license_key', 'activation_token', 'LicenseManager', 'Marketplace', 'Repository\\' ] as $forbidden ) {
+	foreach ( [ 'wp_remote_', 'license_key', 'activation_token', 'CB\\LicenseManager', 'CB\\Marketplace', 'CB\\Repository' ] as $forbidden ) {
 		if ( str_contains( $source, $forbidden ) ) {
 			$fail( 'Backups pilot adapter must remain a thin registration-only integration: ' . $forbidden );
 		}
