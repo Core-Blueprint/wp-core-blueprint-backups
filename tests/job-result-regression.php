@@ -56,6 +56,10 @@ namespace {
 		try { $call(); } catch ( JsonResponse $r ) { return $r; }
 		throw new RuntimeException( 'Expected JSON response.' );
 	}
+	function metric_has( string $html, string $label, string $value_id, string $value ): bool {
+		return str_contains( $html, 'class="cb-core-tile__label">' . $label . '</dt>' )
+			&& str_contains( $html, '<span id="' . $value_id . '">' . $value . '</span>' );
+	}
 
 	$root = dirname(__DIR__);
 	require $root . '/src/Support/Capabilities.php';
@@ -124,14 +128,14 @@ namespace {
 	]);
 	Repository::$jobs['restore-1'] = $website;
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
-	check_result( str_contains($html, '<dt>Restored files verified</dt><dd><span id="cb-backups-files">14,900 / 14,900</span>'), 'Terminal HTML must use verified filesystem counts and their label.' );
-	check_result( str_contains($html, '<dt>Restored filesystem data</dt><dd><span id="cb-backups-file-bytes">' . (463 * $mb) . '</span>'), 'Terminal HTML must show filesystem bytes without the extraction-byte ratio.' );
+	check_result( metric_has( $html, 'Restored files verified', 'cb-backups-files', '14,900 / 14,900' ), 'Terminal HTML must use verified filesystem counts and their label.' );
+	check_result( metric_has( $html, 'Restored filesystem data', 'cb-backups-file-bytes', (string) (463 * $mb) ), 'Terminal HTML must show filesystem bytes without the extraction-byte ratio.' );
 	check_result( ! str_contains($html, '15,804 / 15,802'), 'Terminal HTML mixed archive and filesystem counts.' );
 	Repository::$jobs['restore-1']['stage'] = 'extract';
 	Repository::$jobs['restore-1']['status'] = 'running';
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
-	check_result( str_contains($html, '<dt>Payloads extracted</dt><dd><span id="cb-backups-files">15,804 / 15,804</span>'), 'Active server-rendered extraction must use the archive payload domain.' );
-	check_result( str_contains($html, '<dt>Data extracted</dt><dd><span id="cb-backups-file-bytes">' . (494 * $mb) . '</span>'), 'Extraction bytes must be absolute before polling starts.' );
+	check_result( metric_has( $html, 'Payloads extracted', 'cb-backups-files', '15,804 / 15,804' ), 'Active server-rendered extraction must use the archive payload domain.' );
+	check_result( metric_has( $html, 'Data extracted', 'cb-backups-file-bytes', (string) (494 * $mb) ), 'Extraction bytes must be absolute before polling starts.' );
 	check_result( ! str_contains($html, 'cb-backups-next-steps'), 'Follow-up guidance must not invite navigation before migration completes.' );
 	Repository::$jobs['restore-1'] = $job;
 	Repository::$jobs['restore-1']['status'] = 'failed';

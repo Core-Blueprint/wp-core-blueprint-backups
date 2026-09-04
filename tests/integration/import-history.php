@@ -1,9 +1,24 @@
 <?php
 declare(strict_types=1);
 
-// Only the Base page interface is doubled. WordPress, SQL, Repository and Page
-// rendering are real; no archive is restored by this presentation regression.
+// Only the Base page/UI contracts are doubled. WordPress, SQL, Repository and
+// Page rendering are real; no archive is restored by this presentation regression.
 namespace CB\Core\Admin { interface Page {} }
+namespace CB\Core\UI {
+	final class StateBadge {
+		public const NEUTRAL = 'neutral';
+		public const SUCCESS = 'success';
+		public const ERROR = 'error';
+		public const INFO = 'info';
+		public const WARNING = 'warning';
+
+		/** @param array<string,mixed> $args */
+		public static function render( string $label, array $args = [] ): string {
+			$variant = (string) ( $args['variant'] ?? self::NEUTRAL );
+			return '<span class="cb-core-state-badge cb-core-state-badge--' . htmlspecialchars( $variant ) . '">' . htmlspecialchars( $label ) . '</span>';
+		}
+	}
+}
 namespace {
 	require __DIR__ . '/bootstrap.php';
 
