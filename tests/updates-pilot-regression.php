@@ -15,7 +15,7 @@ namespace CB\Updates {
 namespace {
 	define( 'ABSPATH', __DIR__ );
 	define( 'CB_BACKUPS_BASENAME', 'core-blueprint-backups/core-blueprint-backups.php' );
-	define( 'CB_BACKUPS_VERSION', '1.0.0-rc4' );
+	define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );
 
 	$GLOBALS['cb_backups_pilot_actions'] = [];
 	function add_action( string $hook, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool {
@@ -35,8 +35,8 @@ namespace {
 	if ( false === $bootstrap ) {
 		$fail( 'Backups bootstrap must be readable.' );
 	}
-	if ( ! str_contains( $bootstrap, 'Version:     1.0.0-rc4' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc4' );" ) ) {
-		$fail( 'Backups package/runtime version declarations must both be rc4.' );
+	if ( ! str_contains( $bootstrap, 'Version:     1.0.0-rc1' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );" ) ) {
+		$fail( 'Backups package/runtime version declarations must both use the suite-wide v1.0.0-rc1 release baseline.' );
 	}
 	if ( ! str_contains( $bootstrap, 'Update URI:  https://coreblueprint.io/' ) ) {
 		$fail( 'Premium Backups must pin WordPress update authority to coreblueprint.io.' );
