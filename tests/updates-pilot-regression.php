@@ -15,7 +15,7 @@ namespace CB\Updates {
 namespace {
 	define( 'ABSPATH', __DIR__ );
 	define( 'CB_BACKUPS_BASENAME', 'core-blueprint-backups/core-blueprint-backups.php' );
-	define( 'CB_BACKUPS_VERSION', '1.0.0-rc3' );
+	define( 'CB_BACKUPS_VERSION', '1.0.0-rc4' );
 
 	$GLOBALS['cb_backups_pilot_actions'] = [];
 	function add_action( string $hook, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool {
@@ -35,8 +35,8 @@ namespace {
 	if ( false === $bootstrap ) {
 		$fail( 'Backups bootstrap must be readable.' );
 	}
-	if ( ! str_contains( $bootstrap, 'Version:     1.0.0-rc3' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc3' );" ) ) {
-		$fail( 'Backups package/runtime version declarations must both be rc3.' );
+	if ( ! str_contains( $bootstrap, 'Version:     1.0.0-rc4' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc4' );" ) ) {
+		$fail( 'Backups package/runtime version declarations must both be rc4.' );
 	}
 	if ( ! str_contains( $bootstrap, 'Update URI:  https://coreblueprint.io/' ) ) {
 		$fail( 'Premium Backups must pin WordPress update authority to coreblueprint.io.' );
@@ -65,8 +65,16 @@ namespace {
 	if ( 'core-blueprint-backups' !== ( $descriptor['product_key'] ?? null ) ) {
 		$fail( 'Backups must use the canonical pilot License Product key.' );
 	}
+	if ( 'core-blueprint' !== ( $descriptor['vendor_id'] ?? null ) ) {
+		$fail( 'Backups must declare the durable Core Blueprint vendor identity.' );
+	}
 	if ( '' !== ( $descriptor['software_uuid'] ?? null ) ) {
 		$fail( 'The Marketplace software UUID must not be invented or hard-coded into Backups.' );
+	}
+	foreach ( [ 'vendor_origin', 'canonical_origin', 'services', 'endpoints' ] as $authority_field ) {
+		if ( array_key_exists( $authority_field, $descriptor ) ) {
+			$fail( 'Backups must not declare vendor origin or service authority: ' . $authority_field );
+		}
 	}
 
 	$source = file_get_contents( dirname( __DIR__ ) . '/src/Integration/Updates.php' );
@@ -79,5 +87,5 @@ namespace {
 		}
 	}
 
-	echo "Core Blueprint Backups PILOT-1 Updates registration regression PASS\n";
+	echo "Core Blueprint Backups PILOT-1 vendor-aware Updates registration regression PASS\n";
 }
