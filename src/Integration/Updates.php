@@ -8,6 +8,7 @@ defined( 'ABSPATH' ) || exit;
 /** Optional adapter for the central Core Blueprint Updates client. */
 final class Updates {
 	public const PRODUCT_KEY = 'core-blueprint-backups';
+	public const VENDOR_ID   = 'core-blueprint';
 
 	private static bool $registered = false;
 
@@ -30,6 +31,7 @@ final class Updates {
 			'plugin'        => CB_BACKUPS_BASENAME,
 			'version'       => CB_BACKUPS_VERSION,
 			'product_key'   => self::PRODUCT_KEY,
+			'vendor_id'     => self::VENDOR_ID,
 			// The canonical Marketplace software UUID is learned after the first
 			// successful licensed handshake and is deliberately not hard-coded here.
 			'software_uuid' => '',
