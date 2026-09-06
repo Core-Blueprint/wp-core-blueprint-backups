@@ -82,7 +82,7 @@ final class Bootstrap {
 				'core-blueprint-backups',
 				[
 					'label'       => __( 'Backups', 'core-blueprint-backups' ),
-					'description' => __( 'Review Backups storage and execution configuration. Backup, restore and scheduling operations remain in the Backups workspace.', 'core-blueprint-backups' ),
+					'description' => __( 'Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser is only a monitor and may be closed during backups.', 'core-blueprint-backups' ),
 					'group'       => SettingsRegistry::GROUP_INFRASTRUCTURE,
 					'capability'  => Capabilities::MANAGE,
 					'renderer'    => [ Settings::class, 'render' ],
