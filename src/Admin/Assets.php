@@ -5,6 +5,7 @@ namespace CB\Backups\Admin;
 
 use CB\Backups\Jobs\Repository;
 use CB\Core\Admin\PageRegistry;
+use CB\Core\Admin\SettingsRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -18,7 +19,9 @@ final class Assets {
 	}
 
 	public static function enqueue( string $hook ): void {
-		if ( $hook !== PageRegistry::hook_suffix( 'core-blueprint-backups' ) ) {
+		$is_operational = $hook === PageRegistry::hook_suffix( 'core-blueprint-backups' );
+		$is_settings    = self::is_settings_request();
+		if ( ! $is_operational && ! $is_settings ) {
 			return;
 		}
 
@@ -28,6 +31,11 @@ final class Assets {
 			[],
 			CB_BACKUPS_VERSION
 		);
+
+		if ( $is_settings ) {
+			return;
+		}
+
 		wp_enqueue_style(
 			'cb-backups-job-monitor',
 			CB_BACKUPS_URL . 'assets/css/job-monitor.css',
@@ -224,5 +232,21 @@ final class Assets {
 			$args['tab'] = is_array( $job ) && 'restore' === (string) ( $job['kind'] ?? '' ) ? 'restore' : 'backups';
 		}
 		return add_query_arg( $args, admin_url( 'admin.php' ) );
+	}
+
+	private static function is_settings_request(): bool {
+		$extension = isset( $_GET['extension'] ) ? sanitize_key( wp_unslash( (string) $_GET['extension'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only admin routing.
+		if ( 'core-blueprint-backups' !== $extension ) {
+			return false;
+		}
+
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only admin routing.
+		$query = wp_parse_url( SettingsRegistry::url( 'core-blueprint-backups' ), PHP_URL_QUERY );
+		if ( ! is_string( $query ) || '' === $query ) {
+			return false;
+		}
+
+		parse_str( $query, $args );
+		return isset( $args['page'] ) && $page === sanitize_key( (string) $args['page'] );
 	}
 }

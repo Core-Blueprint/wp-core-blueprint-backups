@@ -61,7 +61,7 @@ add_action( 'plugins_loaded', static function (): void {
 	if ( version_compare( PHP_VERSION, '8.4', '<' ) ) {
 		$errors[] = sprintf( 'PHP 8.4 or newer is required; this server runs PHP %s.', PHP_VERSION );
 	}
-	if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
+	if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
 		$errors[] = 'A compatible Core Blueprint Base installation is required.';
 	}
 	if ( ! class_exists( 'ZipArchive' ) ) {

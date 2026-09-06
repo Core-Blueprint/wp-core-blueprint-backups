@@ -6,6 +6,7 @@ namespace CB\Backups;
 use CB\Backups\Admin\Actions;
 use CB\Backups\Admin\Assets;
 use CB\Backups\Admin\Page;
+use CB\Backups\Admin\Settings;
 use CB\Backups\DB\Schema;
 use CB\Backups\Jobs\Dispatcher;
 use CB\Backups\Jobs\Runner;
@@ -17,6 +18,7 @@ use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\SiteHealth;
 use CB\Backups\Support\Capabilities;
 use CB\Core\Admin\PageRegistry;
+use CB\Core\Admin\SettingsRegistry;
 use CB\Core\Dashboard\CardRegistry;
 use CB\Core\ExtensionRegistry;
 
@@ -75,6 +77,24 @@ final class Bootstrap {
 			);
 		} );
 
+		add_action( 'cb_core_register_settings', static function (): void {
+			SettingsRegistry::register(
+				'core-blueprint-backups',
+				[
+					'label'       => __( 'Backups', 'core-blueprint-backups' ),
+					'description' => __( 'Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser is only a monitor and may be closed during backups.', 'core-blueprint-backups' ),
+					'group'       => SettingsRegistry::GROUP_INFRASTRUCTURE,
+					'capability'  => Capabilities::MANAGE,
+					'renderer'    => [ Settings::class, 'render' ],
+					'icon'        => 'settings',
+					'requirements' => [
+						'foundations' => [],
+						'components'  => [ 'panels', 'kv-table' ],
+					],
+				]
+			);
+		} );
+
 		add_action( 'cb_backups_run_job', [ Runner::class, 'scheduled_tick' ], 10, 1 );
 		add_action( 'cb_backups_scheduler_tick', [ Scheduler::class, 'run_due' ] );
 		add_filter( 'cb_core_cli_register_commands', [ self::class, 'register_cli_commands' ] );
@@ -116,7 +136,7 @@ final class Bootstrap {
 			[
 				'id'         => 'settings',
 				'label'      => __( 'Settings', 'core-blueprint-backups' ),
-				'url'        => add_query_arg( 'tab', 'settings', $base_url ),
+				'url'        => SettingsRegistry::url( 'core-blueprint-backups' ),
 				'capability' => Capabilities::MANAGE,
 				'order'      => 30,
 			],
@@ -124,7 +144,7 @@ final class Bootstrap {
 	}
 
 	public static function activate(): void {
-		if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
+		if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
 			deactivate_plugins( CB_BACKUPS_BASENAME );
 			wp_die( esc_html( 'Core Blueprint Backups requires an active, compatible Core Blueprint Base installation.' ) );
 		}
