@@ -53,7 +53,7 @@ cb_backups_settings_hub_expect( str_contains( $bootstrap, 'SettingsRegistry::GRO
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "'capability'  => Capabilities::MANAGE" ), 'Settings provider must preserve the Backups capability.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "'renderer'    => [ Settings::class, 'render' ]" ), 'Settings provider must use the Backups-owned diagnostics renderer.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "SettingsRegistry::url( 'core-blueprint-backups' )" ), 'Settings-specific dashboard deep link must use the canonical SettingsRegistry URL.' );
-cb_backups_settings_hub_expect( ! str_contains( $bootstrap, "add_query_arg( 'tab', 'settings', $base_url )" ), 'Old settings deep link must be removed.' );
+cb_backups_settings_hub_expect( ! str_contains( $bootstrap, "add_query_arg( 'tab', 'settings', \$base_url )" ), 'Old settings deep link must be removed.' );
 
 // Existing diagnostic semantics are preserved in the new provider.
 foreach ( [ 'Storage', 'Storage location', 'PHP ZIP', 'Background execution', 'WP-Cron', 'CB_BACKUPS_STORAGE_PATH' ] as $needle ) {
@@ -63,8 +63,8 @@ foreach ( [ 'Storage', 'Storage location', 'PHP ZIP', 'Background execution', 'W
 // Assets: settings provider gets only plugin settings styling; operation monitor stays operational.
 cb_backups_settings_hub_expect( str_contains( $assets, "PageRegistry::hook_suffix( 'core-blueprint-backups' )" ), 'Operational asset scope must remain PageRegistry-based.' );
 cb_backups_settings_hub_expect( str_contains( $assets, "SettingsRegistry::url( 'core-blueprint-backups' )" ), 'Settings asset scope must derive from the canonical SettingsRegistry URL.' );
-cb_backups_settings_hub_expect( str_contains( $assets, "'core-blueprint-backups' !== $extension" ), 'Settings assets must verify the Backups provider identity.' );
-$settings_return = strpos( $assets, "if ( $is_settings ) {\n\t\t\treturn;" );
+cb_backups_settings_hub_expect( str_contains( $assets, "'core-blueprint-backups' !== \$extension" ), 'Settings assets must verify the Backups provider identity.' );
+$settings_return = strpos( $assets, "if ( \$is_settings ) {\n\t\t\treturn;" );
 $job_monitor     = strpos( $assets, "'cb-backups-job-monitor'" );
 cb_backups_settings_hub_expect( false !== $settings_return && false !== $job_monitor && $settings_return < $job_monitor, 'Settings provider must return before operational job-monitor assets are enqueued.' );
 
