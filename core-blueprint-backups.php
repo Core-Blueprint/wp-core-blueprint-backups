@@ -26,6 +26,7 @@ if ( defined( 'CB_BACKUPS_FILE' ) ) {
 }
 
 define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );
+define( 'CB_BACKUPS_REQUIRED_API', '1.0' );
 define( 'CB_BACKUPS_DB_VERSION', '1.0' );
 define( 'CB_BACKUPS_FILE', __FILE__ );
 define( 'CB_BACKUPS_DIR', plugin_dir_path( __FILE__ ) );
@@ -44,12 +45,44 @@ spl_autoload_register( static function ( string $class ): void {
 	}
 } );
 
+function cb_backups_api_compatible( string $available, string $required ): bool {
+	if ( 1 !== preg_match( '/^(\d+)\.(\d+)$/', $available, $a ) || 1 !== preg_match( '/^(\d+)\.(\d+)$/', $required, $r ) ) {
+		return false;
+	}
+	return (int) $a[1] === (int) $r[1] && (int) $a[2] >= (int) $r[2];
+}
+
+function cb_backups_base_ready(): bool {
+	return defined( 'CB_CORE_API_VERSION' )
+		&& cb_backups_api_compatible( (string) CB_CORE_API_VERSION, CB_BACKUPS_REQUIRED_API )
+		&& class_exists( '\\CB\\Core\\Database\\SchemaRegistry' )
+		&& interface_exists( '\\CB\\Core\\Admin\\Page' )
+		&& class_exists( '\\CB\\Core\\Admin\\PageRegistry' )
+		&& class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' )
+		&& class_exists( '\\CB\\Core\\ExtensionRegistry' )
+		&& class_exists( '\\CB\\Core\\Governance\\Audit' )
+		&& class_exists( '\\CB\\Core\\Governance\\EventRegistry' );
+}
+
+function cb_backups_activate(): void {
+	if ( ! cb_backups_base_ready() ) {
+		deactivate_plugins( CB_BACKUPS_BASENAME );
+		wp_die(
+			esc_html( 'Core Blueprint Backups requires an active Core Blueprint Base installation with a compatible public API.' ),
+			esc_html( 'Core Blueprint Backups - Activation Error' ),
+			[ 'back_link' => true ]
+		);
+	}
+
+	\CB\Backups\Bootstrap::activate();
+}
+
 // Attach lightweight suite/update integrations before any feature-runtime
 // dependency can stop the Backups boot sequence.
 \CB\Backups\Bootstrap::register_suite_integration();
 \CB\Backups\Integration\Updates::init();
 
-register_activation_hook( __FILE__, [ \CB\Backups\Bootstrap::class, 'activate' ] );
+register_activation_hook( __FILE__, 'cb_backups_activate' );
 register_deactivation_hook( __FILE__, [ \CB\Backups\Bootstrap::class, 'deactivate' ] );
 
 add_action( 'init', static function (): void {
@@ -61,7 +94,7 @@ add_action( 'plugins_loaded', static function (): void {
 	if ( version_compare( PHP_VERSION, '8.4', '<' ) ) {
 		$errors[] = sprintf( 'PHP 8.4 or newer is required; this server runs PHP %s.', PHP_VERSION );
 	}
-	if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
+	if ( ! cb_backups_base_ready() ) {
 		$errors[] = 'A compatible Core Blueprint Base installation is required.';
 	}
 	if ( ! class_exists( 'ZipArchive' ) ) {
