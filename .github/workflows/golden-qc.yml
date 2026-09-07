@@ -1,0 +1,89 @@
+name: Backups Golden QC
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golden-qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install PHP 8.4, PHP 8.5 and gettext
+        run: |
+          sudo add-apt-repository ppa:ondrej/php -y
+          sudo apt-get update
+          sudo apt-get install -y php8.4-cli php8.5-cli gettext
+          php8.4 -v
+          php8.5 -v
+          msgfmt --version | head -n1
+
+      - name: Golden contract regression
+        run: |
+          php8.4 tests/golden-contract-regression.php
+          php8.5 tests/golden-contract-regression.php
+
+      - name: Lint all PHP on 8.4
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php8.4 -l
+
+      - name: Lint all PHP on 8.5
+        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php8.5 -l
+
+      - name: JavaScript syntax
+        run: |
+          node --check assets/js/admin.js
+          node --check assets/js/job-monitor.js
+          node --check assets/js/job-handoff.js
+          node --check assets/js/job-terminal-recovery.js
+          node --check assets/js/restore-confirmation.js
+
+      - name: Existing source regressions
+        run: |
+          php8.4 tests/rc15-migration-smoke.php
+          php8.4 tests/rc15-filesystem-policy-smoke.php
+          php8.4 tests/rc15-filesystem-commit-policy-smoke.php
+          php8.4 tests/rc15-job-presentation-smoke.php
+          php8.4 tests/rc15-job-monitor-smoke.php
+          php8.4 tests/job-result-regression.php
+          php8.4 tests/restore-confirmation-regression.php
+          php8.4 tests/extension-registration-regression.php
+          php8.4 tests/first-party-integration-lifecycle-regression.php
+          php8.4 tests/settings-hub-regression.php
+          php8.4 tests/updates-pilot-regression.php
+
+      - name: Build validated production package
+        run: |
+          python3 tools/build-release.py \
+            --output dist \
+            --php-bin php8.4 \
+            --php-bin php8.5
+
+      - name: Verify package outputs
+        run: |
+          test -s dist/core-blueprint-backups-1.0.0-rc1.zip
+          test -s dist/core-blueprint-backups-1.0.0-rc1.zip.sha256
+          (cd dist && sha256sum -c core-blueprint-backups-1.0.0-rc1.zip.sha256)
+
+      - name: Upload validated release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-blueprint-backups-1.0.0-rc1
+          path: |
+            dist/core-blueprint-backups-1.0.0-rc1.zip
+            dist/core-blueprint-backups-1.0.0-rc1.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
