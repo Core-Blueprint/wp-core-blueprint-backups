@@ -11,22 +11,24 @@ defined( 'ABSPATH' ) || exit;
 final class JobResource {
 	/** @param array<string,mixed> $job @return array<string,mixed> */
 	public static function from_job( array $job ): array {
-		$kind   = (string) ( $job['kind'] ?? '' );
-		$status = (string) ( $job['status'] ?? '' );
-		$meta   = is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
-		$type   = in_array( (string) ( $job['backup_type'] ?? '' ), [ 'database', 'website' ], true ) ? (string) $job['backup_type'] : 'database';
+		$kind            = (string) ( $job['kind'] ?? '' );
+		$status          = (string) ( $job['status'] ?? '' );
+		$meta            = is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
+		$request_context = is_array( $meta['request_context'] ?? null ) ? $meta['request_context'] : [];
+		$type            = in_array( (string) ( $job['backup_type'] ?? '' ), [ 'database', 'website' ], true ) ? (string) $job['backup_type'] : 'database';
+		$run_id          = trim( sanitize_text_field( (string) ( $request_context['run_id'] ?? '' ) ) );
 
 		$metrics = [
-			'database_rows_done'      => max( 0, (int) ( $meta['db_rows_done'] ?? 0 ) ),
-			'database_rows_total'     => max( 0, (int) ( $meta['db_rows_total'] ?? 0 ) ),
-			'database_tables_done'    => max( 0, (int) ( $meta['db_tables_done'] ?? 0 ) ),
-			'database_tables_total'   => max( 0, (int) ( $meta['db_tables_total'] ?? 0 ) ),
-			'files_done'              => max( 0, (int) ( $meta['files_done'] ?? 0 ) ),
-			'files_total'             => max( 0, (int) ( $meta['files_total'] ?? 0 ) ),
-			'files_bytes_done'        => max( 0, (int) ( $meta['files_bytes_done'] ?? 0 ) ),
-			'files_bytes_total'       => max( 0, (int) ( $meta['files_bytes_total'] ?? 0 ) ),
-			'verification_done'       => max( 0, (int) ( $meta['restore_verify_done'] ?? $meta['verify_done'] ?? 0 ) ),
-			'verification_total'      => max( 0, (int) ( $meta['restore_verify_total'] ?? $meta['verify_total'] ?? 0 ) ),
+			'database_rows_done'    => max( 0, (int) ( $meta['db_rows_done'] ?? 0 ) ),
+			'database_rows_total'   => max( 0, (int) ( $meta['db_rows_total'] ?? 0 ) ),
+			'database_tables_done'  => max( 0, (int) ( $meta['db_tables_done'] ?? 0 ) ),
+			'database_tables_total' => max( 0, (int) ( $meta['db_tables_total'] ?? 0 ) ),
+			'files_done'            => max( 0, (int) ( $meta['files_done'] ?? 0 ) ),
+			'files_total'           => max( 0, (int) ( $meta['files_total'] ?? 0 ) ),
+			'files_bytes_done'      => max( 0, (int) ( $meta['files_bytes_done'] ?? 0 ) ),
+			'files_bytes_total'     => max( 0, (int) ( $meta['files_bytes_total'] ?? 0 ) ),
+			'verification_done'     => max( 0, (int) ( $meta['restore_verify_done'] ?? $meta['verify_done'] ?? 0 ) ),
+			'verification_total'    => max( 0, (int) ( $meta['restore_verify_total'] ?? $meta['verify_total'] ?? 0 ) ),
 		];
 
 		return [
@@ -34,6 +36,7 @@ final class JobResource {
 			'job_id'           => (string) ( $job['job_id'] ?? '' ),
 			'kind'             => 'verify' === $kind ? 'verify' : 'backup',
 			'type'             => $type,
+			'run_id'           => '' !== $run_id ? substr( $run_id, 0, 64 ) : null,
 			'state'            => self::state( $status ),
 			'stage'            => self::stage( $kind, (string) ( $job['stage'] ?? '' ), $status ),
 			'progress_percent' => max( 0, min( 100, (int) ( $job['progress'] ?? 0 ) ) ),

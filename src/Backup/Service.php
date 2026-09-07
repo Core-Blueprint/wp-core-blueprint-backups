@@ -22,12 +22,21 @@ final class Service {
 		if ( is_multisite() ) {
 			throw new RuntimeException( 'Multisite backups are not supported in backup format v1.' );
 		}
+
+		$safe_context = self::safe_context( $context );
+		if ( 'hub' === $trigger && ! empty( $safe_context['run_id'] ) ) {
+			$existing = Repository::find_hub_backup_by_run_id( (string) $safe_context['run_id'], $type );
+			if ( is_array( $existing ) ) {
+				return $existing;
+			}
+		}
+
 		if ( Repository::has_active() ) {
 			throw new RuntimeException( 'Another backup or restore job is already active.' );
 		}
 		LocalStorage::ensure();
 		$meta = [
-			'request_context'          => self::safe_context( $context ),
+			'request_context'          => $safe_context,
 			'started_timestamp'        => time(),
 			'typical_duration_seconds' => Telemetry::median_duration( $type ) ?? 0,
 		];
@@ -35,7 +44,7 @@ final class Service {
 		if ( ! $job ) {
 			throw new RuntimeException( 'Backup job could not be created.' );
 		}
-		Audit::log( 'backups.backup.started', 'notice', array_merge( [ 'job_id' => $job['job_id'], 'type' => $type, 'trigger' => $trigger ], self::safe_context( $context ) ) );
+		Audit::log( 'backups.backup.started', 'notice', array_merge( [ 'job_id' => $job['job_id'], 'type' => $type, 'trigger' => $trigger ], $safe_context ) );
 
 		// The server owns execution. The browser only monitors state. A single
 		// cron event remains as a recovery watchdog if loopback dispatch fails.

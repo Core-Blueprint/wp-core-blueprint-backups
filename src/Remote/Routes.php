@@ -84,6 +84,11 @@ final class Routes {
 			],
 		] );
 
+		self::control_route( '/backups/schedules/(?P<type>database|website)', [
+			'methods'  => WP_REST_Server::CREATABLE,
+			'callback' => [ self::class, 'update_schedule_type' ],
+		] );
+
 		self::control_route( '/backups/(?P<backup_id>[A-Za-z0-9._-]+\.cbbackup)/download-ticket', [
 			'methods'  => WP_REST_Server::CREATABLE,
 			'callback' => [ self::class, 'download_ticket' ],
@@ -211,6 +216,24 @@ final class Routes {
 		return new WP_REST_Response( ScheduleResource::current(), 200 );
 	}
 
+	public static function update_schedule_type( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$input = $request->get_json_params();
+		if ( ! is_array( $input ) ) {
+			return self::error( 'cb_backups_invalid_schedule', 'A backup schedule object is required.', 400, false );
+		}
+
+		$type   = sanitize_key( (string) $request['type'] );
+		$mapped = ScheduleResource::to_scheduler_type_input( $type, $input );
+		if ( is_wp_error( $mapped ) ) {
+			return $mapped;
+		}
+
+		$context                  = self::actor_context( $request );
+		$context['schedule_type'] = $type;
+		Scheduler::save( $mapped, 'hub', $context );
+		return new WP_REST_Response( ScheduleResource::current(), 200 );
+	}
+
 	public static function download_ticket( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$backup_id = basename( sanitize_file_name( (string) $request['backup_id'] ) );
 		$backup    = BackupResource::find( $backup_id );
@@ -259,8 +282,8 @@ final class Routes {
 		if ( null === $backup ) {
 			return self::error( 'cb_backups_backup_not_found', 'Backup not found.', 404, false );
 		}
-		$path = LocalStorage::archive_path( $backup_id );
-		$size = filesize( $path );
+		$path   = LocalStorage::archive_path( $backup_id );
+		$size   = filesize( $path );
 		$stream = fopen( $path, 'rb' );
 		if ( false === $stream || false === $size ) {
 			if ( is_resource( $stream ) ) {
@@ -284,7 +307,6 @@ final class Routes {
 		] + $context );
 		exit;
 	}
-
 
 	/**
 	 * Permit cross-origin Fetch streaming only from the authenticated Hub
@@ -332,7 +354,7 @@ final class Routes {
 		if ( ! in_array( $scheme, [ 'http', 'https' ], true ) || '' === $host ) {
 			return '';
 		}
-		$port = isset( $parts['port'] ) ? (int) $parts['port'] : 0;
+		$port         = isset( $parts['port'] ) ? (int) $parts['port'] : 0;
 		$default_port = ( 'https' === $scheme ) ? 443 : 80;
 		return $scheme . '://' . $host . ( $port > 0 && $port !== $default_port ? ':' . $port : '' );
 	}
