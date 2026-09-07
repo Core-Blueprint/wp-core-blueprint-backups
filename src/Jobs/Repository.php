@@ -64,6 +64,7 @@ final class Repository {
 		}
 
 		$needle = '%"run_id":"' . $wpdb->esc_like( $run_id ) . '"%';
+		$needle = str_replace( '\\"', '"', $needle );
 		$sql    = $wpdb->prepare(
 			'SELECT * FROM ' . Schema::table() . ' WHERE kind = %s AND backup_type = %s AND trigger_source = %s AND meta LIKE %s ORDER BY id DESC LIMIT 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			'backup',
