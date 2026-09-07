@@ -106,7 +106,7 @@ final class Bootstrap {
 		ExtensionRegistry::register( [
 			'id'           => 'core-blueprint-backups',
 			'plugin_file'  => CB_BACKUPS_BASENAME,
-			'requires_api' => '1.0',
+			'requires_api' => CB_BACKUPS_REQUIRED_API,
 			'menu_url'     => admin_url( 'admin.php?page=core-blueprint-backups' ),
 			'status_id'    => 'backups',
 		] );
