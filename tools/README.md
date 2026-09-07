@@ -65,6 +65,14 @@ The builder fails unless all of these gates pass:
 - the ZIP passes CRC verification;
 - a SHA-256 sidecar is generated only after validation succeeds.
 
+## Translation maintenance
+
+`refresh-translations.py` is a maintainer aid, not release authority. It can create candidate translations from the English POT while protecting technical literals, HTML and printf placeholders.
+
+Generated output must be reviewed in the target language before it is accepted into the release catalogs. CI must not automatically push machine-translated PO/MO files to a release branch.
+
+The production builder remains the hard gate: a locale that is empty, fuzzy, placeholder-incompatible or predominantly identical to English cannot produce a Golden package.
+
 ## Failure handling
 
 A failing build is not a releasable artifact. Fix the source, catalog or environment problem and rebuild. Never edit a generated ZIP manually to bypass a gate.
