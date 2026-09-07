@@ -39,6 +39,48 @@ final class Repository {
 		return is_array( $row ) ? self::normalise( $row ) : null;
 	}
 
+	/**
+	 * Find the newest Hub-created backup for one persistent Hub run.
+	 *
+	 * The Hub run UUID is stored inside request_context metadata rather than in
+	 * its own column. Match the exact JSON key/value token so a lost HTTP start
+	 * response can safely adopt a queued, running or already completed job
+	 * without creating a duplicate backup. The UUID is validated before it is
+	 * used in the bounded LIKE lookup and the returned metadata is verified
+	 * again after normalisation.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public static function find_hub_backup_by_run_id( string $run_id, string $type ): ?array {
+		global $wpdb;
+
+		$run_id = strtolower( trim( $run_id ) );
+		$type   = sanitize_key( $type );
+		if (
+			! preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $run_id )
+			|| ! in_array( $type, [ 'database', 'website' ], true )
+		) {
+			return null;
+		}
+
+		$needle = '%"run_id":"' . $wpdb->esc_like( $run_id ) . '"%';
+		$sql    = $wpdb->prepare(
+			'SELECT * FROM ' . Schema::table() . ' WHERE kind = %s AND backup_type = %s AND trigger_source = %s AND meta LIKE %s ORDER BY id DESC LIMIT 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			'backup',
+			$type,
+			'hub',
+			$needle
+		);
+		$row = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		if ( ! is_array( $row ) ) {
+			return null;
+		}
+
+		$job     = self::normalise( $row );
+		$context = is_array( $job['meta']['request_context'] ?? null ) ? $job['meta']['request_context'] : [];
+		return hash_equals( $run_id, strtolower( (string) ( $context['run_id'] ?? '' ) ) ) ? $job : null;
+	}
+
 	/** @param array<string,mixed> $fields */
 	public static function update( string $job_id, array $fields ): void {
 		global $wpdb;
@@ -80,7 +122,6 @@ final class Repository {
 			'completed_at' => current_time( 'mysql', true ),
 		] );
 	}
-
 
 	public static function request_cancel( string $job_id ): bool {
 		$job = self::get( $job_id );
