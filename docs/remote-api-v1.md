@@ -1,10 +1,34 @@
 # Core Blueprint Backups — Remote API v1
 
-The Backups Remote API is exposed only while Core Blueprint Beacon is active and paired. Beacon owns authentication; Backups owns all backup jobs, archives, schedules and integrity state.
+The Backups Remote API is exposed only while Core Blueprint Beacon is active and paired. Beacon owns authentication and the generic remote transport boundary; Backups owns all backup jobs, archives, schedules, verification state and download streaming.
 
 REST namespace: `core-blueprint/v1`
 
 Remote schema version: `1`
+
+## Beacon integration boundary
+
+Backups registers authenticated control-plane routes through the canonical Golden Beacon contract:
+
+```php
+CB\Beacon\Rest\RemoteRouteRegistry
+```
+
+Browser-direct archive authorization uses:
+
+```php
+CB\Beacon\Tickets\Service
+```
+
+Registration occurs on the public Beacon lifecycle hook:
+
+```text
+cb_core_beacon_register_remote_routes
+```
+
+The hook is argument-free. Backups must not receive or duplicate Beacon's stored pairing secret and must not use the removed pre-v1 `CB\Core\Beacon` compatibility namespace.
+
+Backups remains fully usable locally when Beacon is absent or disabled.
 
 ## Routes
 
@@ -16,6 +40,7 @@ Remote schema version: `1`
 - `POST /backups/{backup_id}/verify`
 - `GET /backups/schedules`
 - `POST /backups/schedules`
+- `POST /backups/schedules/{type}`
 - `POST /backups/{backup_id}/download-ticket`
 - `GET /backups/download?ticket=...`
 
@@ -55,7 +80,7 @@ A failed explicit verification degrades the archive to `unverified` (fail closed
 
 Schedule time is stored as `HH:MM` wall-clock time in the managed WordPress site's timezone. `timezone` is returned explicitly so Hub must never reinterpret the local time as Hub time.
 
-A write sends the complete v1 schedule document with both `database` and `website` definitions. Hub edits local Backups configuration; the managed site continues to execute schedules independently when Hub is offline.
+A complete schedule write may update both `database` and `website` definitions. The type-specific route may update one schedule definition. Hub edits local Backups configuration; the managed site continues to execute schedules independently when Hub is offline.
 
 Retention applies to automatic scheduled backups only. Manual and Hub-triggered backups remain protected from automatic retention.
 
@@ -70,6 +95,8 @@ The ticket is:
 - single-use;
 - pairing-key bound;
 - HTTPS-only in normal operation.
+
+When a browser sends an `Origin` header, Backups also requires it to match the browser origin retained in the Beacon ticket context before exposing the streaming response cross-origin.
 
 Hub must not permanently store or PHP-buffer the backup payload.
 
