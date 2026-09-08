@@ -63,11 +63,11 @@
 	gap: 6px;
 	margin: 16px 20px 12px;
 	padding: 12px 14px;
-	border: 1px solid var(--cb-border, #c3c4c7);
-	border-inline-start: 4px solid var(--cb-success, #00a32a);
-	border-radius: var(--cb-radius-sm, 4px);
-	background: color-mix(in srgb, var(--cb-success, #00a32a) 10%, var(--cb-surface-0, #fff));
-	color: var(--cb-text-strong, #1d2327);
+	border: 1px solid var(--cb-border);
+	border-inline-start: 4px solid var(--cb-success);
+	border-radius: var(--cb-radius-sm);
+	background: color-mix(in srgb, var(--cb-success) 10%, var(--cb-surface-0));
+	color: var(--cb-text-strong);
 	line-height: 1.45;
 }
 
@@ -77,8 +77,8 @@
 }
 
 #wp-auth-check .cb-backups-auth-context__title {
-	color: var(--cb-success, #00a32a);
-	font-weight: 600;
+	color: var(--cb-success);
+	font-weight: var(--cb-fw-semibold);
 }
 
 @media (max-width: 782px) {
