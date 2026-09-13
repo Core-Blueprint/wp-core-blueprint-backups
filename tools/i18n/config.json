@@ -1,0 +1,10 @@
+{
+  "product": "Core Blueprint Backups",
+  "domain": "core-blueprint-backups",
+  "main_file": "core-blueprint-backups.php",
+  "version_constant": "CB_BACKUPS_VERSION",
+  "exclude": [".git", ".github", "docs", "languages", "tests", "tools", "dist", "node_modules"],
+  "skip_js": false,
+  "commit_mo": true,
+  "source_paths": ["core-blueprint-backups.php", "src", "assets", "uninstall.php"]
+}
