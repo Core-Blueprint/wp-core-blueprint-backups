@@ -13,6 +13,7 @@
  * Domain Path: /languages
  * Requires at least: 7.0
  * Requires PHP:      8.4
+ * Requires Plugins: core-blueprint
  *
  * @package Core_Blueprint_Backups
  */
@@ -43,8 +44,8 @@ if ( version_compare( PHP_VERSION, CB_BACKUPS_MIN_PHP, '<' ) ) {
 		}
 		deactivate_plugins( CB_BACKUPS_BASENAME );
 		wp_die(
-			esc_html( sprintf( '%s requires PHP %s or newer. This server runs PHP %s.', CB_BACKUPS_NAME, CB_BACKUPS_MIN_PHP, PHP_VERSION ) ),
-			esc_html( 'Core Blueprint dependency required' ),
+			esc_html( sprintf( 'PHP %1$s or newer is required. This server runs PHP %2$s.', CB_BACKUPS_MIN_PHP, PHP_VERSION ) ),
+			esc_html( 'Core Blueprint requirements not met' ),
 			[
 				'link_url'  => admin_url( 'plugins.php' ),
 				'link_text' => __( 'Plugins' ),
@@ -59,7 +60,7 @@ if ( version_compare( PHP_VERSION, CB_BACKUPS_MIN_PHP, '<' ) ) {
 		printf(
 			'<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
 			esc_html( CB_BACKUPS_NAME . ':' ),
-			esc_html( sprintf( 'PHP %s or newer is required. This server runs PHP %s.', CB_BACKUPS_MIN_PHP, PHP_VERSION ) )
+			esc_html( sprintf( 'PHP %1$s or newer is required. This server runs PHP %2$s.', CB_BACKUPS_MIN_PHP, PHP_VERSION ) )
 		);
 	} );
 
@@ -103,7 +104,7 @@ function cb_backups_fail_activation( string $message ): void {
 	deactivate_plugins( CB_BACKUPS_BASENAME );
 	wp_die(
 		esc_html( $message ),
-		esc_html( 'Core Blueprint dependency required' ),
+		esc_html( 'Core Blueprint requirements not met' ),
 		[
 			'link_url'  => admin_url( 'plugins.php' ),
 			'link_text' => __( 'Plugins' ),
@@ -113,10 +114,10 @@ function cb_backups_fail_activation( string $message ): void {
 
 function cb_backups_activate(): void {
 	if ( ! \CB\Backups\Support\Requirements::runtime_ready() ) {
-		cb_backups_fail_activation( \CB\Backups\Support\Requirements::operator_message() );
+		cb_backups_fail_activation( \CB\Backups\Support\Requirements::activation_message() );
 	}
 	if ( ! cb_backups_base_ready() ) {
-		cb_backups_fail_activation( 'Core Blueprint Backups requires the public Base services used by Backups. Update Core Blueprint Base first.' );
+		cb_backups_fail_activation( 'Required Core Blueprint Base contracts are unavailable.' );
 	}
 	\CB\Backups\Bootstrap::activate();
 }
@@ -158,7 +159,7 @@ add_action( 'plugins_loaded', static function (): void {
 
 	$errors = [];
 	if ( ! cb_backups_base_ready() ) {
-		$errors[] = 'Required public Core Blueprint Base services are unavailable.';
+		$errors[] = 'Required Core Blueprint Base contracts are unavailable.';
 	}
 	if ( ! class_exists( 'ZipArchive' ) ) {
 		$errors[] = 'The PHP ZIP extension (ZipArchive) is required.';
