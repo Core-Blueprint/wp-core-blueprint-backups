@@ -5,10 +5,13 @@
 ## Requirements
 
 - Python 3.10 or newer
+- WP-CLI with the `wp i18n` commands
+- GNU gettext (`msgfmt`) for catalog validation and deterministic MO compilation
 - Node.js for JavaScript syntax validation
-- GNU gettext (`msgfmt`) for PO validation and deterministic MO compilation
 - an actual PHP 8.4 CLI binary
 - an actual PHP 8.5 CLI binary
+
+`tools/i18n/update` additionally requires GNU gettext `msgmerge` and `msgattrib` when catalogs are intentionally refreshed.
 
 ## Usage
 
@@ -22,6 +25,19 @@ python3 tools/build-release.py \
 ```
 
 The version is intentionally fixed at `1.0.0-rc1` during the current Golden release-candidate patch cycle.
+
+## Localization authority
+
+The only first-party catalog workflow is:
+
+```text
+tools/i18n/update   # mutating maintenance workflow
+tools/i18n/check    # read-only release/conformance gate
+```
+
+POT and reviewed PO files are translation authority. The release builder runs `tools/i18n/check` before packaging and compiles fresh MO files from reviewed PO sources into the staged release.
+
+There is no machine-translation refresh path, compatibility alias or second POT/PO authority. Translation drafting may happen outside the canonical workflow, but only deliberately reviewed PO content may enter release catalogs.
 
 ## Outputs
 
@@ -53,30 +69,20 @@ The builder fails unless all of these gates pass:
 - plugin header and `CB_BACKUPS_VERSION` are exactly `1.0.0-rc1`;
 - `CB_BACKUPS_REQUIRED_API` is exactly `1.0`;
 - `Requires PHP` remains `8.4`;
-- all six launch locales exist: `nl_NL`, `de_DE`, `fr_FR`, `es_ES`, `it_IT`, `pt_PT`;
-- PO catalogs have no active fuzzy or untranslated entries;
-- printf placeholders remain compatible with their English source strings;
-- translation quality is not predominantly identical to English;
-- MO catalogs are rebuilt from PO source with GNU gettext;
+- canonical `tools/i18n/check` proves current source/POT/PO coverage, locale completeness, no fuzzy or untranslated release entries, placeholder compatibility and configured runtime-artifact reproducibility;
+- fresh MO catalogs are compiled from reviewed PO source with GNU gettext;
 - every packaged PHP file lints on actual PHP 8.4 and PHP 8.5 runtimes;
 - every packaged JavaScript file passes `node --check`;
 - CSS passes structural brace/comment validation;
 - the ZIP root and production-only boundary are canonical;
+- all six PO/MO locale artifacts are present in the ZIP;
 - the ZIP passes CRC verification;
 - a SHA-256 sidecar is generated only after validation succeeds.
 
-## Translation maintenance
-
-`refresh-translations.py` is a maintainer aid, not release authority. It can create candidate translations from the English POT while protecting technical literals, HTML and printf placeholders.
-
-Generated output must be reviewed in the target language before it is accepted into the release catalogs. CI must not automatically push machine-translated PO/MO files to a release branch.
-
-The production builder remains the hard gate: a locale that is empty, fuzzy, placeholder-incompatible or predominantly identical to English cannot produce a Golden package.
-
 ## Failure handling
 
-A failing build is not a releasable artifact. Fix the source, catalog or environment problem and rebuild. Never edit a generated ZIP manually to bypass a gate.
+A failing localization check or build is not a releasable artifact. Fix the source, reviewed catalog or environment problem and rebuild. Never edit a generated ZIP manually to bypass a gate.
 
 ## Maintenance
 
-When runtime directories, supported locales, the Base API contract or PHP support policy change, update `build-release.py` in the same patch. Keep tooling and documentation outside the release ZIP.
+When runtime directories, supported locales, the Base API contract or PHP support policy change, update the product config and release builder in the same patch. Keep tooling and documentation outside the release ZIP.

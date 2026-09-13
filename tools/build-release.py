@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import ast
 import hashlib
 import re
 import shutil
@@ -24,8 +23,6 @@ RUNTIME_FILES = ("core-blueprint-backups.php", "uninstall.php")
 RUNTIME_DIRS = ("src", "assets", "languages")
 DEV_PATH_PARTS = {".git", ".github", "docs", "tests", "tools", "node_modules", "vendor", "__pycache__"}
 JUNK_NAMES = {".DS_Store", "Thumbs.db"}
-PLACEHOLDER_RE = re.compile(r"%(?:\d+\$)?[-+0 #]*(?:\d+)?(?:\.\d+)?[bcdeEfFgGosuxX%]")
-PROJECT_VERSION_RE = re.compile(r"Project-Id-Version:\s*Core Blueprint Backups\s+([^\\\n]+)")
 
 
 def fail(message: str) -> None:
@@ -33,7 +30,7 @@ def fail(message: str) -> None:
 
 
 def run(command: list[str], *, capture: bool = False) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(command, text=True, capture_output=capture)
+    result = subprocess.run(command, cwd=ROOT, text=True, capture_output=capture)
     if result.returncode:
         detail = (result.stderr or result.stdout or "").strip()
         fail(f"command failed: {' '.join(command)}" + (f": {detail}" if detail else ""))
@@ -56,97 +53,11 @@ def source_contract(root: Path) -> None:
         fail(f"Requires PHP must remain {EXPECTED_REQUIRES_PHP}")
 
 
-def parse_po_blocks(text: str) -> list[dict[str, object]]:
-    entries: list[dict[str, object]] = []
-    for raw_block in re.split(r"\n\s*\n", text):
-        lines = raw_block.splitlines()
-        if not lines or any(line.startswith("#~") for line in lines):
-            continue
-        values: dict[str, str] = {}
-        current: str | None = None
-        fuzzy = any(line.startswith("#,") and "fuzzy" in line for line in lines)
-        for line in lines:
-            match = re.match(r"^(msgid|msgid_plural|msgstr(?:\[\d+\])?)\s+(\".*\")$", line)
-            if match:
-                current = match.group(1)
-                try:
-                    values[current] = str(ast.literal_eval(match.group(2)))
-                except (SyntaxError, ValueError) as exc:
-                    fail(f"invalid PO string: {line}: {exc}")
-                continue
-            if current and line.startswith('"'):
-                try:
-                    values[current] += str(ast.literal_eval(line))
-                except (SyntaxError, ValueError) as exc:
-                    fail(f"invalid PO continuation: {line}: {exc}")
-        msgid = values.get("msgid", "")
-        if msgid:
-            entries.append({"values": values, "fuzzy": fuzzy})
-    return entries
-
-
-def project_version(text: str, label: str) -> str:
-    match = PROJECT_VERSION_RE.search(text)
-    if not match:
-        fail(f"missing Project-Id-Version in {label}")
-    return match.group(1).strip()
-
-
-def check_i18n_source(root: Path) -> None:
-    lang = root / "languages"
-    pot = lang / f"{ROOT_NAME}.pot"
-    if not pot.is_file():
-        fail("missing POT catalog")
-    pot_text = pot.read_text(encoding="utf-8")
-    if project_version(pot_text, pot.name) != EXPECTED_VERSION:
-        fail("POT Project-Id-Version is stale")
-
-    for locale in EXPECTED_LOCALES:
-        po = lang / f"{ROOT_NAME}-{locale}.po"
-        if not po.is_file():
-            fail(f"missing PO catalog for {locale}")
-        text = po.read_text(encoding="utf-8")
-        if project_version(text, po.name) != EXPECTED_VERSION:
-            fail(f"{locale} Project-Id-Version is stale")
-        entries = parse_po_blocks(text)
-        if not entries:
-            fail(f"{locale} contains no active translation entries")
-
-        identical = 0
-        quality_total = 0
-        for entry in entries:
-            if bool(entry["fuzzy"]):
-                fail(f"{locale} contains an active fuzzy translation")
-            values = entry["values"]
-            assert isinstance(values, dict)
-            msgid = str(values.get("msgid", ""))
-            plural = str(values.get("msgid_plural", ""))
-            translations: list[tuple[str, str]] = []
-            if plural:
-                plural_values = [str(value) for key, value in sorted(values.items()) if key.startswith("msgstr[")]
-                if len(plural_values) < 2 or any(not value.strip() for value in plural_values):
-                    fail(f"{locale} has an untranslated plural entry: {msgid}")
-                translations.append((msgid, plural_values[0]))
-                translations.append((plural, plural_values[1]))
-            else:
-                translated = str(values.get("msgstr", ""))
-                if not translated.strip():
-                    fail(f"{locale} has an untranslated entry: {msgid}")
-                translations.append((msgid, translated))
-
-            for source, translated in translations:
-                if sorted(PLACEHOLDER_RE.findall(source)) != sorted(PLACEHOLDER_RE.findall(translated)):
-                    fail(f"{locale} placeholder mismatch: {source}")
-                alpha = re.sub(r"[^A-Za-zÀ-ÿ]", "", source)
-                if len(alpha) >= 5 and source not in {"WordPress", "Core Blueprint", "Core Blueprint Hub", "Core Blueprint Backups", "WP-Cron", "WP-CLI"}:
-                    quality_total += 1
-                    if source.casefold() == translated.casefold():
-                        identical += 1
-
-        if quality_total and (identical / quality_total) > 0.35:
-            fail(
-                f"{locale} translation quality gate failed: {identical}/{quality_total} substantial strings are identical to English"
-            )
+def run_i18n_check() -> None:
+    check = ROOT / "tools" / "i18n" / "check"
+    if not check.is_file():
+        fail("missing canonical i18n check")
+    run([str(check)], capture=True)
 
 
 def php_runtime(binary: str) -> tuple[int, int, str]:
@@ -179,9 +90,9 @@ def copy_runtime(source: Path, staged: Path) -> None:
                 fail(f"symlink not allowed: {path.relative_to(source)}")
             if not path.is_file():
                 continue
-            rel = path.relative_to(source)
             if path.name in JUNK_NAMES or path.suffix == ".pyc":
                 continue
+            rel = path.relative_to(source)
             target = staged / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(path, target)
@@ -191,10 +102,14 @@ def compile_translations(staged: Path) -> None:
     if shutil.which("msgfmt") is None:
         fail("GNU gettext msgfmt is required to build release translations")
     lang = staged / "languages"
+    for existing in lang.glob(f"{ROOT_NAME}-*.mo"):
+        existing.unlink()
     for locale in EXPECTED_LOCALES:
         po = lang / f"{ROOT_NAME}-{locale}.po"
         mo = lang / f"{ROOT_NAME}-{locale}.mo"
-        run(["msgfmt", "--check", "--check-format", "-o", str(mo), str(po)])
+        if not po.is_file():
+            fail(f"missing reviewed PO catalog for {locale}")
+        run(["msgfmt", "--check-format", "--check-header", "-o", str(mo), str(po)])
         if not mo.is_file() or mo.stat().st_size == 0:
             fail(f"compiled MO is missing for {locale}")
 
@@ -286,6 +201,11 @@ def validate_zip(target: Path) -> None:
             rel = name[len(ROOT_NAME) + 1 :] if name.startswith(ROOT_NAME + "/") else name
             if excluded_from_release(rel):
                 fail(f"development path entered release ZIP: {name}")
+        for locale in EXPECTED_LOCALES:
+            po = f"{ROOT_NAME}/languages/{ROOT_NAME}-{locale}.po"
+            mo = f"{ROOT_NAME}/languages/{ROOT_NAME}-{locale}.mo"
+            if po not in names or mo not in names:
+                fail(f"release ZIP is missing locale artifacts for {locale}")
 
 
 def write_checksum(target: Path) -> Path:
@@ -302,7 +222,7 @@ def main() -> None:
     args = parser.parse_args()
 
     source_contract(ROOT)
-    check_i18n_source(ROOT)
+    run_i18n_check()
     if not args.php_bins:
         fail("pass both PHP 8.4 and PHP 8.5 CLI binaries with --php-bin")
 
