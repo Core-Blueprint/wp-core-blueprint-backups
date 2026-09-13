@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import re
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+CATALOG = SCRIPT_DIR / "catalog.py"
+REFERENCE = SCRIPT_DIR / "reference.json"
+CONFIG_EXAMPLE = SCRIPT_DIR / "config.json.example"
+EXPECTED_IMPLEMENTATION = "core-blueprint-first-party-i18n"
+REQUIRED_CONFIG_KEYS = {
+    "product",
+    "domain",
+    "main_file",
+    "version_constant",
+    "exclude",
+    "skip_js",
+    "commit_mo",
+    "commit_l10n_php",
+    "source_paths",
+}
+
+
+def fail(message: str) -> None:
+    raise SystemExit(f"ERROR: {message}")
+
+
+def git_blob_id(content: bytes) -> str:
+    header = f"blob {len(content)}\0".encode("utf-8")
+    return hashlib.sha1(header + content).hexdigest()
+
+
+def main() -> None:
+    try:
+        metadata = json.loads(REFERENCE.read_text(encoding="utf-8"))
+        config = json.loads(CONFIG_EXAMPLE.read_text(encoding="utf-8"))
+        content = CATALOG.read_bytes()
+    except (OSError, ValueError) as exc:
+        fail(f"could not read canonical i18n reference: {exc}")
+
+    if metadata.get("implementation") != EXPECTED_IMPLEMENTATION:
+        fail("unexpected canonical i18n implementation id")
+
+    version = metadata.get("version")
+    if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        fail("reference version must use semantic major.minor.patch form")
+
+    source_match = re.search(rb'^I18N_TOOLING_VERSION = "([^"]+)"$', content, re.M)
+    source_version = source_match.group(1).decode("utf-8") if source_match else None
+    if source_version != version:
+        fail(f"catalog tooling version drift: source={source_version!r} reference={version!r}")
+
+    actual_blob = git_blob_id(content)
+    if actual_blob != metadata.get("catalog_git_blob"):
+        fail(
+            "catalog implementation drift: "
+            f"git-blob={actual_blob} expected={metadata.get('catalog_git_blob')}"
+        )
+
+    actual_sha256 = hashlib.sha256(content).hexdigest()
+    if actual_sha256 != metadata.get("catalog_sha256"):
+        fail(
+            "catalog implementation drift: "
+            f"sha256={actual_sha256} expected={metadata.get('catalog_sha256')}"
+        )
+
+    missing = sorted(REQUIRED_CONFIG_KEYS - set(config))
+    if missing:
+        fail("config.json.example missing keys: " + ", ".join(missing))
+    if config.get("commit_mo") is not False or config.get("commit_l10n_php") is not False:
+        fail("starter config example must not prescribe a runtime artifact policy")
+
+    for name in ("update", "check"):
+        wrapper = SCRIPT_DIR / name
+        if not wrapper.is_file():
+            fail(f"missing canonical operator entrypoint: tools/i18n/{name}")
+        wrapper_source = wrapper.read_text(encoding="utf-8")
+        if "tools/i18n/catalog.py" not in wrapper_source:
+            fail(f"tools/i18n/{name} must delegate to the canonical catalog engine")
+
+    catalog_text = content.decode("utf-8")
+    if "deep_translator" in catalog_text or "GoogleTranslator" in catalog_text:
+        fail("canonical engine must not use live machine translation")
+    if "commit_l10n_php" not in catalog_text or '"i18n", "make-php"' not in catalog_text:
+        fail("canonical engine must support reproducible WordPress PHP runtime artifacts")
+
+    print(
+        "Canonical i18n reference: PASS "
+        f"version={version} git-blob={actual_blob} sha256={actual_sha256}"
+    )
+
+
+if __name__ == "__main__":
+    main()

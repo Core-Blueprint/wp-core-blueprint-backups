@@ -1,0 +1,11 @@
+{
+  "product": "Core Blueprint Product",
+  "domain": "core-blueprint-product",
+  "main_file": "core-blueprint-product.php",
+  "version_constant": "CB_PRODUCT_VERSION",
+  "exclude": ["dist", "vendor", "node_modules", "tests", "tools", ".git", ".github"],
+  "skip_js": false,
+  "commit_mo": false,
+  "commit_l10n_php": false,
+  "source_paths": ["core-blueprint-product.php", "src", "assets"]
+}

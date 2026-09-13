@@ -6,5 +6,6 @@
   "exclude": [".git", ".github", "docs", "languages", "tests", "tools", "dist", "node_modules"],
   "skip_js": false,
   "commit_mo": true,
+  "commit_l10n_php": false,
   "source_paths": ["core-blueprint-backups.php", "src", "assets", "uninstall.php"]
 }
