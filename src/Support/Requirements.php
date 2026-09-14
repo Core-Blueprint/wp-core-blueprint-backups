@@ -5,7 +5,7 @@ namespace CB\Backups\Support;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Bootstrap v1 dependency readiness only: PHP, Base presence and Core API. */
+/** Bootstrap v1 and Backups product readiness. */
 final class Requirements {
 	public static function api_compatible( string $available, string $required ): bool {
 		if ( 1 !== preg_match( '/^(\d+)\.(\d+)$/', $available, $available_match ) ) {
@@ -19,7 +19,7 @@ final class Requirements {
 			&& (int) $available_match[2] >= (int) $required_match[2];
 	}
 
-	/** @return string[] */
+	/** @return string[] Stable Bootstrap v1 issue IDs. */
 	public static function issues(): array {
 		$issues = [];
 
@@ -96,6 +96,42 @@ final class Requirements {
 			default:
 				return __( 'Ready', 'core-blueprint-backups' );
 		}
+	}
+
+	/** Product-specific public Base contracts; intentionally outside Bootstrap v1. */
+	public static function base_contracts_ready(): bool {
+		return class_exists( '\\CB\\Core\\Database\\SchemaRegistry' )
+			&& interface_exists( '\\CB\\Core\\Admin\\Page' )
+			&& class_exists( '\\CB\\Core\\Admin\\PageRegistry' )
+			&& class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' )
+			&& class_exists( '\\CB\\Core\\ExtensionRegistry' )
+			&& class_exists( '\\CB\\Core\\Governance\\Audit' )
+			&& class_exists( '\\CB\\Core\\Governance\\EventRegistry' );
+	}
+
+	public static function product_ready(): bool {
+		return self::base_contracts_ready() && class_exists( 'ZipArchive' );
+	}
+
+	/** Untranslated product activation explanation for the early activation path. */
+	public static function product_activation_message(): string {
+		if ( ! self::base_contracts_ready() ) {
+			return 'Required Core Blueprint Base contracts are unavailable.';
+		}
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			return 'Core Blueprint Backups requires the PHP ZIP extension.';
+		}
+		return 'Ready';
+	}
+
+	public static function product_operator_message(): string {
+		if ( ! self::base_contracts_ready() ) {
+			return __( 'Required Core Blueprint Base contracts are unavailable.', 'core-blueprint-backups' );
+		}
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			return __( 'Core Blueprint Backups requires the PHP ZIP extension.', 'core-blueprint-backups' );
+		}
+		return __( 'Ready', 'core-blueprint-backups' );
 	}
 
 	private static function primary_issue(): string {

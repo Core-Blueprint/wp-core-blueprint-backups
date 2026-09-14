@@ -25,12 +25,24 @@ jobs:
 
       - name: Install PHP 8.4, PHP 8.5 and gettext
         run: |
+          set -euo pipefail
           sudo add-apt-repository ppa:ondrej/php -y
           sudo apt-get update
           sudo apt-get install -y php8.4-cli php8.5-cli gettext
           php8.4 -v
           php8.5 -v
           msgfmt --version | head -n1
+
+      - name: Install WP-CLI i18n toolchain
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o /tmp/wp
+          sudo install -m 0755 /tmp/wp /usr/local/bin/wp
+          wp --info
+          wp i18n make-pot --help >/dev/null
+
+      - name: Canonical i18n check
+        run: tools/i18n/check
 
       - name: Golden contract regression
         run: |
@@ -65,12 +77,24 @@ jobs:
           php8.4 tests/settings-hub-regression.php
           php8.4 tests/updates-pilot-regression.php
 
-      - name: Build validated production package
+      - name: Build validated production package twice
         run: |
-          python3 tools/build-release.py \
+          set -euo pipefail
+          mkdir -p dist
+          tools/build-release \
             --output dist \
             --php-bin php8.4 \
             --php-bin php8.5
+          first_sha="$(sha256sum dist/core-blueprint-backups-1.0.0-rc1.zip | awk '{print $1}')"
+          first_sidecar="$(cat dist/core-blueprint-backups-1.0.0-rc1.zip.sha256)"
+          tools/build-release \
+            --output dist \
+            --php-bin php8.4 \
+            --php-bin php8.5
+          second_sha="$(sha256sum dist/core-blueprint-backups-1.0.0-rc1.zip | awk '{print $1}')"
+          second_sidecar="$(cat dist/core-blueprint-backups-1.0.0-rc1.zip.sha256)"
+          test "$first_sha" = "$second_sha"
+          test "$first_sidecar" = "$second_sidecar"
 
       - name: Verify package outputs
         run: |

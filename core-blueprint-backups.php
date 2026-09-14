@@ -80,23 +80,6 @@ spl_autoload_register( static function ( string $class ): void {
 	}
 } );
 
-/* Backward-compatible product-prefixed wrappers around Bootstrap v1 semantics. */
-function cb_backups_api_compatible( string $available, string $required ): bool {
-	return \CB\Backups\Support\Requirements::api_compatible( $available, $required );
-}
-
-/** Product-specific public Base contracts; intentionally outside Bootstrap v1. */
-function cb_backups_base_ready(): bool {
-	return \CB\Backups\Support\Requirements::runtime_ready()
-		&& class_exists( '\\CB\\Core\\Database\\SchemaRegistry' )
-		&& interface_exists( '\\CB\\Core\\Admin\\Page' )
-		&& class_exists( '\\CB\\Core\\Admin\\PageRegistry' )
-		&& class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' )
-		&& class_exists( '\\CB\\Core\\ExtensionRegistry' )
-		&& class_exists( '\\CB\\Core\\Governance\\Audit' )
-		&& class_exists( '\\CB\\Core\\Governance\\EventRegistry' );
-}
-
 function cb_backups_fail_activation( string $message ): void {
 	if ( ! function_exists( 'deactivate_plugins' ) ) {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -116,8 +99,8 @@ function cb_backups_activate(): void {
 	if ( ! \CB\Backups\Support\Requirements::runtime_ready() ) {
 		cb_backups_fail_activation( \CB\Backups\Support\Requirements::activation_message() );
 	}
-	if ( ! cb_backups_base_ready() ) {
-		cb_backups_fail_activation( 'Required Core Blueprint Base contracts are unavailable.' );
+	if ( ! \CB\Backups\Support\Requirements::product_ready() ) {
+		cb_backups_fail_activation( \CB\Backups\Support\Requirements::product_activation_message() );
 	}
 	\CB\Backups\Bootstrap::activate();
 }
@@ -129,7 +112,7 @@ add_action( 'init', static function (): void {
 	load_plugin_textdomain( 'core-blueprint-backups', false, dirname( CB_BACKUPS_BASENAME ) . '/languages' );
 }, 0 );
 
-/* Lightweight suite/update integration starts after Bootstrap readiness. */
+/* Suite/update integrations attach only after complete Backups readiness. */
 add_action( 'plugins_loaded', static function (): void {
 	if ( ! \CB\Backups\Support\Requirements::runtime_ready() ) {
 		if ( is_admin() ) {
@@ -147,39 +130,23 @@ add_action( 'plugins_loaded', static function (): void {
 		return;
 	}
 
-	\CB\Backups\Bootstrap::register_suite_integration();
-	\CB\Backups\Integration\Updates::init();
-}, 1 );
-
-/* Backups retains its existing plugins_loaded:2 product runtime timing. */
-add_action( 'plugins_loaded', static function (): void {
-	if ( ! \CB\Backups\Support\Requirements::runtime_ready() ) {
-		return;
-	}
-
-	$errors = [];
-	if ( ! cb_backups_base_ready() ) {
-		$errors[] = 'Required Core Blueprint Base contracts are unavailable.';
-	}
-	if ( ! class_exists( 'ZipArchive' ) ) {
-		$errors[] = 'The PHP ZIP extension (ZipArchive) is required.';
-	}
-
-	if ( $errors ) {
+	if ( ! \CB\Backups\Support\Requirements::product_ready() ) {
 		if ( is_admin() ) {
-			add_action( 'admin_notices', static function () use ( $errors ): void {
+			add_action( 'admin_notices', static function (): void {
 				if ( ! current_user_can( 'activate_plugins' ) ) {
 					return;
 				}
-				echo '<div class="notice notice-error"><p><strong>Core Blueprint Backups:</strong></p><ul>';
-				foreach ( $errors as $error ) {
-					echo '<li>' . esc_html( $error ) . '</li>';
-				}
-				echo '</ul></div>';
+				printf(
+					'<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+					esc_html__( 'Core Blueprint Backups:', 'core-blueprint-backups' ),
+					esc_html( \CB\Backups\Support\Requirements::product_operator_message() )
+				);
 			} );
 		}
 		return;
 	}
 
+	\CB\Backups\Bootstrap::register_suite_integration();
+	\CB\Backups\Integration\Updates::init();
 	\CB\Backups\Bootstrap::boot();
 }, 2 );
