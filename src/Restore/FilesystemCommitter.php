@@ -232,15 +232,59 @@ final class FilesystemCommitter {
 			$name = self::decode_path( (string) ( $entry['name_b64'] ?? '' ) );
 			$target = WP_CONTENT_DIR . '/' . $name;
 			$old = $recovery . '/' . $name;
+			$had_old = ! empty( $entry['had_old'] );
+			$has_new = ! empty( $entry['has_new'] );
 			$state = (string) ( $entry['state'] ?? 'pending' );
+			$target_exists = self::exists( $target );
+			$old_exists = self::exists( $old );
+
+			if ( ! in_array( $state, [ 'pending', 'old_moved', 'new_moved', 'committed' ], true ) ) {
+				throw new RuntimeException( sprintf( 'Filesystem rollback journal contains an unknown state for wp-content/%s.', $name ) );
+			}
+
 			if ( 'pending' === $state ) {
+				if ( $had_old ) {
+					if ( $target_exists && ! $old_exists ) {
+						// The original entry is still live; the rename never happened.
+						continue;
+					}
+					if ( ! $target_exists && $old_exists ) {
+						// The live -> recovery rename completed before the journal advanced.
+						self::move_atomic( $old, $target );
+						continue;
+					}
+					throw new RuntimeException( sprintf( 'Filesystem rollback cannot safely reconcile pending state for wp-content/%s.', $name ) );
+				}
+
+				if ( ! $target_exists && ! $old_exists ) {
+					// There was no original entry and no restore mutation is durably recorded.
+					continue;
+				}
+				throw new RuntimeException( sprintf( 'Filesystem rollback cannot safely reconcile pending no-original state for wp-content/%s.', $name ) );
+			}
+
+			if ( $had_old ) {
+				if ( ! $old_exists ) {
+					throw new RuntimeException( sprintf( 'Filesystem rollback cannot recover original wp-content/%s because its recovery copy is missing.', $name ) );
+				}
+				if ( $target_exists ) {
+					if ( ! $has_new ) {
+						throw new RuntimeException( sprintf( 'Filesystem rollback found an unexpected live entry for delete-only wp-content/%s.', $name ) );
+					}
+					LocalStorage::remove_tree( $target );
+				}
+				self::move_atomic( $old, $target );
 				continue;
 			}
-			if ( self::exists( $target ) ) {
-				LocalStorage::remove_tree( $target );
+
+			if ( $old_exists ) {
+				throw new RuntimeException( sprintf( 'Filesystem rollback found unexpected recovery data for wp-content/%s that had no original live entry.', $name ) );
 			}
-			if ( self::exists( $old ) ) {
-				self::move_atomic( $old, $target );
+			if ( $target_exists ) {
+				if ( ! $has_new ) {
+					throw new RuntimeException( sprintf( 'Filesystem rollback found an unexpected live entry for absent wp-content/%s.', $name ) );
+				}
+				LocalStorage::remove_tree( $target );
 			}
 		}
 	}
