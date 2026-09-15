@@ -2,7 +2,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Core Blueprint Backups 1.0.0-rc1\n"
-"PO-Revision-Date: 2026-09-03 00:55+0000\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/core-blueprint-"
+"backups\n"
+"POT-Creation-Date: 2026-09-15 18:30+0000\n"
+"PO-Revision-Date: 2026-09-15 18:30+0000\n"
 "Last-Translator: Core Blueprint\n"
 "Language-Team: de_DE\n"
 "Language: de_DE\n"
@@ -10,1283 +13,197 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Core Blueprint i18n tooling 1.1.0\n"
 
-#: src/Admin/Actions.php:288
-#, php-format
-msgid "%1$d backups deleted; %2$d could not be deleted."
-msgstr "%1$d backups deleted; %2$d could not be deleted."
+#. Plugin Name of the plugin
+#: core-blueprint-backups.php
+msgid "Core Blueprint Backups"
+msgstr "Core Blueprint Backups"
 
-#: src/Admin/Assets.php:184
-#, php-format
-msgid "%d backup deleted."
-msgid_plural "%d backups deleted."
-msgstr[0] "%d backup deleted."
-msgstr[1] "%d backups deleted."
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: core-blueprint-backups.php
+msgid "https://coreblueprint.io"
+msgstr "https://coreblueprint.io"
 
-#: src/Admin/Assets.php:117
-#, php-format
-msgid "%d backups selected"
-msgstr "%d backups selected"
-
-#: src/Admin/Assets.php:116
-msgid "1 backup selected"
-msgstr "1 backup selected"
-
-#: src/Support/SiteHealth.php:65
-msgid "A recent Core Blueprint backup is available"
-msgstr "A recent Core Blueprint backup is available"
-
-#: src/Admin/Page.php:184 src/Admin/Page.php:479
-msgid "Actions"
-msgstr "Actions"
-
-#: src/Admin/JobPresentation.php:73
-msgid "Applying restored website…"
-msgstr "Applying restored website…"
-
-#: src/Admin/Page.php:492
-msgid "Archive verified"
-msgstr "Archive verified"
-
-#: src/Admin/Page.php:100
+#. Description of the plugin
+#: core-blueprint-backups.php
 msgid ""
-"Archive verified means the stored files passed checksum checks. Before a "
-"restore replaces live data, its database contents are also compared with the"
-" recorded source values. A successful restore rehearsal is a separate check."
+"Governed database and full-site backups for Core Blueprint, with local "
+"restore/migration, scheduling, CLI and optional Beacon remote orchestration."
 msgstr ""
-"Archive verified means the stored files passed checksum checks. Before a "
-"restore replaces live data, its database contents are also compared with the"
-" recorded source values. A successful restore rehearsal is a separate check."
+"Verwaltete Datenbank- und vollständige Website-Backups für Core Blueprint "
+"mit lokaler Wiederherstellung/Migration, Zeitplanung, CLI und optionaler "
+"Remote-Orchestrierung über Beacon."
 
-#: src/Admin/Page.php:453
-msgid ""
-"Archives use random filenames and the directory includes Apache and IIS deny"
-" rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a "
-"writable directory outside the public web root."
-msgstr ""
-"Archives use random filenames and the directory includes Apache and IIS deny"
-" rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a "
-"writable directory outside the public web root."
+#. Author of the plugin
+#: core-blueprint-backups.php src/Support/Capabilities.php:42
+msgid "Core Blueprint"
+msgstr "Core Blueprint"
 
-#: src/Bootstrap.php:222
-msgid "Automatic backup retention applied"
-msgstr "Automatic backup retention applied"
-
-#: src/Bootstrap.php:223
-msgid "Automatic backup retention failed"
-msgstr "Automatic backup retention failed"
-
-#: src/Admin/Page.php:371
-msgid ""
-"Automatic backup schedules are enabled, but the scheduler heartbeat is not "
-"recent. Configure a server cron running “cb backup run-due” when WP-Cron is "
-"disabled or site traffic is too low."
-msgstr ""
-"Automatic backup schedules are enabled, but the scheduler heartbeat is not "
-"recent. Configure a server cron running “cb backup run-due” when WP-Cron is "
-"disabled or site traffic is too low."
-
-#: src/Bootstrap.php:185
-msgid "Automatic backup schedules are healthy"
-msgstr "Automatic backup schedules are healthy"
-
-#: src/Support/SiteHealth.php:96
-msgid ""
-"Automatic schedules are enabled but no recent scheduler heartbeat was "
-"detected. Configure WP-Cron or a server cron before relying on automatic "
-"backups."
-msgstr ""
-"Automatic schedules are enabled but no recent scheduler heartbeat was "
-"detected. Configure WP-Cron or a server cron before relying on automatic "
-"backups."
-
-#: src/Admin/Page.php:455
-msgid "Available"
-msgstr "Available"
-
-#: src/Admin/Page.php:93
-msgid "Available backups"
-msgstr "Available backups"
-
-#: src/Admin/Page.php:456
-msgid "Background execution"
-msgstr "Background execution"
-
-#: src/Admin/Page.php:89
-msgid ""
-"Backs up the database and wp-content, including plugins, themes, uploads, MU"
-" plugins, languages and custom content files."
-msgstr ""
-"Backs up the database and wp-content, including plugins, themes, uploads, MU"
-" plugins, languages and custom content files."
-
-#: src/Admin/Page.php:398
-msgid "Backup"
-msgstr "Backup"
-
-#: src/Admin/Actions.php:229
-msgid "Backup archive could not be opened for download."
-msgstr "Backup archive could not be opened for download."
-
-#: src/Admin/Actions.php:207
-msgid "Backup archive could not be opened."
-msgstr "Backup archive could not be opened."
-
-#: src/Admin/JobPresentation.php:113
-msgid "Backup archive size"
-msgstr "Backup archive size"
-
-#: src/Admin/Assets.php:143
-msgid "Backup cancellation requested."
-msgstr "Backup cancellation requested."
-
-#: src/Bootstrap.php:206
-msgid "Backup cancelled"
-msgstr "Backup cancelled"
-
-#: src/Admin/Page.php:555
-msgid "Backup cancelled."
-msgstr "Backup cancelled."
-
-#: src/Admin/JobPresentation.php:59 src/Bootstrap.php:204
-msgid "Backup completed"
-msgstr "Backup completed"
-
-#: src/Bootstrap.php:211
-msgid "Backup deleted"
-msgstr "Backup deleted"
-
-#: src/Admin/Assets.php:193
-msgid "Backup deleted."
-msgstr "Backup deleted."
-
-#: src/Bootstrap.php:210
-msgid "Backup downloaded"
-msgstr "Backup downloaded"
-
-#: src/Bootstrap.php:205
-msgid "Backup failed"
-msgstr "Backup failed"
+#: core-blueprint-backups.php:125 core-blueprint-backups.php:141
+msgid "Core Blueprint Backups:"
+msgstr "Core Blueprint Backups:"
 
 #: src/Admin/Actions.php:201
 msgid "Backup file not found."
 msgstr "Backup file not found."
 
-#: src/Admin/Page.php:119
-msgid ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base"
-" and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
-msgstr ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base"
-" and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
-
-#: src/Bootstrap.php:225
-msgid "Backup housekeeping cleanup"
-msgstr "Backup housekeeping cleanup"
-
-#: src/Bootstrap.php:228
-msgid "Backup import cancelled"
-msgstr "Backup import cancelled"
-
-#: src/Bootstrap.php:226
-msgid "Backup import prepared"
-msgstr "Backup import prepared"
-
-#: src/Admin/Assets.php:103 src/Admin/Assets.php:196
-msgid "Backup imported and prepared for restore."
-msgstr "Backup imported and prepared for restore."
-
-#: src/Admin/Assets.php:194
-msgid "Backup integrity verified successfully."
-msgstr "Backup integrity verified successfully."
-
-#: src/Admin/JobMonitor.php:48
-msgid "Backup job not found."
-msgstr "Backup job not found."
-
-#: src/Admin/Assets.php:191
-msgid ""
-"Backup job started. It continues in the background if you leave this page."
-msgstr ""
-"Backup job started. It continues in the background if you leave this page."
-
-#: src/Admin/JobPresentation.php:112
-msgid "Backup payloads verified"
-msgstr "Backup payloads verified"
-
-#: src/Admin/Page.php:576
-msgid "Backup progress"
-msgstr "Backup progress"
-
-#: src/Bootstrap.php:224
-msgid "Backup scheduler error"
-msgstr "Backup scheduler error"
-
-#: src/Bootstrap.php:180
-msgid "Backup scheduler is delayed"
-msgstr "Backup scheduler is delayed"
-
-#: src/Bootstrap.php:175
-msgid "Backup scheduler requires attention"
-msgstr "Backup scheduler requires attention"
-
-#: src/Admin/Assets.php:195
-msgid "Backup schedules saved."
-msgstr "Backup schedules saved."
-
-#: src/Bootstrap.php:217
-msgid "Backup schedules updated"
-msgstr "Backup schedules updated"
-
-#: src/Bootstrap.php:221
-msgid "Backup stale job recovery attempted"
-msgstr "Backup stale job recovery attempted"
-
-#: src/Bootstrap.php:203
-msgid "Backup started"
-msgstr "Backup started"
-
-#: src/Admin/Assets.php:95 src/Admin/Assets.php:144
-msgid "Backup status request failed."
-msgstr "Backup status request failed."
-
-#: src/Bootstrap.php:166 src/Support/SiteHealth.php:42
-msgid "Backup storage is not writable"
-msgstr "Backup storage is not writable"
-
-#: src/Support/SiteHealth.php:42
-msgid "Backup storage is writable"
-msgstr "Backup storage is writable"
-
-#: src/Bootstrap.php:158
-msgid "Backup storage unavailable"
-msgstr "Backup storage unavailable"
-
-#: src/Bootstrap.php:209
-msgid "Backup verification failed"
-msgstr "Backup verification failed"
-
-#: src/Bootstrap.php:207
-msgid "Backup verification started"
-msgstr "Backup verification started"
-
-#: src/Bootstrap.php:208
-msgid "Backup verified"
-msgstr "Backup verified"
-
-#: src/Admin/Page.php:25 src/Admin/Page.php:29 src/Admin/Page.php:50
-#: src/Admin/Page.php:71 src/Bootstrap.php:142
-msgid "Backups"
-msgstr "Backups"
-
-#: src/Bootstrap.php:212
-msgid "Backups deleted in bulk"
-msgstr "Backups deleted in bulk"
-
-#: src/Admin/Assets.php:94 src/Admin/Assets.php:140
-msgid "Cancel"
-msgstr "Cancel"
-
-#: src/Admin/Page.php:606 src/Admin/Assets.php:139
-msgid "Cancel backup"
-msgstr "Cancel backup"
-
-#: src/Admin/Assets.php:141
-msgid "Cancel backup?"
-msgstr "Cancel backup?"
-
-#: src/Admin/Page.php:135 src/Admin/Assets.php:105
-msgid "Cancel import"
-msgstr "Cancel import"
-
-#: src/Admin/Assets.php:106
-msgid "Cancel import?"
-msgstr "Cancel import?"
-
-#: src/Admin/JobPresentation.php:97 src/Admin/Assets.php:137
-msgid "Cancelled"
-msgstr "Cancelled"
-
-#: src/Admin/Page.php:312 src/Admin/Page.php:606
-#: src/Admin/JobPresentation.php:94 src/Admin/Assets.php:93
-#: src/Admin/Assets.php:138
-msgid "Cancelling…"
-msgstr "Cancelling…"
-
-#: src/Admin/Page.php:416
-msgid "Choose time"
-msgstr "Choose time"
-
-#: src/Admin/Page.php:569
-msgid ""
-"Clear any page-cache plugin, hosting/server and CDN caches you use, then "
-"refresh your browser."
-msgstr ""
-"Clear any page-cache plugin, hosting/server and CDN caches you use, then "
-"refresh your browser."
-
-#: src/Admin/JobPresentation.php:95
-msgid "Completed"
-msgstr "Completed"
-
-#: src/Restore/Service.php:18
-msgid ""
-"Confirm that you understand the destination data will be replaced before "
-"starting a restore or migration."
-msgstr ""
-"Confirm that you understand the destination data will be replaced before "
-"starting a restore or migration."
-
-#: src/Admin/Assets.php:145
-msgid ""
-"Connection to the restore monitor was interrupted. Retrying… The restore "
-"continues on the server."
-msgstr ""
-"Connection to the restore monitor was interrupted. Retrying… The restore "
-"continues on the server."
-
-#: src/Support/Capabilities.php:42
-msgid "Core Blueprint"
-msgstr "Core Blueprint"
-
-#: src/Bootstrap.php:112
-msgid "Core Blueprint Backups requires PHP 8.4 or newer."
-msgstr "Core Blueprint Backups requires PHP 8.4 or newer."
-
-#: src/Bootstrap.php:116
-msgid "Core Blueprint Backups requires the PHP ZIP extension."
-msgstr "Core Blueprint Backups requires the PHP ZIP extension."
-
-#: src/Support/SiteHealth.php:27
-msgid "Core Blueprint backup scheduler"
-msgstr "Core Blueprint backup scheduler"
-
-#: src/Support/SiteHealth.php:19
-msgid "Core Blueprint backup storage"
-msgstr "Core Blueprint backup storage"
-
-#: src/Support/SiteHealth.php:45
-msgid ""
-"Core Blueprint can write backup archives to its configured local storage."
-msgstr ""
-"Core Blueprint can write backup archives to its configured local storage."
-
-#: src/Support/SiteHealth.php:45
-msgid ""
-"Core Blueprint cannot write to the configured backup storage directory."
-msgstr ""
-"Core Blueprint cannot write to the configured backup storage directory."
-
-#: src/Support/SiteHealth.php:23
-msgid "Core Blueprint recent backup"
-msgstr "Core Blueprint recent backup"
-
-#: src/Admin/Page.php:174
-msgid "Could not load restore history. Refresh this page before trying again."
-msgstr ""
-"Could not load restore history. Refresh this page before trying again."
-
-#: src/Support/SiteHealth.php:71
-msgid ""
-"Create a database or full website backup to establish the first restore "
-"point."
-msgstr ""
-"Create a database or full website backup to establish the first restore "
-"point."
-
-#: src/Admin/Page.php:111
-msgid "Create backup"
-msgstr "Create backup"
-
-#: src/Support/Capabilities.php:44
-msgid ""
-"Create, download, verify, schedule, delete and restore Core Blueprint "
-"backups. This authority is derived from Administrator or CB Operator trust "
-"and cannot be granted independently."
-msgstr ""
-"Create, download, verify, schedule, delete and restore Core Blueprint "
-"backups. This authority is derived from Administrator or CB Operator trust "
-"and cannot be granted independently."
-
-#: src/Admin/Page.php:479
-msgid "Created"
-msgstr "Created"
-
-#: src/Admin/JobPresentation.php:84
-msgid "Creating backup archive…"
-msgstr "Creating backup archive…"
-
-#: src/Admin/Page.php:596
-msgid "Current file:"
-msgstr "Current file:"
-
-#: src/Admin/Page.php:594
-msgid "Current table:"
-msgstr "Current table:"
-
-#: src/Admin/Page.php:405
-msgid "Daily"
-msgstr "Daily"
-
-#: src/Admin/JobPresentation.php:120
-msgid "Data extracted"
-msgstr "Data extracted"
-
-#: src/Admin/JobPresentation.php:44
-msgid "Data processed"
-msgstr "Data processed"
-
-#: src/Admin/Page.php:191 src/Admin/Page.php:400 src/Admin/Page.php:492
-msgid "Database"
-msgstr "Database"
-
-#: src/Admin/Page.php:88
-msgid "Database backup"
-msgstr "Database backup"
+#: src/Admin/Actions.php:207
+msgid "Backup archive could not be opened."
+msgstr "Backup archive could not be opened."
 
 #: src/Admin/Actions.php:213
 msgid "Database export is missing from this backup."
 msgstr "Database export is missing from this backup."
 
-#: src/Admin/Page.php:581
-msgid "Database rows"
-msgstr "Database rows"
-
-#: src/Admin/Page.php:426
-msgid "Delayed"
-msgstr "Delayed"
-
-#: src/Admin/Page.php:274 src/Admin/Page.php:520
-msgid "Delete"
-msgstr "Delete"
-
-#: src/Admin/Page.php:518
-msgid "Delete backup"
-msgstr "Delete backup"
-
-#: src/Admin/Page.php:518
-msgid "Delete backup?"
-msgstr "Delete backup?"
-
-#: src/Admin/Page.php:271
-msgid "Delete import"
-msgstr "Delete import"
-
-#: src/Admin/Page.php:271
-msgid "Delete prepared import?"
-msgstr "Delete prepared import?"
-
-#: src/Admin/Page.php:466 src/Admin/Page.php:469 src/Admin/Assets.php:115
-msgid "Delete selected"
-msgstr "Delete selected"
-
-#: src/Admin/Page.php:466 src/Admin/Assets.php:112
-msgid "Delete selected backups?"
-msgstr "Delete selected backups?"
-
-#: src/Admin/Page.php:268
-#, php-format
-msgid ""
-"Delete the prepared import %s? The uploaded archive will be removed from "
-"private import storage."
-msgstr ""
-"Delete the prepared import %s? The uploaded archive will be removed from "
-"private import storage."
-
-#: src/Admin/Page.php:207
-msgid "Destination"
-msgstr "Destination"
-
-#: src/Admin/Page.php:457
-msgid ""
-"Disabled — the loopback worker still runs started jobs; use a server "
-"cron/CLI runner as watchdog and for schedules."
-msgstr ""
-"Disabled — the loopback worker still runs started jobs; use a server "
-"cron/CLI runner as watchdog and for schedules."
-
-#: src/Admin/Assets.php:162
-msgid "Dismiss"
-msgstr "Dismiss"
-
-#: src/Admin/Page.php:507
-msgid "Download"
-msgstr "Download"
-
-#: src/Admin/Page.php:479
-msgid "Duration"
-msgstr "Duration"
-
-#: src/Admin/Page.php:588
-msgid "Elapsed"
-msgstr "Elapsed"
-
-#: src/Admin/Page.php:398 src/Admin/Page.php:457
-msgid "Enabled"
-msgstr "Enabled"
-
-#: src/Admin/Page.php:388
-msgid "Execution"
-msgstr "Execution"
-
-#: src/Admin/JobPresentation.php:82
-msgid "Exporting database…"
-msgstr "Exporting database…"
-
-#: src/Admin/Page.php:88
-msgid ""
-"Exports all WordPress tables for this site into a portable Core Blueprint "
-"backup. The SQL can also be downloaded separately."
-msgstr ""
-"Exports all WordPress tables for this site into a portable Core Blueprint "
-"backup. The SQL can also be downloaded separately."
-
-#: src/Admin/JobPresentation.php:96 src/Admin/Assets.php:136
-msgid "Failed"
-msgstr "Failed"
-
-#: src/Admin/Page.php:479 src/Admin/JobPresentation.php:39
-#: src/Admin/JobPresentation.php:154
-msgid "Files"
-msgstr "Files"
-
-#: src/Admin/JobPresentation.php:148
-msgid "Files staged"
-msgstr "Files staged"
-
-#: src/Admin/JobPresentation.php:127 src/Admin/JobPresentation.php:149
-#: src/Admin/JobPresentation.php:155
-msgid "Filesystem snapshot"
-msgstr "Filesystem snapshot"
-
-#: src/Admin/Assets.php:151
-msgid "Finalizing"
-msgstr "Finalizing"
-
-#: src/Admin/Assets.php:152
-msgid "Finalizing migration"
-msgstr "Finalizing migration"
-
-#: src/Admin/Assets.php:154
-msgid "Finalizing restore"
-msgstr "Finalizing restore"
-
-#: src/Admin/Page.php:398
-msgid "Frequency"
-msgstr "Frequency"
-
-#: src/Admin/Page.php:399
-msgid "Friday"
-msgstr "Friday"
-
-#: src/Admin/Page.php:191 src/Admin/Page.php:400 src/Admin/Page.php:492
-msgid "Full website"
-msgstr "Full website"
-
-#: src/Admin/Page.php:89
-msgid "Full website backup"
-msgstr "Full website backup"
-
-#: src/Admin/Page.php:380 src/Admin/Page.php:430
-msgid "Healthy"
-msgstr "Healthy"
-
-#: src/Admin/Page.php:381
-msgid "Heartbeat delayed"
-msgstr "Heartbeat delayed"
-
-#: src/Admin/Page.php:405
-msgid "Hourly"
-msgstr "Hourly"
-
-#: src/Admin/Page.php:532
-#, php-format
-msgid ""
-"I understand that this action replaces the current database and site files "
-"on %s. Changes on this site that are not in this backup will be lost."
-msgstr ""
-"I understand that this action replaces the current database and site files "
-"on %s. Changes on this site that are not in this backup will be lost."
-
-#: src/Admin/Page.php:533
-#, php-format
-msgid ""
-"I understand that this action replaces the current database on %s. Database "
-"changes on this site that are not in this backup will be lost."
-msgstr ""
-"I understand that this action replaces the current database on %s. Database "
-"changes on this site that are not in this backup will be lost."
-
-#: src/Admin/Page.php:383
-msgid "Idle — no automatic schedules enabled"
-msgstr "Idle — no automatic schedules enabled"
-
-#: src/Admin/Page.php:72 src/Bootstrap.php:83
-msgid "Import & Restore"
-msgstr "Import & Restore"
-
-#: src/Admin/Page.php:123
-msgid "Import a backup"
-msgstr "Import a backup"
-
-#: src/Admin/Assets.php:104
-msgid "Import cancelled."
-msgstr "Import cancelled."
-
-#: src/Admin/Assets.php:111
-msgid "Import request failed."
-msgstr "Import request failed."
-
-#: src/Admin/Assets.php:110
-msgid "Import upload did not advance."
-msgstr "Import upload did not advance."
-
-#: src/Admin/Page.php:178
-msgid "Imported"
-msgstr "Imported"
-
-#: src/Admin/Page.php:454
-msgid ""
-"Inside wp-content; protected where the web server honours supplied deny "
-"rules."
-msgstr ""
-"Inside wp-content; protected where the web server honours supplied deny "
-"rules."
-
-#: src/Admin/Page.php:479
-msgid "Integrity"
-msgstr "Integrity"
-
-#: src/Admin/Page.php:398
-msgid "Keep automatic"
-msgstr "Keep automatic"
-
-#: src/Admin/Page.php:130
-msgid ""
-"Large files are uploaded in resumable chunks. If this page is closed, select"
-" the same file again later and the upload resumes from the last committed "
-"byte."
-msgstr ""
-"Large files are uploaded in resumable chunks. If this page is closed, select"
-" the same file again later and the upload resumes from the last committed "
-"byte."
-
-#: src/Admin/Page.php:287
-#, php-format
-msgid "Last attempt: %s"
-msgstr "Last attempt: %s"
-
-#: src/Admin/Page.php:292
-#, php-format
-msgid "Last migrated: %s"
-msgstr "Last migrated: %s"
-
-#: src/Admin/Page.php:292
-#, php-format
-msgid "Last restored: %s"
-msgstr "Last restored: %s"
-
-#: src/Admin/Page.php:390
-msgid "Last scheduler error"
-msgstr "Last scheduler error"
-
-#: src/Support/SiteHealth.php:88
-#, php-format
-msgid "Last scheduler heartbeat: %s."
-msgstr "Last scheduler heartbeat: %s."
-
-#: src/Admin/Page.php:386
-msgid "Last scheduler tick"
-msgstr "Last scheduler tick"
-
-#: src/Admin/Page.php:398
-msgid "Last success"
-msgstr "Last success"
-
-#: src/Support/SiteHealth.php:71
-#, php-format
-msgid "Latest successful backup: %s."
-msgstr "Latest successful backup: %s."
-
-#: src/Support/Capabilities.php:41
-msgid "Manage backups"
-msgstr "Manage backups"
-
-#: src/Support/SiteHealth.php:84
-msgid ""
-"Manual backups remain available. Enable a schedule when automatic restore "
-"points are required."
-msgstr ""
-"Manual backups remain available. Enable a schedule when automatic restore "
-"points are required."
-
-#: src/Admin/Page.php:231
-#, php-format
-msgid ""
-"Migrate %1$s from %2$s (prefix %3$s) to %4$s (prefix %5$s)? The archive will"
-" be fully verified first. Core Blueprint will prepare a private migration "
-"copy, map database tables to the destination prefix, replace source URLs in "
-"serialization-aware data where required, preserve post GUID values, and only"
-" then replace live site data."
-msgstr ""
-"Migrate %1$s from %2$s (prefix %3$s) to %4$s (prefix %5$s)? The archive will"
-" be fully verified first. Core Blueprint will prepare a private migration "
-"copy, map database tables to the destination prefix, replace source URLs in "
-"serialization-aware data where required, preserve post GUID values, and only"
-" then replace live site data."
-
-#: src/Admin/Page.php:239 src/Admin/Page.php:240
-msgid "Migrate & restore"
-msgstr "Migrate & restore"
-
-#: src/Admin/Page.php:254
-msgid "Migrate again"
-msgstr "Migrate again"
-
-#: src/Admin/Page.php:238
-msgid "Migrate imported backup?"
-msgstr "Migrate imported backup?"
-
-#: src/Admin/Page.php:291
-msgid "Migrated successfully"
-msgstr "Migrated successfully"
-
-#: src/Admin/Page.php:307
-msgid "Migrating…"
-msgstr "Migrating…"
-
-#: src/Admin/Assets.php:156
-msgid "Migration applied successfully"
-msgstr "Migration applied successfully"
-
-#: src/Admin/Assets.php:160
-msgid ""
-"Migration applied successfully. Sign in again to complete final "
-"verification."
-msgstr ""
-"Migration applied successfully. Sign in again to complete final "
-"verification."
-
-#: src/Admin/Page.php:300
-msgid "Migration cancelled"
-msgstr "Migration cancelled"
-
-#: src/Admin/JobPresentation.php:56
-msgid "Migration completed"
-msgstr "Migration completed"
-
-#: src/Admin/Page.php:296
-msgid "Migration failed"
-msgstr "Migration failed"
-
-#: src/Admin/Page.php:303
-msgid "Migration queued"
-msgstr "Migration queued"
-
-#: src/Admin/Page.php:217
-msgid "Migration ready"
-msgstr "Migration ready"
-
-#: src/Admin/Page.php:455
-msgid "Missing"
-msgstr "Missing"
-
-#: src/Admin/Page.php:399
-msgid "Monday"
-msgstr "Monday"
-
-#: src/Admin/Page.php:215
-msgid "Needs review"
-msgstr "Needs review"
-
-#: src/Admin/Page.php:387
-msgid "Next automatic backup"
-msgstr "Next automatic backup"
-
-#: src/Admin/Page.php:398
-msgid "Next run"
-msgstr "Next run"
-
-#: src/Admin/Page.php:565
-msgid "Next steps: save permalinks and clear caches"
-msgstr "Next steps: save permalinks and clear caches"
-
-#: src/Support/SiteHealth.php:59
-msgid "No Core Blueprint backup exists yet"
-msgstr "No Core Blueprint backup exists yet"
-
-#: src/Support/SiteHealth.php:83
-msgid "No automatic backup schedules are enabled"
-msgstr "No automatic backup schedules are enabled"
-
-#: src/Admin/Page.php:95
-msgid "No backups have been created yet."
-msgstr "No backups have been created yet."
-
-#: src/Admin/Page.php:143
-msgid "No imported backups are waiting for restore."
-msgstr "No imported backups are waiting for restore."
-
-#: src/Admin/Page.php:153
-msgid "No local backups are available."
-msgstr "No local backups are available."
-
-#: src/Admin/Page.php:492
-msgid "Not verified"
-msgstr "Not verified"
-
-#: src/Admin/Page.php:423
-msgid "Off"
-msgstr "Off"
-
-#: src/Admin/Page.php:403
-msgid "On"
-msgstr "On"
-
-#: src/Admin/Assets.php:109
-msgid "Only .cbbackup files can be imported."
-msgstr "Only .cbbackup files can be imported."
-
-#: src/Admin/Page.php:568
-msgid ""
-"Open Settings → Permalinks and click Save Changes without changing your "
-"permalink structure."
-msgstr ""
-"Open Settings → Permalinks and click Save Changes without changing your "
-"permalink structure."
-
-#: src/Admin/Page.php:572
-msgid "Open permalink settings"
-msgstr "Open permalink settings"
-
-#: src/Admin/Page.php:179
-msgid "Original file"
-msgstr "Original file"
-
-#: src/Admin/Page.php:589
-msgid "Output size"
-msgstr "Output size"
-
-#: src/Admin/Page.php:454
-msgid "Outside wp-content."
-msgstr "Outside wp-content."
-
-#: src/Admin/Page.php:455
-msgid "PHP ZIP"
-msgstr "PHP ZIP"
-
-#: src/Admin/JobPresentation.php:119
-msgid "Payloads extracted"
-msgstr "Payloads extracted"
-
-#: src/Admin/Assets.php:114
-#, php-format
-msgid ""
-"Permanently delete %d selected backups? These restore points will be removed"
-" from local backup storage and cannot be recovered."
-msgstr ""
-"Permanently delete %d selected backups? These restore points will be removed"
-" from local backup storage and cannot be recovered."
-
-#: src/Admin/Page.php:515
-#, php-format
-msgid ""
-"Permanently delete %s? This restore point will be removed from local backup "
-"storage and cannot be recovered."
-msgstr ""
-"Permanently delete %s? This restore point will be removed from local backup "
-"storage and cannot be recovered."
-
-#: src/Admin/Assets.php:113
-msgid ""
-"Permanently delete 1 selected backup? This restore point will be removed "
-"from local backup storage and cannot be recovered."
-msgstr ""
-"Permanently delete 1 selected backup? This restore point will be removed "
-"from local backup storage and cannot be recovered."
-
-#: src/Admin/Page.php:203
-msgid "Preflight unavailable"
-msgstr "Preflight unavailable"
-
-#: src/Bootstrap.php:227
-msgid "Prepared backup import deleted"
-msgstr "Prepared backup import deleted"
-
-#: src/Admin/Assets.php:197
-msgid "Prepared import deleted."
-msgstr "Prepared import deleted."
-
-#: src/Admin/Page.php:140
-msgid "Prepared imports"
-msgstr "Prepared imports"
-
-#: src/Admin/Page.php:141
-msgid ""
-"Prepared imports are temporary staging copies. Review the source and "
-"destination identity before restoring. Inactive imports are removed "
-"automatically after 24 hours."
-msgstr ""
-"Prepared imports are temporary staging copies. Review the source and "
-"destination identity before restoring. Inactive imports are removed "
-"automatically after 24 hours."
-
-#: src/Admin/JobPresentation.php:126
-msgid "Prepared payloads verified"
-msgstr "Prepared payloads verified"
-
-#: src/Admin/JobPresentation.php:81
-msgid "Preparing backup…"
-msgstr "Preparing backup…"
-
-#: src/Admin/JobPresentation.php:69
-msgid "Preparing migrated database…"
-msgstr "Preparing migrated database…"
-
-#: src/Admin/JobPresentation.php:67
-msgid "Preparing restore files…"
-msgstr "Preparing restore files…"
-
-#: src/Admin/JobPresentation.php:70
-msgid "Preparing restored database…"
-msgstr "Preparing restored database…"
-
-#: src/Admin/JobPresentation.php:65
-msgid "Preparing restore…"
-msgstr "Preparing restore…"
-
-#: src/Admin/JobPresentation.php:72
-msgid "Preparing safe switch…"
-msgstr "Preparing safe switch…"
-
-#: src/Admin/Page.php:132 src/Admin/Assets.php:98
-msgid "Preparing upload…"
-msgstr "Preparing upload…"
-
-#: src/Admin/JobPresentation.php:86
-msgid "Processing backup…"
-msgstr "Processing backup…"
-
-#: src/Admin/JobPresentation.php:76
-msgid "Processing restore…"
-msgstr "Processing restore…"
-
-#: src/Admin/JobPresentation.php:92
-msgid "Queued"
-msgstr "Queued"
-
-#: src/Bootstrap.php:190
-msgid "Ready"
-msgstr "Ready"
-
-#: src/Admin/Page.php:566
-msgid "Recommended before using the migrated site:"
-msgstr "Recommended before using the migrated site:"
-
-#: src/Admin/Assets.php:165
-msgid "Reload monitoring"
-msgstr "Reload monitoring"
-
-#: src/Admin/Page.php:251 src/Admin/Page.php:502
-msgid "Restore"
-msgstr "Restore"
-
-#: src/Admin/Page.php:244
-#, php-format
-msgid ""
-"Restore %1$s to %2$s (prefix %3$s)? The source and destination identity "
-"match. The archive will be fully verified before replacing the destination "
-"data covered by this backup."
-msgstr ""
-"Restore %1$s to %2$s (prefix %3$s)? The source and destination identity "
-"match. The archive will be fully verified before replacing the destination "
-"data covered by this backup."
-
-#: src/Admin/Page.php:496
-#, php-format
-msgid ""
-"Restore %s? The archive will be verified before the restore starts. Live "
-"site data will be replaced and the site may be temporarily unavailable."
-msgstr ""
-"Restore %s? The archive will be verified before the restore starts. Live "
-"site data will be replaced and the site may be temporarily unavailable."
-
-#: src/Admin/Page.php:151
-msgid "Restore a local backup"
-msgstr "Restore a local backup"
-
-#: src/Admin/Page.php:254
-msgid "Restore again"
-msgstr "Restore again"
-
-#: src/Admin/Assets.php:158
-msgid "Restore applied successfully"
-msgstr "Restore applied successfully"
-
-#: src/Admin/Assets.php:161
-msgid ""
-"Restore applied successfully. Sign in again to complete final verification."
-msgstr ""
-"Restore applied successfully. Sign in again to complete final verification."
-
-#: src/Admin/Page.php:250 src/Admin/Page.php:499
-msgid "Restore backup"
-msgstr "Restore backup"
-
-#: src/Admin/Page.php:499
-msgid "Restore backup?"
-msgstr "Restore backup?"
-
-#: src/Admin/Page.php:300
-msgid "Restore cancelled"
-msgstr "Restore cancelled"
-
-#: src/Admin/JobPresentation.php:57 src/Bootstrap.php:214
-msgid "Restore completed"
-msgstr "Restore completed"
-
-#: src/Admin/Page.php:296 src/Bootstrap.php:215
-msgid "Restore failed"
-msgstr "Restore failed"
-
-#: src/Admin/Page.php:249
-msgid "Restore imported backup?"
-msgstr "Restore imported backup?"
-
-#: src/Restore/Maintenance.php:35
-msgid "Restore in progress"
-msgstr "Restore in progress"
-
-#: src/Admin/Assets.php:192
-msgid ""
-"Restore job started. Execution is server-owned; this page only monitors its "
-"status."
-msgstr ""
-"Restore job started. Execution is server-owned; this page only monitors its "
-"status."
-
-#: src/Admin/Assets.php:166
-msgid "Restore monitoring reconnected."
-msgstr "Restore monitoring reconnected."
-
-#: src/Admin/Page.php:553
-msgid "Restore or backup failed. Review the job error below."
-msgstr "Restore or backup failed. Review the job error below."
-
-#: src/Admin/Page.php:576
-msgid "Restore progress"
-msgstr "Restore progress"
-
-#: src/Admin/Page.php:303
-msgid "Restore queued"
-msgstr "Restore queued"
-
-#: src/Admin/Page.php:219
-msgid "Restore ready"
-msgstr "Restore ready"
-
-#: src/Bootstrap.php:216
-msgid "Restore recovery cleanup warning"
-msgstr "Restore recovery cleanup warning"
-
-#: src/Admin/Page.php:118
-msgid "Restore replaces live site data."
-msgstr "Restore replaces live site data."
-
-#: src/Bootstrap.php:213
-msgid "Restore started"
-msgstr "Restore started"
-
-#: src/Admin/JobPresentation.php:133 src/Admin/JobPresentation.php:141
-msgid "Restored files verified"
-msgstr "Restored files verified"
-
-#: src/Admin/JobPresentation.php:134 src/Admin/JobPresentation.php:142
-msgid "Restored filesystem data"
-msgstr "Restored filesystem data"
-
-#: src/Admin/Page.php:291
-msgid "Restored successfully"
-msgstr "Restored successfully"
-
-#: src/Admin/Page.php:307
-msgid "Restoring…"
-msgstr "Restoring…"
-
-#: src/Admin/Assets.php:100
-msgid "Resume upload"
-msgstr "Resume upload"
-
-#: src/Admin/Assets.php:101
-msgid "Resuming previous import upload."
-msgstr "Resuming previous import upload."
-
-#: src/Admin/Page.php:445
-msgid ""
-"Retention only manages automatic backups created by these schedules; manual "
-"restore points are never deleted automatically. For Hourly schedules, the "
-"minute from Time is used. Weekday is used only for Weekly schedules. "
-"Schedules remain local and work without Beacon or Hub."
-msgstr ""
-"Retention only manages automatic backups created by these schedules; manual "
-"restore points are never deleted automatically. For Hourly schedules, the "
-"minute from Time is used. Weekday is used only for Weekly schedules. "
-"Schedules remain local and work without Beacon or Hub."
-
-#: src/Admin/Page.php:428
-msgid "Retry scheduled"
-msgstr "Retry scheduled"
-
-#: src/Admin/Page.php:479
-msgid "Rows"
-msgstr "Rows"
-
-#: src/Admin/JobPresentation.php:93
-msgid "Running"
-msgstr "Running"
-
-#: src/Admin/JobPresentation.php:75
-msgid "Running final safety checks…"
-msgstr "Running final safety checks…"
-
-#: src/Admin/Page.php:508
-msgid "SQL"
-msgstr "SQL"
-
-#: src/Admin/Page.php:399
-msgid "Saturday"
-msgstr "Saturday"
-
-#: src/Admin/Page.php:443
-msgid "Save schedules"
-msgstr "Save schedules"
-
-#: src/Admin/JobPresentation.php:83
-msgid "Scanning website files…"
-msgstr "Scanning website files…"
-
-#: src/Bootstrap.php:218
-msgid "Scheduled backup delayed"
-msgstr "Scheduled backup delayed"
-
-#: src/Bootstrap.php:219
-msgid "Scheduled backup retry planned"
-msgstr "Scheduled backup retry planned"
-
-#: src/Bootstrap.php:220
-msgid "Scheduled backup running longer than baseline"
-msgstr "Scheduled backup running longer than baseline"
-
-#: src/Admin/Page.php:375
-msgid "Scheduler health"
-msgstr "Scheduler health"
-
-#: src/Admin/Page.php:382
-msgid "Scheduler not running"
-msgstr "Scheduler not running"
-
-#: src/Admin/Page.php:73 src/Bootstrap.php:90
-msgid "Schedules"
-msgstr "Schedules"
-
-#: src/Admin/Assets.php:108
-msgid "Select a .cbbackup file first."
-msgstr "Select a .cbbackup file first."
-
-#: src/Admin/Page.php:477
-msgid "Select all backups"
-msgstr "Select all backups"
+#: src/Admin/Actions.php:229
+msgid "Backup archive could not be opened for download."
+msgstr "Backup archive could not be opened for download."
 
 #: src/Admin/Actions.php:266
 msgid "Select at least one backup to delete."
 msgstr "Select at least one backup to delete."
 
-#: src/Admin/Page.php:490
+#. translators: 1: deleted backup count, 2: failed backup count.
+#: src/Admin/Actions.php:288
 #, php-format
-msgid "Select backup created %s"
-msgstr "Select backup created %s"
+msgid "%1$d backups deleted; %2$d could not be deleted."
+msgstr "%1$d backups deleted; %2$d could not be deleted."
 
-#: src/Admin/Page.php:466
-msgid "Select one or more backups to delete."
-msgstr "Select one or more backups to delete."
+#: src/Admin/Actions.php:440 src/Admin/Page.php:43 src/Admin/Settings.php:14
+msgid "You are not allowed to manage backups."
+msgstr "You are not allowed to manage backups."
 
-#: src/Admin/Page.php:456
+#: src/Admin/Assets.php:101 src/Admin/Assets.php:146
+#: src/Admin/JobPresentation.php:94 src/Admin/Page.php:310
+#: src/Admin/Page.php:590
+msgid "Cancelling…"
+msgstr "Cancelling…"
+
+#: src/Admin/Assets.php:102 src/Admin/Assets.php:148
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/Admin/Assets.php:103 src/Admin/Assets.php:152
+msgid "Backup status request failed."
+msgstr "Backup status request failed."
+
+#: src/Admin/Assets.php:104 src/Admin/Page.php:127
+msgid "Upload backup"
+msgstr "Upload backup"
+
+#: src/Admin/Assets.php:105
+msgid "Uploading…"
+msgstr "Uploading…"
+
+#: src/Admin/Assets.php:106 src/Admin/Page.php:130
+msgid "Preparing upload…"
+msgstr "Preparing upload…"
+
+#: src/Admin/Assets.php:107
+msgid "Validating backup…"
+msgstr "Validating backup…"
+
+#: src/Admin/Assets.php:108
+msgid "Resume upload"
+msgstr "Resume upload"
+
+#: src/Admin/Assets.php:109
+msgid "Resuming previous import upload."
+msgstr "Resuming previous import upload."
+
+#: src/Admin/Assets.php:110
+msgid "Upload interrupted — select the same file to resume."
+msgstr "Upload interrupted — select the same file to resume."
+
+#: src/Admin/Assets.php:111 src/Admin/Assets.php:204
+msgid "Backup imported and prepared for restore."
+msgstr "Backup imported and prepared for restore."
+
+#: src/Admin/Assets.php:112
+msgid "Import cancelled."
+msgstr "Import cancelled."
+
+#: src/Admin/Assets.php:113 src/Admin/Page.php:133
+msgid "Cancel import"
+msgstr "Cancel import"
+
+#: src/Admin/Assets.php:114
+msgid "Cancel import?"
+msgstr "Cancel import?"
+
+#: src/Admin/Assets.php:115
+msgid "The uploaded chunks for this incomplete import will be removed."
+msgstr "The uploaded chunks for this incomplete import will be removed."
+
+#: src/Admin/Assets.php:116
+msgid "Select a .cbbackup file first."
+msgstr "Select a .cbbackup file first."
+
+#: src/Admin/Assets.php:117
+msgid "Only .cbbackup files can be imported."
+msgstr "Only .cbbackup files can be imported."
+
+#: src/Admin/Assets.php:118
+msgid "Import upload did not advance."
+msgstr "Import upload did not advance."
+
+#: src/Admin/Assets.php:119
+msgid "Import request failed."
+msgstr "Import request failed."
+
+#: src/Admin/Assets.php:120 src/Admin/Page.php:450
+msgid "Delete selected backups?"
+msgstr "Delete selected backups?"
+
+#: src/Admin/Assets.php:121
 msgid ""
-"Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser"
-" is only a monitor and may be closed during backups."
+"Permanently delete 1 selected backup? This restore point will be removed "
+"from local backup storage and cannot be recovered."
 msgstr ""
-"Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser"
-" is only a monitor and may be closed during backups."
+"Permanently delete 1 selected backup? This restore point will be removed "
+"from local backup storage and cannot be recovered."
 
-#: src/Admin/Page.php:74 src/Bootstrap.php:97
-msgid "Settings"
-msgstr "Settings"
+#: src/Admin/Assets.php:122
+#, php-format
+msgid ""
+"Permanently delete %d selected backups? These restore points will be removed "
+"from local backup storage and cannot be recovered."
+msgstr ""
+"Permanently delete %d selected backups? These restore points will be removed "
+"from local backup storage and cannot be recovered."
 
-#: src/Admin/Assets.php:164
-msgid "Sign in again"
-msgstr "Sign in again"
+#: src/Admin/Assets.php:123 src/Admin/Page.php:450 src/Admin/Page.php:453
+msgid "Delete selected"
+msgstr "Delete selected"
 
-#: src/Admin/Page.php:181 src/Admin/Page.php:479
-msgid "Size"
-msgstr "Size"
+#: src/Admin/Assets.php:124
+msgid "1 backup selected"
+msgstr "1 backup selected"
 
-#: src/Admin/Page.php:205
-msgid "Source"
-msgstr "Source"
+#: src/Admin/Assets.php:125
+#, php-format
+msgid "%d backups selected"
+msgstr "%d backups selected"
 
-#: src/Admin/Page.php:182
-msgid "Source → Destination"
-msgstr "Source → Destination"
+#: src/Admin/Assets.php:144 src/Admin/JobPresentation.php:96
+msgid "Failed"
+msgstr "Failed"
 
-#: src/Admin/Page.php:398
-msgid "State"
-msgstr "State"
+#: src/Admin/Assets.php:145 src/Admin/JobPresentation.php:97
+msgid "Cancelled"
+msgstr "Cancelled"
 
-#: src/Admin/Page.php:183 src/Admin/Page.php:385
-msgid "Status"
-msgstr "Status"
+#: src/Admin/Assets.php:147 src/Admin/Page.php:590
+msgid "Cancel backup"
+msgstr "Cancel backup"
 
-#: src/Admin/Page.php:211 src/Admin/Page.php:316 src/Bootstrap.php:195
-msgid "Status unavailable"
-msgstr "Status unavailable"
+#: src/Admin/Assets.php:149
+msgid "Cancel backup?"
+msgstr "Cancel backup?"
 
-#: src/Admin/Page.php:453
-msgid "Storage"
-msgstr "Storage"
-
-#: src/Admin/Page.php:454
-msgid "Storage location"
-msgstr "Storage location"
-
-#: src/Admin/Page.php:399
-msgid "Sunday"
-msgstr "Sunday"
-
-#: src/Admin/Page.php:205 src/Admin/Page.php:207
-msgid "Table prefix:"
-msgstr "Table prefix:"
-
-#: src/Admin/Page.php:582
-msgid "Tables"
-msgstr "Tables"
-
-#: src/Support/SiteHealth.php:91
-msgid "The Core Blueprint backup scheduler heartbeat is delayed"
-msgstr "The Core Blueprint backup scheduler heartbeat is delayed"
-
-#: src/Support/SiteHealth.php:87
-msgid "The Core Blueprint backup scheduler is healthy"
-msgstr "The Core Blueprint backup scheduler is healthy"
-
-#: src/Support/SiteHealth.php:95
-msgid "The Core Blueprint backup scheduler is not running"
-msgstr "The Core Blueprint backup scheduler is not running"
-
-#: src/Admin/Assets.php:142
+#: src/Admin/Assets.php:150
 msgid ""
 "The current safe chunk will finish first. Incomplete backup data will then "
 "be removed."
@@ -1294,57 +211,51 @@ msgstr ""
 "The current safe chunk will finish first. Incomplete backup data will then "
 "be removed."
 
-#: src/Support/SiteHealth.php:62
-msgid "The latest Core Blueprint backup is older than 14 days"
-msgstr "The latest Core Blueprint backup is older than 14 days"
+#: src/Admin/Assets.php:151
+msgid "Backup cancellation requested."
+msgstr "Backup cancellation requested."
 
 #: src/Admin/Assets.php:153
 msgid ""
-"The migrated database has been restored and is being verified. Core "
-"Blueprint will switch the website next. Your WordPress session may expire "
-"during that final switch — this is expected."
+"Connection to the restore monitor was interrupted. Retrying… The restore "
+"continues on the server."
 msgstr ""
-"The migrated database has been restored and is being verified. Core "
-"Blueprint will switch the website next. Your WordPress session may expire "
-"during that final switch — this is expected."
+"Connection to the restore monitor was interrupted. Retrying… The restore "
+"continues on the server."
 
-#: src/Admin/Assets.php:149
+#: src/Admin/Assets.php:154 src/Admin/JobMonitor.php:61
 msgid ""
-"The migrated site is now active. Sign in again to confirm the final "
-"migration result."
+"Your WordPress session changed during migration. Sign in again to continue "
+"monitoring. The restore continues safely in the background."
 msgstr ""
-"The migrated site is now active. Sign in again to confirm the final "
-"migration result."
-
-#: src/Admin/Assets.php:157
-msgid ""
-"The migrated site is now active. Your previous WordPress session was "
-"replaced as expected. Sign in again to complete the final verification and "
-"view the migration result."
-msgstr ""
-"The migrated site is now active. Your previous WordPress session was "
-"replaced as expected. Sign in again to complete the final verification and "
-"view the migration result."
-
-#: src/Admin/Assets.php:147
-msgid ""
-"The migrated site is taking over. Your WordPress session may change while "
-"final safety checks finish."
-msgstr ""
-"The migrated site is taking over. Your WordPress session may change while "
-"final safety checks finish."
+"Your WordPress session changed during migration. Sign in again to continue "
+"monitoring. The restore continues safely in the background."
 
 #: src/Admin/Assets.php:155
 msgid ""
-"The restored database has been staged and is being verified. Core Blueprint "
-"will switch the website next. Your WordPress session may expire during that "
-"final switch — this is expected."
+"The migrated site is taking over. Your WordPress session may change while "
+"final safety checks finish."
 msgstr ""
-"The restored database has been staged and is being verified. Core Blueprint "
-"will switch the website next. Your WordPress session may expire during that "
-"final switch — this is expected."
+"The migrated site is taking over. Your WordPress session may change while "
+"final safety checks finish."
 
-#: src/Admin/Assets.php:150
+#: src/Admin/Assets.php:156
+msgid ""
+"The restored site is taking over. Your WordPress session may change while "
+"final safety checks finish."
+msgstr ""
+"The restored site is taking over. Your WordPress session may change while "
+"final safety checks finish."
+
+#: src/Admin/Assets.php:157
+msgid ""
+"The migrated site is now active. Sign in again to confirm the final "
+"migration result."
+msgstr ""
+"The migrated site is now active. Sign in again to confirm the final "
+"migration result."
+
+#: src/Admin/Assets.php:158
 msgid ""
 "The restored site is now active. Sign in again to confirm the final restore "
 "result."
@@ -1353,6 +264,56 @@ msgstr ""
 "result."
 
 #: src/Admin/Assets.php:159
+msgid "Finalizing"
+msgstr "Finalizing"
+
+#: src/Admin/Assets.php:160
+msgid "Finalizing migration"
+msgstr "Finalizing migration"
+
+#: src/Admin/Assets.php:161
+msgid ""
+"The migrated database has been restored and is being verified. Core "
+"Blueprint will switch the website next. Your WordPress session may expire "
+"during that final switch — this is expected."
+msgstr ""
+"The migrated database has been restored and is being verified. Core "
+"Blueprint will switch the website next. Your WordPress session may expire "
+"during that final switch — this is expected."
+
+#: src/Admin/Assets.php:162
+msgid "Finalizing restore"
+msgstr "Finalizing restore"
+
+#: src/Admin/Assets.php:163
+msgid ""
+"The restored database has been staged and is being verified. Core Blueprint "
+"will switch the website next. Your WordPress session may expire during that "
+"final switch — this is expected."
+msgstr ""
+"The restored database has been staged and is being verified. Core Blueprint "
+"will switch the website next. Your WordPress session may expire during that "
+"final switch — this is expected."
+
+#: src/Admin/Assets.php:164
+msgid "Migration applied successfully"
+msgstr "Migration applied successfully"
+
+#: src/Admin/Assets.php:165
+msgid ""
+"The migrated site is now active. Your previous WordPress session was "
+"replaced as expected. Sign in again to complete the final verification and "
+"view the migration result."
+msgstr ""
+"The migrated site is now active. Your previous WordPress session was "
+"replaced as expected. Sign in again to complete the final verification and "
+"view the migration result."
+
+#: src/Admin/Assets.php:166
+msgid "Restore applied successfully"
+msgstr "Restore applied successfully"
+
+#: src/Admin/Assets.php:167
 msgid ""
 "The restored site is now active. Your previous WordPress session was "
 "replaced as expected. Sign in again to complete the final verification and "
@@ -1362,163 +323,79 @@ msgstr ""
 "replaced as expected. Sign in again to complete the final verification and "
 "view the restore result."
 
-#: src/Admin/Assets.php:148
+#: src/Admin/Assets.php:168
 msgid ""
-"The restored site is taking over. Your WordPress session may change while "
-"final safety checks finish."
+"Migration applied successfully. Sign in again to complete final verification."
 msgstr ""
-"The restored site is taking over. Your WordPress session may change while "
-"final safety checks finish."
+"Migration applied successfully. Sign in again to complete final verification."
 
-#: src/Admin/Assets.php:107
-msgid "The uploaded chunks for this incomplete import will be removed."
-msgstr "The uploaded chunks for this incomplete import will be removed."
-
-#: src/Admin/Page.php:600
+#: src/Admin/Assets.php:169
 msgid ""
-"This backup is taking significantly longer than its recent baseline. You can"
-" inspect the current stage and cancel it safely at the next checkpoint."
+"Restore applied successfully. Sign in again to complete final verification."
 msgstr ""
-"This backup is taking significantly longer than its recent baseline. You can"
-" inspect the current stage and cancel it safely at the next checkpoint."
+"Restore applied successfully. Sign in again to complete final verification."
 
-#: src/Restore/Maintenance.php:34
+#: src/Admin/Assets.php:170
+msgid "Dismiss"
+msgstr "Dismiss"
+
+#: src/Admin/Assets.php:171 src/Admin/JobMonitor.php:36
 msgid ""
-"This site is temporarily unavailable while Core Blueprint restores a "
-"verified backup."
+"Your monitoring session expired. Reload this page to continue monitoring the "
+"server-owned job."
 msgstr ""
-"This site is temporarily unavailable while Core Blueprint restores a "
-"verified backup."
+"Your monitoring session expired. Reload this page to continue monitoring the "
+"server-owned job."
 
-#: src/Admin/Page.php:586
-msgid "Throughput"
-msgstr "Throughput"
+#: src/Admin/Assets.php:172
+msgid "Sign in again"
+msgstr "Sign in again"
 
-#: src/Admin/Page.php:399
-msgid "Thursday"
-msgstr "Thursday"
+#: src/Admin/Assets.php:173
+msgid "Reload monitoring"
+msgstr "Reload monitoring"
 
-#: src/Admin/Page.php:398
-msgid "Time"
-msgstr "Time"
+#: src/Admin/Assets.php:174
+msgid "Restore monitoring reconnected."
+msgstr "Restore monitoring reconnected."
 
-#: src/Admin/Page.php:415
-msgid "Time in 24-hour format"
-msgstr "Time in 24-hour format"
+#. translators: %d: number of deleted backups.
+#: src/Admin/Assets.php:192
+#, php-format
+msgid "%d backup deleted."
+msgid_plural "%d backups deleted."
+msgstr[0] "%d backup deleted."
+msgstr[1] "%d backups deleted."
 
-#: src/Admin/Page.php:399
-msgid "Tuesday"
-msgstr "Tuesday"
-
-#: src/Admin/Page.php:180 src/Admin/Page.php:479
-msgid "Type"
-msgstr "Type"
-
-#: src/Admin/Page.php:591
-msgid "Typical duration"
-msgstr "Typical duration"
-
-#: src/Admin/Page.php:124
+#: src/Admin/Assets.php:199
 msgid ""
-"Upload a .cbbackup file in resumable chunks. Uploading only prepares the "
-"archive; restoring live data is a separate confirmed action."
+"Backup job started. It continues in the background if you leave this page."
 msgstr ""
-"Upload a .cbbackup file in resumable chunks. Uploading only prepares the "
-"archive; restoring live data is a separate confirmed action."
+"Backup job started. It continues in the background if you leave this page."
 
-#: src/Admin/Page.php:129 src/Admin/Assets.php:96
-msgid "Upload backup"
-msgstr "Upload backup"
-
-#: src/Admin/Assets.php:102
-msgid "Upload interrupted — select the same file to resume."
-msgstr "Upload interrupted — select the same file to resume."
-
-#: src/Admin/Assets.php:97
-msgid "Uploading…"
-msgstr "Uploading…"
-
-#: src/Admin/Assets.php:99
-msgid "Validating backup…"
-msgstr "Validating backup…"
-
-#: src/Admin/Page.php:511
-msgid "Verify"
-msgstr "Verify"
-
-#: src/Admin/JobPresentation.php:66 src/Admin/JobPresentation.php:85
-msgid "Verifying backup archive…"
-msgstr "Verifying backup archive…"
-
-#: src/Admin/JobPresentation.php:68
-msgid "Verifying prepared files…"
-msgstr "Verifying prepared files…"
-
-#: src/Admin/JobPresentation.php:71
-msgid "Verifying restored database…"
-msgstr "Verifying restored database…"
-
-#: src/Admin/JobPresentation.php:74
-msgid "Verifying restored files and runtime…"
-msgstr "Verifying restored files and runtime…"
-
-#: src/Admin/Page.php:224
-msgid "View progress"
-msgstr "View progress"
-
-#: src/Admin/Page.php:224
-msgid "View result"
-msgstr "View result"
-
-#: src/Admin/Page.php:457
-msgid "WP-Cron"
-msgstr "WP-Cron"
-
-#: src/Admin/Page.php:388
-msgid "WP-Cron disabled — use server cron / CLI for schedule triggering."
-msgstr "WP-Cron disabled — use server cron / CLI for schedule triggering."
-
-#: src/Admin/Page.php:388
+#: src/Admin/Assets.php:200
 msgid ""
-"WP-Cron enabled; server cron / CLI may also call the same scheduler safely."
+"Restore job started. Execution is server-owned; this page only monitors its "
+"status."
 msgstr ""
-"WP-Cron enabled; server cron / CLI may also call the same scheduler safely."
+"Restore job started. Execution is server-owned; this page only monitors its "
+"status."
 
-#: src/Support/SiteHealth.php:92
-msgid ""
-"WP-Cron may not be receiving enough traffic. Configure a server cron to run "
-"the Core Blueprint backup scheduler reliably."
-msgstr ""
-"WP-Cron may not be receiving enough traffic. Configure a server cron to run "
-"the Core Blueprint backup scheduler reliably."
+#: src/Admin/Assets.php:201
+msgid "Backup deleted."
+msgstr "Backup deleted."
 
-#: src/Admin/Page.php:432
-msgid "Waiting for first run"
-msgstr "Waiting for first run"
+#: src/Admin/Assets.php:202
+msgid "Backup integrity verified successfully."
+msgstr "Backup integrity verified successfully."
 
-#: src/Admin/Page.php:399
-msgid "Wednesday"
-msgstr "Wednesday"
+#: src/Admin/Assets.php:203
+msgid "Backup schedules saved."
+msgstr "Backup schedules saved."
 
-#: src/Admin/Page.php:398
-msgid "Weekday"
-msgstr "Weekday"
-
-#: src/Admin/Page.php:405
-msgid "Weekly"
-msgstr "Weekly"
-
-#: src/Admin/Page.php:42 src/Admin/Actions.php:440
-msgid "You are not allowed to manage backups."
-msgstr "You are not allowed to manage backups."
-
-#: src/Admin/JobMonitor.php:61 src/Admin/Assets.php:146
-msgid ""
-"Your WordPress session changed during migration. Sign in again to continue "
-"monitoring. The restore continues safely in the background."
-msgstr ""
-"Your WordPress session changed during migration. Sign in again to continue "
-"monitoring. The restore continues safely in the background."
+#: src/Admin/Assets.php:205
+msgid "Prepared import deleted."
+msgstr "Prepared import deleted."
 
 #: src/Admin/JobMonitor.php:25
 msgid ""
@@ -1530,10 +407,1189 @@ msgstr ""
 "privileged access review may be required. The server job is not cancelled; "
 "its result cannot be confirmed from this session."
 
-#: src/Admin/JobMonitor.php:36 src/Admin/Assets.php:163
+#: src/Admin/JobMonitor.php:48
+msgid "Backup job not found."
+msgstr "Backup job not found."
+
+#: src/Admin/JobPresentation.php:39 src/Admin/JobPresentation.php:154
+#: src/Admin/Page.php:463
+msgid "Files"
+msgstr "Files"
+
+#: src/Admin/JobPresentation.php:44
+msgid "Data processed"
+msgstr "Data processed"
+
+#: src/Admin/JobPresentation.php:56
+msgid "Migration completed"
+msgstr "Migration completed"
+
+#: src/Admin/JobPresentation.php:57 src/Bootstrap.php:256
+msgid "Restore completed"
+msgstr "Restore completed"
+
+#: src/Admin/JobPresentation.php:59 src/Bootstrap.php:246
+msgid "Backup completed"
+msgstr "Backup completed"
+
+#: src/Admin/JobPresentation.php:65
+msgid "Preparing restore…"
+msgstr "Preparing restore…"
+
+#: src/Admin/JobPresentation.php:66 src/Admin/JobPresentation.php:85
+msgid "Verifying backup archive…"
+msgstr "Verifying backup archive…"
+
+#: src/Admin/JobPresentation.php:67
+msgid "Preparing restore files…"
+msgstr "Preparing restore files…"
+
+#: src/Admin/JobPresentation.php:68
+msgid "Verifying prepared files…"
+msgstr "Verifying prepared files…"
+
+#: src/Admin/JobPresentation.php:69
+msgid "Preparing migrated database…"
+msgstr "Preparing migrated database…"
+
+#: src/Admin/JobPresentation.php:70
+msgid "Preparing restored database…"
+msgstr "Preparing restored database…"
+
+#: src/Admin/JobPresentation.php:71
+msgid "Verifying restored database…"
+msgstr "Verifying restored database…"
+
+#: src/Admin/JobPresentation.php:72
+msgid "Preparing safe switch…"
+msgstr "Preparing safe switch…"
+
+#: src/Admin/JobPresentation.php:73
+msgid "Applying restored website…"
+msgstr "Applying restored website…"
+
+#: src/Admin/JobPresentation.php:74
+msgid "Verifying restored files and runtime…"
+msgstr "Verifying restored files and runtime…"
+
+#: src/Admin/JobPresentation.php:75
+msgid "Running final safety checks…"
+msgstr "Running final safety checks…"
+
+#: src/Admin/JobPresentation.php:76
+msgid "Processing restore…"
+msgstr "Processing restore…"
+
+#: src/Admin/JobPresentation.php:81
+msgid "Preparing backup…"
+msgstr "Preparing backup…"
+
+#: src/Admin/JobPresentation.php:82
+msgid "Exporting database…"
+msgstr "Exporting database…"
+
+#: src/Admin/JobPresentation.php:83
+msgid "Scanning website files…"
+msgstr "Scanning website files…"
+
+#: src/Admin/JobPresentation.php:84
+msgid "Creating backup archive…"
+msgstr "Creating backup archive…"
+
+#: src/Admin/JobPresentation.php:86
+msgid "Processing backup…"
+msgstr "Processing backup…"
+
+#: src/Admin/JobPresentation.php:92
+msgid "Queued"
+msgstr "Queued"
+
+#: src/Admin/JobPresentation.php:93
+msgid "Running"
+msgstr "Running"
+
+#: src/Admin/JobPresentation.php:95
+msgid "Completed"
+msgstr "Completed"
+
+#: src/Admin/JobPresentation.php:112
+msgid "Backup payloads verified"
+msgstr "Backup payloads verified"
+
+#: src/Admin/JobPresentation.php:113
+msgid "Backup archive size"
+msgstr "Backup archive size"
+
+#: src/Admin/JobPresentation.php:119
+msgid "Payloads extracted"
+msgstr "Payloads extracted"
+
+#: src/Admin/JobPresentation.php:120
+msgid "Data extracted"
+msgstr "Data extracted"
+
+#: src/Admin/JobPresentation.php:126
+msgid "Prepared payloads verified"
+msgstr "Prepared payloads verified"
+
+#: src/Admin/JobPresentation.php:127 src/Admin/JobPresentation.php:149
+#: src/Admin/JobPresentation.php:155
+msgid "Filesystem snapshot"
+msgstr "Filesystem snapshot"
+
+#: src/Admin/JobPresentation.php:133 src/Admin/JobPresentation.php:141
+msgid "Restored files verified"
+msgstr "Restored files verified"
+
+#: src/Admin/JobPresentation.php:134 src/Admin/JobPresentation.php:142
+msgid "Restored filesystem data"
+msgstr "Restored filesystem data"
+
+#: src/Admin/JobPresentation.php:148
+msgid "Files staged"
+msgstr "Files staged"
+
+#: src/Admin/Page.php:26 src/Admin/Page.php:30 src/Admin/Page.php:51
+#: src/Admin/Page.php:70 src/Bootstrap.php:84 src/Bootstrap.php:178
+msgid "Backups"
+msgstr "Backups"
+
+#: src/Admin/Page.php:52 src/Admin/Page.php:109
+msgid "Create backup"
+msgstr "Create backup"
+
+#: src/Admin/Page.php:52 src/Admin/Page.php:71 src/Bootstrap.php:124
+msgid "Import & Restore"
+msgstr "Import & Restore"
+
+#: src/Admin/Page.php:52 src/Admin/Page.php:72 src/Bootstrap.php:131
+msgid "Schedules"
+msgstr "Schedules"
+
+#: src/Admin/Page.php:86
+msgid "Database backup"
+msgstr "Database backup"
+
+#: src/Admin/Page.php:86
 msgid ""
-"Your monitoring session expired. Reload this page to continue monitoring the"
-" server-owned job."
+"Exports all WordPress tables for this site into a portable Core Blueprint "
+"backup. The SQL can also be downloaded separately."
 msgstr ""
-"Your monitoring session expired. Reload this page to continue monitoring the"
-" server-owned job."
+"Exports all WordPress tables for this site into a portable Core Blueprint "
+"backup. The SQL can also be downloaded separately."
+
+#: src/Admin/Page.php:87
+msgid "Full website backup"
+msgstr "Full website backup"
+
+#: src/Admin/Page.php:87
+msgid ""
+"Backs up the database and wp-content, including plugins, themes, uploads, MU "
+"plugins, languages and custom content files."
+msgstr ""
+"Backs up the database and wp-content, including plugins, themes, uploads, MU "
+"plugins, languages and custom content files."
+
+#: src/Admin/Page.php:91
+msgid "Available backups"
+msgstr "Available backups"
+
+#: src/Admin/Page.php:93
+msgid "No backups have been created yet."
+msgstr "No backups have been created yet."
+
+#: src/Admin/Page.php:98
+msgid ""
+"Archive verified means the stored files passed checksum checks. Before a "
+"restore replaces live data, its database contents are also compared with the "
+"recorded source values. A successful restore rehearsal is a separate check."
+msgstr ""
+"Archive verified means the stored files passed checksum checks. Before a "
+"restore replaces live data, its database contents are also compared with the "
+"recorded source values. A successful restore rehearsal is a separate check."
+
+#: src/Admin/Page.php:116
+msgid "Restore replaces live site data."
+msgstr "Restore replaces live site data."
+
+#: src/Admin/Page.php:117
+msgid ""
+"Backup format v1 only restores to the same site URL and table prefix. "
+"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
+"and Backups code remain at their currently installed versions during "
+"recovery so the restore engine cannot replace itself mid-operation."
+msgstr ""
+"Backup format v1 only restores to the same site URL and table prefix. "
+"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
+"and Backups code remain at their currently installed versions during "
+"recovery so the restore engine cannot replace itself mid-operation."
+
+#: src/Admin/Page.php:121
+msgid "Import a backup"
+msgstr "Import a backup"
+
+#: src/Admin/Page.php:122
+msgid ""
+"Upload a .cbbackup file in resumable chunks. Uploading only prepares the "
+"archive; restoring live data is a separate confirmed action."
+msgstr ""
+"Upload a .cbbackup file in resumable chunks. Uploading only prepares the "
+"archive; restoring live data is a separate confirmed action."
+
+#: src/Admin/Page.php:128
+msgid ""
+"Large files are uploaded in resumable chunks. If this page is closed, select "
+"the same file again later and the upload resumes from the last committed "
+"byte."
+msgstr ""
+"Large files are uploaded in resumable chunks. If this page is closed, select "
+"the same file again later and the upload resumes from the last committed "
+"byte."
+
+#: src/Admin/Page.php:138
+msgid "Prepared imports"
+msgstr "Prepared imports"
+
+#: src/Admin/Page.php:139
+msgid ""
+"Prepared imports are temporary staging copies. Review the source and "
+"destination identity before restoring. Inactive imports are removed "
+"automatically after 24 hours."
+msgstr ""
+"Prepared imports are temporary staging copies. Review the source and "
+"destination identity before restoring. Inactive imports are removed "
+"automatically after 24 hours."
+
+#: src/Admin/Page.php:141
+msgid "No imported backups are waiting for restore."
+msgstr "No imported backups are waiting for restore."
+
+#: src/Admin/Page.php:149
+msgid "Restore a local backup"
+msgstr "Restore a local backup"
+
+#: src/Admin/Page.php:151
+msgid "No local backups are available."
+msgstr "No local backups are available."
+
+#: src/Admin/Page.php:172
+msgid "Could not load restore history. Refresh this page before trying again."
+msgstr "Could not load restore history. Refresh this page before trying again."
+
+#: src/Admin/Page.php:176
+msgid "Imported"
+msgstr "Imported"
+
+#: src/Admin/Page.php:177
+msgid "Original file"
+msgstr "Original file"
+
+#: src/Admin/Page.php:178 src/Admin/Page.php:463
+msgid "Type"
+msgstr "Type"
+
+#: src/Admin/Page.php:179 src/Admin/Page.php:463
+msgid "Size"
+msgstr "Size"
+
+#: src/Admin/Page.php:180
+msgid "Source → Destination"
+msgstr "Source → Destination"
+
+#: src/Admin/Page.php:181 src/Admin/Page.php:383
+msgid "Status"
+msgstr "Status"
+
+#: src/Admin/Page.php:182 src/Admin/Page.php:463
+msgid "Actions"
+msgstr "Actions"
+
+#: src/Admin/Page.php:189 src/Admin/Page.php:398 src/Admin/Page.php:476
+msgid "Full website"
+msgstr "Full website"
+
+#: src/Admin/Page.php:189 src/Admin/Page.php:398 src/Admin/Page.php:476
+msgid "Database"
+msgstr "Database"
+
+#: src/Admin/Page.php:201
+msgid "Preflight unavailable"
+msgstr "Preflight unavailable"
+
+#: src/Admin/Page.php:203
+msgid "Source"
+msgstr "Source"
+
+#: src/Admin/Page.php:203 src/Admin/Page.php:205
+msgid "Table prefix:"
+msgstr "Table prefix:"
+
+#: src/Admin/Page.php:205
+msgid "Destination"
+msgstr "Destination"
+
+#: src/Admin/Page.php:209 src/Admin/Page.php:314
+msgid "Status unavailable"
+msgstr "Status unavailable"
+
+#: src/Admin/Page.php:213
+msgid "Needs review"
+msgstr "Needs review"
+
+#: src/Admin/Page.php:215
+msgid "Migration ready"
+msgstr "Migration ready"
+
+#: src/Admin/Page.php:217
+msgid "Restore ready"
+msgstr "Restore ready"
+
+#: src/Admin/Page.php:222
+msgid "View progress"
+msgstr "View progress"
+
+#: src/Admin/Page.php:222
+msgid "View result"
+msgstr "View result"
+
+#. translators: 1: imported backup filename, 2: source URL, 3: source prefix, 4: destination URL, 5: destination prefix.
+#: src/Admin/Page.php:229
+#, php-format
+msgid ""
+"Migrate %1$s from %2$s (prefix %3$s) to %4$s (prefix %5$s)? The archive will "
+"be fully verified first. Core Blueprint will prepare a private migration "
+"copy, map database tables to the destination prefix, replace source URLs in "
+"serialization-aware data where required, preserve post GUID values, and only "
+"then replace live site data."
+msgstr ""
+"Migrate %1$s from %2$s (prefix %3$s) to %4$s (prefix %5$s)? The archive will "
+"be fully verified first. Core Blueprint will prepare a private migration "
+"copy, map database tables to the destination prefix, replace source URLs in "
+"serialization-aware data where required, preserve post GUID values, and only "
+"then replace live site data."
+
+#: src/Admin/Page.php:236
+msgid "Migrate imported backup?"
+msgstr "Migrate imported backup?"
+
+#: src/Admin/Page.php:237 src/Admin/Page.php:238
+msgid "Migrate & restore"
+msgstr "Migrate & restore"
+
+#. translators: 1: imported backup filename, 2: destination URL, 3: destination prefix.
+#: src/Admin/Page.php:242
+#, php-format
+msgid ""
+"Restore %1$s to %2$s (prefix %3$s)? The source and destination identity "
+"match. The archive will be fully verified before replacing the destination "
+"data covered by this backup."
+msgstr ""
+"Restore %1$s to %2$s (prefix %3$s)? The source and destination identity "
+"match. The archive will be fully verified before replacing the destination "
+"data covered by this backup."
+
+#: src/Admin/Page.php:247
+msgid "Restore imported backup?"
+msgstr "Restore imported backup?"
+
+#: src/Admin/Page.php:248 src/Admin/Page.php:483
+msgid "Restore backup"
+msgstr "Restore backup"
+
+#: src/Admin/Page.php:249 src/Admin/Page.php:486
+msgid "Restore"
+msgstr "Restore"
+
+#: src/Admin/Page.php:252
+msgid "Migrate again"
+msgstr "Migrate again"
+
+#: src/Admin/Page.php:252
+msgid "Restore again"
+msgstr "Restore again"
+
+#. translators: %s: imported backup filename.
+#: src/Admin/Page.php:266
+#, php-format
+msgid ""
+"Delete the prepared import %s? The uploaded archive will be removed from "
+"private import storage."
+msgstr ""
+"Delete the prepared import %s? The uploaded archive will be removed from "
+"private import storage."
+
+#: src/Admin/Page.php:269
+msgid "Delete prepared import?"
+msgstr "Delete prepared import?"
+
+#: src/Admin/Page.php:269
+msgid "Delete import"
+msgstr "Delete import"
+
+#: src/Admin/Page.php:272 src/Admin/Page.php:504
+msgid "Delete"
+msgstr "Delete"
+
+#: src/Admin/Page.php:285
+#, php-format
+msgid "Last attempt: %s"
+msgstr "Last attempt: %s"
+
+#: src/Admin/Page.php:289
+msgid "Migrated successfully"
+msgstr "Migrated successfully"
+
+#: src/Admin/Page.php:289
+msgid "Restored successfully"
+msgstr "Restored successfully"
+
+#: src/Admin/Page.php:290
+#, php-format
+msgid "Last migrated: %s"
+msgstr "Last migrated: %s"
+
+#: src/Admin/Page.php:290
+#, php-format
+msgid "Last restored: %s"
+msgstr "Last restored: %s"
+
+#: src/Admin/Page.php:294
+msgid "Migration failed"
+msgstr "Migration failed"
+
+#: src/Admin/Page.php:294 src/Bootstrap.php:257
+msgid "Restore failed"
+msgstr "Restore failed"
+
+#: src/Admin/Page.php:298
+msgid "Migration cancelled"
+msgstr "Migration cancelled"
+
+#: src/Admin/Page.php:298
+msgid "Restore cancelled"
+msgstr "Restore cancelled"
+
+#: src/Admin/Page.php:301
+msgid "Migration queued"
+msgstr "Migration queued"
+
+#: src/Admin/Page.php:301
+msgid "Restore queued"
+msgstr "Restore queued"
+
+#: src/Admin/Page.php:305
+msgid "Migrating…"
+msgstr "Migrating…"
+
+#: src/Admin/Page.php:305
+msgid "Restoring…"
+msgstr "Restoring…"
+
+#: src/Admin/Page.php:369
+msgid ""
+"Automatic backup schedules are enabled, but the scheduler heartbeat is not "
+"recent. Configure a server cron running “cb backup run-due” when WP-Cron is "
+"disabled or site traffic is too low."
+msgstr ""
+"Automatic backup schedules are enabled, but the scheduler heartbeat is not "
+"recent. Configure a server cron running “cb backup run-due” when WP-Cron is "
+"disabled or site traffic is too low."
+
+#: src/Admin/Page.php:373
+msgid "Scheduler health"
+msgstr "Scheduler health"
+
+#: src/Admin/Page.php:378 src/Admin/Page.php:428
+msgid "Healthy"
+msgstr "Healthy"
+
+#: src/Admin/Page.php:379
+msgid "Heartbeat delayed"
+msgstr "Heartbeat delayed"
+
+#: src/Admin/Page.php:380
+msgid "Scheduler not running"
+msgstr "Scheduler not running"
+
+#: src/Admin/Page.php:381
+msgid "Idle — no automatic schedules enabled"
+msgstr "Idle — no automatic schedules enabled"
+
+#: src/Admin/Page.php:384
+msgid "Last scheduler tick"
+msgstr "Last scheduler tick"
+
+#: src/Admin/Page.php:385
+msgid "Next automatic backup"
+msgstr "Next automatic backup"
+
+#: src/Admin/Page.php:386
+msgid "Execution"
+msgstr "Execution"
+
+#: src/Admin/Page.php:386
+msgid "WP-Cron disabled — use server cron / CLI for schedule triggering."
+msgstr "WP-Cron disabled — use server cron / CLI for schedule triggering."
+
+#: src/Admin/Page.php:386
+msgid ""
+"WP-Cron enabled; server cron / CLI may also call the same scheduler safely."
+msgstr ""
+"WP-Cron enabled; server cron / CLI may also call the same scheduler safely."
+
+#: src/Admin/Page.php:388
+msgid "Last scheduler error"
+msgstr "Last scheduler error"
+
+#: src/Admin/Page.php:396
+msgid "Backup"
+msgstr "Backup"
+
+#: src/Admin/Page.php:396 src/Admin/Settings.php:27
+msgid "Enabled"
+msgstr "Enabled"
+
+#: src/Admin/Page.php:396
+msgid "Frequency"
+msgstr "Frequency"
+
+#: src/Admin/Page.php:396
+msgid "Weekday"
+msgstr "Weekday"
+
+#: src/Admin/Page.php:396
+msgid "Time"
+msgstr "Time"
+
+#: src/Admin/Page.php:396
+msgid "Keep automatic"
+msgstr "Keep automatic"
+
+#: src/Admin/Page.php:396
+msgid "Last success"
+msgstr "Last success"
+
+#: src/Admin/Page.php:396
+msgid "Next run"
+msgstr "Next run"
+
+#: src/Admin/Page.php:396
+msgid "State"
+msgstr "State"
+
+#: src/Admin/Page.php:397
+msgid "Monday"
+msgstr "Monday"
+
+#: src/Admin/Page.php:397
+msgid "Tuesday"
+msgstr "Tuesday"
+
+#: src/Admin/Page.php:397
+msgid "Wednesday"
+msgstr "Wednesday"
+
+#: src/Admin/Page.php:397
+msgid "Thursday"
+msgstr "Thursday"
+
+#: src/Admin/Page.php:397
+msgid "Friday"
+msgstr "Friday"
+
+#: src/Admin/Page.php:397
+msgid "Saturday"
+msgstr "Saturday"
+
+#: src/Admin/Page.php:397
+msgid "Sunday"
+msgstr "Sunday"
+
+#: src/Admin/Page.php:401
+msgid "On"
+msgstr "On"
+
+#: src/Admin/Page.php:403
+msgid "Hourly"
+msgstr "Hourly"
+
+#: src/Admin/Page.php:403
+msgid "Daily"
+msgstr "Daily"
+
+#: src/Admin/Page.php:403
+msgid "Weekly"
+msgstr "Weekly"
+
+#: src/Admin/Page.php:413
+msgid "Time in 24-hour format"
+msgstr "Time in 24-hour format"
+
+#: src/Admin/Page.php:414
+msgid "Choose time"
+msgstr "Choose time"
+
+#: src/Admin/Page.php:421
+msgid "Off"
+msgstr "Off"
+
+#: src/Admin/Page.php:424
+msgid "Delayed"
+msgstr "Delayed"
+
+#: src/Admin/Page.php:426
+msgid "Retry scheduled"
+msgstr "Retry scheduled"
+
+#: src/Admin/Page.php:430
+msgid "Waiting for first run"
+msgstr "Waiting for first run"
+
+#: src/Admin/Page.php:441
+msgid "Save schedules"
+msgstr "Save schedules"
+
+#: src/Admin/Page.php:443
+msgid ""
+"Retention only manages automatic backups created by these schedules; manual "
+"restore points are never deleted automatically. For Hourly schedules, the "
+"minute from Time is used. Weekday is used only for Weekly schedules. "
+"Schedules remain local and work without Beacon or Hub."
+msgstr ""
+"Retention only manages automatic backups created by these schedules; manual "
+"restore points are never deleted automatically. For Hourly schedules, the "
+"minute from Time is used. Weekday is used only for Weekly schedules. "
+"Schedules remain local and work without Beacon or Hub."
+
+#: src/Admin/Page.php:450
+msgid "Select one or more backups to delete."
+msgstr "Select one or more backups to delete."
+
+#: src/Admin/Page.php:461
+msgid "Select all backups"
+msgstr "Select all backups"
+
+#: src/Admin/Page.php:463
+msgid "Created"
+msgstr "Created"
+
+#: src/Admin/Page.php:463
+msgid "Rows"
+msgstr "Rows"
+
+#: src/Admin/Page.php:463
+msgid "Duration"
+msgstr "Duration"
+
+#: src/Admin/Page.php:463
+msgid "Integrity"
+msgstr "Integrity"
+
+#: src/Admin/Page.php:474
+#, php-format
+msgid "Select backup created %s"
+msgstr "Select backup created %s"
+
+#: src/Admin/Page.php:476
+msgid "Archive verified"
+msgstr "Archive verified"
+
+#: src/Admin/Page.php:476
+msgid "Not verified"
+msgstr "Not verified"
+
+#. translators: %s: backup archive filename.
+#: src/Admin/Page.php:480
+#, php-format
+msgid ""
+"Restore %s? The archive will be verified before the restore starts. Live "
+"site data will be replaced and the site may be temporarily unavailable."
+msgstr ""
+"Restore %s? The archive will be verified before the restore starts. Live "
+"site data will be replaced and the site may be temporarily unavailable."
+
+#: src/Admin/Page.php:483
+msgid "Restore backup?"
+msgstr "Restore backup?"
+
+#: src/Admin/Page.php:491
+msgid "Download"
+msgstr "Download"
+
+#: src/Admin/Page.php:492
+msgid "SQL"
+msgstr "SQL"
+
+#: src/Admin/Page.php:495
+msgid "Verify"
+msgstr "Verify"
+
+#. translators: %s: backup archive filename.
+#: src/Admin/Page.php:499
+#, php-format
+msgid ""
+"Permanently delete %s? This restore point will be removed from local backup "
+"storage and cannot be recovered."
+msgstr ""
+"Permanently delete %s? This restore point will be removed from local backup "
+"storage and cannot be recovered."
+
+#: src/Admin/Page.php:502
+msgid "Delete backup?"
+msgstr "Delete backup?"
+
+#: src/Admin/Page.php:502
+msgid "Delete backup"
+msgstr "Delete backup"
+
+#: src/Admin/Page.php:516
+#, php-format
+msgid ""
+"I understand that this action replaces the current database and site files "
+"on %s. Changes on this site that are not in this backup will be lost."
+msgstr ""
+"I understand that this action replaces the current database and site files "
+"on %s. Changes on this site that are not in this backup will be lost."
+
+#: src/Admin/Page.php:517
+#, php-format
+msgid ""
+"I understand that this action replaces the current database on %s. Database "
+"changes on this site that are not in this backup will be lost."
+msgstr ""
+"I understand that this action replaces the current database on %s. Database "
+"changes on this site that are not in this backup will be lost."
+
+#: src/Admin/Page.php:537
+msgid "Restore or backup failed. Review the job error below."
+msgstr "Restore or backup failed. Review the job error below."
+
+#: src/Admin/Page.php:539
+msgid "Backup cancelled."
+msgstr "Backup cancelled."
+
+#: src/Admin/Page.php:549
+msgid "Next steps: save permalinks and clear caches"
+msgstr "Next steps: save permalinks and clear caches"
+
+#: src/Admin/Page.php:550
+msgid "Recommended before using the migrated site:"
+msgstr "Recommended before using the migrated site:"
+
+#: src/Admin/Page.php:552
+msgid ""
+"Open Settings → Permalinks and click Save Changes without changing your "
+"permalink structure."
+msgstr ""
+"Open Settings → Permalinks and click Save Changes without changing your "
+"permalink structure."
+
+#: src/Admin/Page.php:553
+msgid ""
+"Clear any page-cache plugin, hosting/server and CDN caches you use, then "
+"refresh your browser."
+msgstr ""
+"Clear any page-cache plugin, hosting/server and CDN caches you use, then "
+"refresh your browser."
+
+#: src/Admin/Page.php:556
+msgid "Open permalink settings"
+msgstr "Open permalink settings"
+
+#: src/Admin/Page.php:560
+msgid "Restore progress"
+msgstr "Restore progress"
+
+#: src/Admin/Page.php:560
+msgid "Backup progress"
+msgstr "Backup progress"
+
+#: src/Admin/Page.php:565
+msgid "Database rows"
+msgstr "Database rows"
+
+#: src/Admin/Page.php:566
+msgid "Tables"
+msgstr "Tables"
+
+#: src/Admin/Page.php:570
+msgid "Throughput"
+msgstr "Throughput"
+
+#: src/Admin/Page.php:572
+msgid "Elapsed"
+msgstr "Elapsed"
+
+#: src/Admin/Page.php:573
+msgid "Output size"
+msgstr "Output size"
+
+#: src/Admin/Page.php:575
+msgid "Typical duration"
+msgstr "Typical duration"
+
+#: src/Admin/Page.php:578
+msgid "Current table:"
+msgstr "Current table:"
+
+#: src/Admin/Page.php:580
+msgid "Current file:"
+msgstr "Current file:"
+
+#: src/Admin/Page.php:584
+msgid ""
+"This backup is taking significantly longer than its recent baseline. You can "
+"inspect the current stage and cancel it safely at the next checkpoint."
+msgstr ""
+"This backup is taking significantly longer than its recent baseline. You can "
+"inspect the current stage and cancel it safely at the next checkpoint."
+
+#: src/Admin/Settings.php:23
+msgid "Storage"
+msgstr "Storage"
+
+#: src/Admin/Settings.php:23
+msgid ""
+"Archives use random filenames and the directory includes Apache and IIS deny "
+"rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a "
+"writable directory outside the public web root."
+msgstr ""
+"Archives use random filenames and the directory includes Apache and IIS deny "
+"rules. For the strongest isolation, define CB_BACKUPS_STORAGE_PATH to a "
+"writable directory outside the public web root."
+
+#: src/Admin/Settings.php:24
+msgid "Storage location"
+msgstr "Storage location"
+
+#: src/Admin/Settings.php:24
+msgid ""
+"Inside wp-content; protected where the web server honours supplied deny "
+"rules."
+msgstr ""
+"Inside wp-content; protected where the web server honours supplied deny "
+"rules."
+
+#: src/Admin/Settings.php:24
+msgid "Outside wp-content."
+msgstr "Outside wp-content."
+
+#: src/Admin/Settings.php:25
+msgid "PHP ZIP"
+msgstr "PHP ZIP"
+
+#: src/Admin/Settings.php:25
+msgid "Available"
+msgstr "Available"
+
+#: src/Admin/Settings.php:25
+msgid "Missing"
+msgstr "Missing"
+
+#: src/Admin/Settings.php:26
+msgid "Background execution"
+msgstr "Background execution"
+
+#: src/Admin/Settings.php:26 src/Bootstrap.php:85
+msgid ""
+"Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser "
+"is only a monitor and may be closed during backups."
+msgstr ""
+"Server-owned loopback worker with WP-Cron/CLI recovery watchdog. The browser "
+"is only a monitor and may be closed during backups."
+
+#: src/Admin/Settings.php:27
+msgid "WP-Cron"
+msgstr "WP-Cron"
+
+#: src/Admin/Settings.php:27
+msgid ""
+"Disabled — the loopback worker still runs started jobs; use a server cron/"
+"CLI runner as watchdog and for schedules."
+msgstr ""
+"Disabled — the loopback worker still runs started jobs; use a server cron/"
+"CLI runner as watchdog and for schedules."
+
+#: src/Bootstrap.php:138
+msgid "Settings"
+msgstr "Settings"
+
+#: src/Bootstrap.php:150 src/Bootstrap.php:191 src/Support/Requirements.php:132
+msgid "Core Blueprint Backups requires the PHP ZIP extension."
+msgstr "Core Blueprint Backups requires the PHP ZIP extension."
+
+#: src/Bootstrap.php:200
+msgid "Backup storage unavailable"
+msgstr "Backup storage unavailable"
+
+#: src/Bootstrap.php:208 src/Support/SiteHealth.php:42
+msgid "Backup storage is not writable"
+msgstr "Backup storage is not writable"
+
+#: src/Bootstrap.php:217 src/Bootstrap.php:237
+msgid "Backup scheduler requires attention"
+msgstr "Backup scheduler requires attention"
+
+#: src/Bootstrap.php:222
+msgid "Backup scheduler is delayed"
+msgstr "Backup scheduler is delayed"
+
+#: src/Bootstrap.php:227
+msgid "Automatic backup schedules are healthy"
+msgstr "Automatic backup schedules are healthy"
+
+#: src/Bootstrap.php:232 src/Support/Requirements.php:97
+#: src/Support/Requirements.php:134
+msgid "Ready"
+msgstr "Ready"
+
+#: src/Bootstrap.php:245
+msgid "Backup started"
+msgstr "Backup started"
+
+#: src/Bootstrap.php:247
+msgid "Backup failed"
+msgstr "Backup failed"
+
+#: src/Bootstrap.php:248
+msgid "Backup cancelled"
+msgstr "Backup cancelled"
+
+#: src/Bootstrap.php:249
+msgid "Backup verification started"
+msgstr "Backup verification started"
+
+#: src/Bootstrap.php:250
+msgid "Backup verified"
+msgstr "Backup verified"
+
+#: src/Bootstrap.php:251
+msgid "Backup verification failed"
+msgstr "Backup verification failed"
+
+#: src/Bootstrap.php:252
+msgid "Backup downloaded"
+msgstr "Backup downloaded"
+
+#: src/Bootstrap.php:253
+msgid "Backup deleted"
+msgstr "Backup deleted"
+
+#: src/Bootstrap.php:254
+msgid "Backups deleted in bulk"
+msgstr "Backups deleted in bulk"
+
+#: src/Bootstrap.php:255
+msgid "Restore started"
+msgstr "Restore started"
+
+#: src/Bootstrap.php:258
+msgid "Restore recovery cleanup warning"
+msgstr "Restore recovery cleanup warning"
+
+#: src/Bootstrap.php:259
+msgid "Backup schedules updated"
+msgstr "Backup schedules updated"
+
+#: src/Bootstrap.php:260
+msgid "Scheduled backup delayed"
+msgstr "Scheduled backup delayed"
+
+#: src/Bootstrap.php:261
+msgid "Scheduled backup retry planned"
+msgstr "Scheduled backup retry planned"
+
+#: src/Bootstrap.php:262
+msgid "Scheduled backup running longer than baseline"
+msgstr "Scheduled backup running longer than baseline"
+
+#: src/Bootstrap.php:263
+msgid "Backup stale job recovery attempted"
+msgstr "Backup stale job recovery attempted"
+
+#: src/Bootstrap.php:264
+msgid "Automatic backup retention applied"
+msgstr "Automatic backup retention applied"
+
+#: src/Bootstrap.php:265
+msgid "Automatic backup retention failed"
+msgstr "Automatic backup retention failed"
+
+#: src/Bootstrap.php:266
+msgid "Backup scheduler error"
+msgstr "Backup scheduler error"
+
+#: src/Bootstrap.php:267
+msgid "Backup housekeeping cleanup"
+msgstr "Backup housekeeping cleanup"
+
+#: src/Bootstrap.php:268
+msgid "Backup import prepared"
+msgstr "Backup import prepared"
+
+#: src/Bootstrap.php:269
+msgid "Prepared backup import deleted"
+msgstr "Prepared backup import deleted"
+
+#: src/Bootstrap.php:270
+msgid "Backup import cancelled"
+msgstr "Backup import cancelled"
+
+#: src/Restore/Maintenance.php:34
+msgid ""
+"This site is temporarily unavailable while Core Blueprint restores a "
+"verified backup."
+msgstr ""
+"This site is temporarily unavailable while Core Blueprint restores a "
+"verified backup."
+
+#: src/Restore/Maintenance.php:35
+msgid "Restore in progress"
+msgstr "Restore in progress"
+
+#: src/Restore/Service.php:18
+msgid ""
+"Confirm that you understand the destination data will be replaced before "
+"starting a restore or migration."
+msgstr ""
+"Confirm that you understand the destination data will be replaced before "
+"starting a restore or migration."
+
+#: src/Support/Capabilities.php:41
+msgid "Manage backups"
+msgstr "Manage backups"
+
+#: src/Support/Capabilities.php:44
+msgid ""
+"Create, download, verify, schedule, delete and restore Core Blueprint "
+"backups. This authority is derived from Administrator or CB Operator trust "
+"and cannot be granted independently."
+msgstr ""
+"Create, download, verify, schedule, delete and restore Core Blueprint "
+"backups. This authority is derived from Administrator or CB Operator trust "
+"and cannot be granted independently."
+
+#. translators: 1: required PHP version, 2: current PHP version.
+#: src/Support/Requirements.php:80
+#, php-format
+msgid "PHP %1$s or newer is required. This server runs PHP %2$s."
+msgstr "PHP %1$s oder neuer ist erforderlich. Auf diesem Server läuft PHP %2$s."
+
+#: src/Support/Requirements.php:86
+msgid "Core Blueprint must be installed and active."
+msgstr "Core Blueprint muss installiert und aktiviert sein."
+
+#. translators: 1: required Core API version, 2: available Core API version.
+#: src/Support/Requirements.php:91
+#, php-format
+msgid ""
+"Core API %1$s or a newer compatible minor version is required. Available "
+"Core API: %2$s."
+msgstr "Core API %1$s oder eine neuere kompatible Minor-Version ist erforderlich. Verfügbare Core API: %2$s."
+
+#: src/Support/Requirements.php:93
+msgid "none"
+msgstr "keine"
+
+#: src/Support/Requirements.php:129
+msgid "Required Core Blueprint Base contracts are unavailable."
+msgstr "Erforderliche Core Blueprint Base-Verträge sind nicht verfügbar."
+
+#: src/Support/SiteHealth.php:19
+msgid "Core Blueprint backup storage"
+msgstr "Core Blueprint backup storage"
+
+#: src/Support/SiteHealth.php:23
+msgid "Core Blueprint recent backup"
+msgstr "Core Blueprint recent backup"
+
+#: src/Support/SiteHealth.php:27
+msgid "Core Blueprint backup scheduler"
+msgstr "Core Blueprint backup scheduler"
+
+#: src/Support/SiteHealth.php:42
+msgid "Backup storage is writable"
+msgstr "Backup storage is writable"
+
+#: src/Support/SiteHealth.php:45
+msgid ""
+"Core Blueprint can write backup archives to its configured local storage."
+msgstr ""
+"Core Blueprint can write backup archives to its configured local storage."
+
+#: src/Support/SiteHealth.php:45
+msgid "Core Blueprint cannot write to the configured backup storage directory."
+msgstr ""
+"Core Blueprint cannot write to the configured backup storage directory."
+
+#: src/Support/SiteHealth.php:59
+msgid "No Core Blueprint backup exists yet"
+msgstr "No Core Blueprint backup exists yet"
+
+#: src/Support/SiteHealth.php:62
+msgid "The latest Core Blueprint backup is older than 14 days"
+msgstr "The latest Core Blueprint backup is older than 14 days"
+
+#: src/Support/SiteHealth.php:65
+msgid "A recent Core Blueprint backup is available"
+msgstr "A recent Core Blueprint backup is available"
+
+#: src/Support/SiteHealth.php:71
+#, php-format
+msgid "Latest successful backup: %s."
+msgstr "Latest successful backup: %s."
+
+#: src/Support/SiteHealth.php:71
+msgid ""
+"Create a database or full website backup to establish the first restore "
+"point."
+msgstr ""
+"Create a database or full website backup to establish the first restore "
+"point."
+
+#: src/Support/SiteHealth.php:83
+msgid "No automatic backup schedules are enabled"
+msgstr "No automatic backup schedules are enabled"
+
+#: src/Support/SiteHealth.php:84
+msgid ""
+"Manual backups remain available. Enable a schedule when automatic restore "
+"points are required."
+msgstr ""
+"Manual backups remain available. Enable a schedule when automatic restore "
+"points are required."
+
+#: src/Support/SiteHealth.php:87
+msgid "The Core Blueprint backup scheduler is healthy"
+msgstr "The Core Blueprint backup scheduler is healthy"
+
+#: src/Support/SiteHealth.php:88
+#, php-format
+msgid "Last scheduler heartbeat: %s."
+msgstr "Last scheduler heartbeat: %s."
+
+#: src/Support/SiteHealth.php:91
+msgid "The Core Blueprint backup scheduler heartbeat is delayed"
+msgstr "The Core Blueprint backup scheduler heartbeat is delayed"
+
+#: src/Support/SiteHealth.php:92
+msgid ""
+"WP-Cron may not be receiving enough traffic. Configure a server cron to run "
+"the Core Blueprint backup scheduler reliably."
+msgstr ""
+"WP-Cron may not be receiving enough traffic. Configure a server cron to run "
+"the Core Blueprint backup scheduler reliably."
+
+#: src/Support/SiteHealth.php:95
+msgid "The Core Blueprint backup scheduler is not running"
+msgstr "The Core Blueprint backup scheduler is not running"
+
+#: src/Support/SiteHealth.php:96
+msgid ""
+"Automatic schedules are enabled but no recent scheduler heartbeat was "
+"detected. Configure WP-Cron or a server cron before relying on automatic "
+"backups."
+msgstr ""
+"Automatic schedules are enabled but no recent scheduler heartbeat was "
+"detected. Configure WP-Cron or a server cron before relying on automatic "
+"backups."
