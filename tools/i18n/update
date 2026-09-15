@@ -7,4 +7,5 @@ if [[ ! -f "$CONFIG" ]]; then
   echo "Copy tools/i18n/config.json.example to tools/i18n/config.json and complete the product identity values." >&2
   exit 1
 fi
+python3 "$ROOT/tools/i18n/seed-product-translations.py"
 exec python3 "$ROOT/tools/i18n/catalog.py" update --config "$CONFIG" "$@"
