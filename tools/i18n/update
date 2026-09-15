@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+CONFIG="${CB_I18N_CONFIG:-$ROOT/tools/i18n/config.json}"
+if [[ ! -f "$CONFIG" ]]; then
+  echo "ERROR: missing product i18n config: $CONFIG" >&2
+  echo "Copy tools/i18n/config.json.example to tools/i18n/config.json and complete the product identity values." >&2
+  exit 1
+fi
+exec python3 "$ROOT/tools/i18n/catalog.py" update --config "$CONFIG" "$@"

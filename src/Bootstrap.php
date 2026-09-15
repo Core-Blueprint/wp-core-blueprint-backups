@@ -143,15 +143,8 @@ final class Bootstrap {
 		] );
 	}
 
+	/** Product activation side effects. Dependency readiness is owned by the entrypoint guards. */
 	public static function activate(): void {
-		if ( ! defined( 'CB_CORE_FILE' ) || ! class_exists( '\\CB\\Core\\Database\\SchemaRegistry' ) || ! interface_exists( '\\CB\\Core\\Admin\\Page' ) || ! class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' ) || ! class_exists( '\\CB\\Core\\Governance\\Audit' ) || ! class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
-			deactivate_plugins( CB_BACKUPS_BASENAME );
-			wp_die( esc_html( 'Core Blueprint Backups requires an active, compatible Core Blueprint Base installation.' ) );
-		}
-		if ( version_compare( PHP_VERSION, '8.4', '<' ) ) {
-			deactivate_plugins( CB_BACKUPS_BASENAME );
-			wp_die( esc_html__( 'Core Blueprint Backups requires PHP 8.4 or newer.', 'core-blueprint-backups' ) );
-		}
 		if ( ! class_exists( 'ZipArchive' ) ) {
 			deactivate_plugins( CB_BACKUPS_BASENAME );
 			wp_die( esc_html__( 'Core Blueprint Backups requires the PHP ZIP extension.', 'core-blueprint-backups' ) );

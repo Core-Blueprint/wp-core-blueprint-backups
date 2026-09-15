@@ -1,27 +1,43 @@
 # Backups release tooling
 
-`build-release.py` is the canonical production release builder for Core Blueprint Backups.
+`tools/build-release` is the single canonical customer-release entrypoint for Core Blueprint Backups.
 
 ## Requirements
 
 - Python 3.10 or newer
+- WP-CLI with the canonical `wp i18n` commands
+- GNU gettext (`msgfmt`) for catalog validation and staged MO compilation
 - Node.js for JavaScript syntax validation
-- GNU gettext (`msgfmt`) for PO validation and deterministic MO compilation
 - an actual PHP 8.4 CLI binary
 - an actual PHP 8.5 CLI binary
+
+`tools/i18n/update` additionally requires GNU gettext `msgmerge` and `msgattrib` when catalogs are intentionally refreshed.
 
 ## Usage
 
 Run from the repository root:
 
 ```bash
-python3 tools/build-release.py \
+tools/build-release \
   --output dist \
   --php-bin /path/to/php8.4 \
   --php-bin /path/to/php8.5
 ```
 
-The version is intentionally fixed at `1.0.0-rc1` during the current Golden release-candidate patch cycle.
+The version remains `1.0.0-rc1` during the current Golden release-candidate patch cycle.
+
+## Localization authority
+
+The only first-party catalog workflow is:
+
+```text
+tools/i18n/update   # mutating maintenance workflow
+tools/i18n/check    # read-only release/conformance gate
+```
+
+POT and reviewed PO files remain translation authority. The release builder runs `tools/i18n/check` before packaging. Because Backups uses `commit_mo: true`, canonical check must prove committed MO files reproducible from reviewed PO sources before the release can be accepted. Packaging then compiles fresh MO files from those reviewed PO sources inside isolated staging.
+
+There is no machine-translation refresh path, compatibility alias or second POT/PO authority.
 
 ## Outputs
 
@@ -30,7 +46,7 @@ A successful build creates:
 - `dist/core-blueprint-backups-1.0.0-rc1.zip`
 - `dist/core-blueprint-backups-1.0.0-rc1.zip.sha256`
 
-The ZIP contains exactly one WordPress plugin root:
+The ZIP contains exactly one canonical WordPress plugin root:
 
 ```text
 core-blueprint-backups/
@@ -44,39 +60,23 @@ Only production runtime material is packaged:
 - `assets/`
 - `languages/`
 
-Repository-only material such as `.github/`, `docs/`, `tests/` and `tools/` must never enter the customer package.
+Repository-only material such as `.github/`, `docs/`, `tests` and `tools/` must never enter the customer package.
 
 ## Validation
 
-The builder fails unless all of these gates pass:
+The builder fails closed unless all applicable gates pass, including:
 
-- plugin header and `CB_BACKUPS_VERSION` are exactly `1.0.0-rc1`;
-- `CB_BACKUPS_REQUIRED_API` is exactly `1.0`;
-- `Requires PHP` remains `8.4`;
-- all six launch locales exist: `nl_NL`, `de_DE`, `fr_FR`, `es_ES`, `it_IT`, `pt_PT`;
-- PO catalogs have no active fuzzy or untranslated entries;
-- printf placeholders remain compatible with their English source strings;
-- translation quality is not predominantly identical to English;
-- MO catalogs are rebuilt from PO source with GNU gettext;
-- every packaged PHP file lints on actual PHP 8.4 and PHP 8.5 runtimes;
-- every packaged JavaScript file passes `node --check`;
-- CSS passes structural brace/comment validation;
-- the ZIP root and production-only boundary are canonical;
-- the ZIP passes CRC verification;
-- a SHA-256 sidecar is generated only after validation succeeds.
+- canonical version/API/PHP metadata;
+- canonical `tools/i18n/check`;
+- reviewed six-locale catalogs and staged MO compilation;
+- PHP syntax on actual PHP 8.4 and PHP 8.5 runtimes;
+- JavaScript syntax and CSS structural validation;
+- canonical ZIP root and explicit runtime boundary;
+- required PO/MO artifacts and CRC integrity;
+- SHA-256 sidecar generation after validation succeeds.
 
-## Translation maintenance
-
-`refresh-translations.py` is a maintainer aid, not release authority. It can create candidate translations from the English POT while protecting technical literals, HTML and printf placeholders.
-
-Generated output must be reviewed in the target language before it is accepted into the release catalogs. CI must not automatically push machine-translated PO/MO files to a release branch.
-
-The production builder remains the hard gate: a locale that is empty, fuzzy, placeholder-incompatible or predominantly identical to English cannot produce a Golden package.
-
-## Failure handling
-
-A failing build is not a releasable artifact. Fix the source, catalog or environment problem and rebuild. Never edit a generated ZIP manually to bypass a gate.
+A failing localization check or build is not a releasable artifact. Never edit a generated ZIP manually to bypass a gate.
 
 ## Maintenance
 
-When runtime directories, supported locales, the Base API contract or PHP support policy change, update `build-release.py` in the same patch. Keep tooling and documentation outside the release ZIP.
+When runtime directories, supported locales, the Base API contract or PHP support policy change, update the product config and `tools/build-release` in the same patch. Do not add alternate release builders, aliases or compatibility wrappers.
