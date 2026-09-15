@@ -68,6 +68,7 @@ jobs:
           php8.4 tests/rc15-migration-smoke.php
           php8.4 tests/rc15-filesystem-policy-smoke.php
           php8.4 tests/rc15-filesystem-commit-policy-smoke.php
+          php8.4 tests/filesystem-recovery-reconciliation-regression.php
           php8.4 tests/rc15-job-presentation-smoke.php
           php8.4 tests/rc15-job-monitor-smoke.php
           php8.4 tests/job-result-regression.php
