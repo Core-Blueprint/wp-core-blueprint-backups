@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace {
 	defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
 	defined( 'CB_BACKUPS_BASENAME' ) || define( 'CB_BACKUPS_BASENAME', 'core-blueprint-backups/core-blueprint-backups.php' );
+	defined( 'CB_BACKUPS_REQUIRED_API' ) || define( 'CB_BACKUPS_REQUIRED_API', '1.0' );
 
 	/** @var array<string,array<int,array{callback:mixed,priority:int}>> */
 	$GLOBALS['cb_backups_test_actions'] = [];
