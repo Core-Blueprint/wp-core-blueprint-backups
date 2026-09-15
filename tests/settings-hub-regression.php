@@ -21,6 +21,7 @@ function cb_backups_settings_hub_expect( bool $condition, string $message ): voi
 }
 
 $plugin       = cb_backups_settings_hub_read( 'core-blueprint-backups.php' );
+$requirements = cb_backups_settings_hub_read( 'src/Support/Requirements.php' );
 $bootstrap    = cb_backups_settings_hub_read( 'src/Bootstrap.php' );
 $page         = cb_backups_settings_hub_read( 'src/Admin/Page.php' );
 $settings     = cb_backups_settings_hub_read( 'src/Admin/Settings.php' );
@@ -32,7 +33,7 @@ $capabilities = cb_backups_settings_hub_read( 'src/Support/Capabilities.php' );
 // Release/dependency baseline.
 cb_backups_settings_hub_expect( str_contains( $plugin, 'Version:     1.0.0-rc1' ), 'Backups must remain on 1.0.0-rc1.' );
 cb_backups_settings_hub_expect( str_contains( $plugin, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );" ), 'Runtime version must remain 1.0.0-rc1.' );
-cb_backups_settings_hub_expect( str_contains( $plugin, 'SettingsRegistry' ), 'Runtime dependency gate must require the canonical SettingsRegistry contract.' );
+cb_backups_settings_hub_expect( str_contains( $requirements, 'SettingsRegistry' ), 'Runtime dependency gate must require the canonical SettingsRegistry contract.' );
 
 // Operational Backups workspace remains registered and authoritative.
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "add_action( 'cb_core_register_pages'" ), 'Backups operational workspace must remain registered through PageRegistry.' );
