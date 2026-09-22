@@ -256,6 +256,7 @@ final class Bootstrap {
 		$labels['backups.backup.bulk.deleted']  = __( 'Backups deleted in bulk', 'core-blueprint-backups' );
 		$labels['backups.restore.started']      = __( 'Restore started', 'core-blueprint-backups' );
 		$labels['backups.restore.completed']       = __( 'Restore completed', 'core-blueprint-backups' );
+		$labels['backups.migration.applied']       = __( 'Migration applied, awaiting destination recovery', 'core-blueprint-backups' );
 		$labels['backups.restore.failed']          = __( 'Restore failed', 'core-blueprint-backups' );
 		$labels['backups.restore.cleanup.warning'] = __( 'Restore recovery cleanup warning', 'core-blueprint-backups' );
 		$labels['backups.schedules.updated']    = __( 'Backup schedules updated', 'core-blueprint-backups' );
