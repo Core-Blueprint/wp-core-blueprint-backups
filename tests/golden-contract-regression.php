@@ -65,7 +65,7 @@ cb_backups_golden_expect( str_contains( $bootstrap, "'nav-tabs'" ) && str_contai
 cb_backups_golden_expect( str_contains( $css, 'var(--cb-' ), 'Backups admin CSS must consume Base design tokens.' );
 cb_backups_golden_expect( ! str_contains( $assets, 'cb-core-css-' ), 'Backups must not depend on Base-private CSS handles.' );
 
-cb_backups_golden_expect( str_contains( $admin_page, 'Confirm that you understand the destination data will be replaced before starting a restore or migration.' ), 'Restore warning must acknowledge both restore and migration without contradicting the portable migration contract.' );
+cb_backups_golden_expect( str_contains( $admin_page, 'Full-site backups can be restored on the original site or migrated to another single-site WordPress installation.' ), 'Restore warning must expose the portable full-site migration workflow.' );
 cb_backups_golden_expect( ! str_contains( $admin_page, 'Migration and URL replacement are intentionally blocked.' ), 'Pre-migration blocked copy must not return.' );
 cb_backups_golden_expect( ! str_contains( $admin_page, 'only restores to the same site URL and table prefix' ), 'Same-site-only restore copy must not return.' );
 cb_backups_golden_expect( str_contains( $validator, 'MigrationPlan::build( $manifest );' ), 'Archive validation must retain destination-aware migration preflight.' );
