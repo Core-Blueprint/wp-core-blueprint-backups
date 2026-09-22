@@ -611,18 +611,6 @@ msgstr ""
 msgid "Restore replaces live site data."
 msgstr "Herstellen vervangt live sitegegevens."
 
-#: src/Admin/Page.php:117
-msgid ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
-"and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
-msgstr ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
-"and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
-
 #: src/Admin/Page.php:121
 msgid "Import a backup"
 msgstr "Import a backup"
@@ -1447,6 +1435,7 @@ msgstr ""
 msgid "Restore in progress"
 msgstr "Herstel wordt uitgevoerd"
 
+#: src/Admin/Page.php:117
 #: src/Restore/Service.php:18
 msgid ""
 "Confirm that you understand the destination data will be replaced before "

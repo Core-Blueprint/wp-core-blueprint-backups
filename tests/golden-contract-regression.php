@@ -26,6 +26,11 @@ $requirements = cb_backups_golden_read( 'src/Support/Requirements.php' );
 $routes       = cb_backups_golden_read( 'src/Remote/Routes.php' );
 $updates      = cb_backups_golden_read( 'src/Integration/Updates.php' );
 $assets       = cb_backups_golden_read( 'src/Admin/Assets.php' );
+$admin_page   = cb_backups_golden_read( 'src/Admin/Page.php' );
+$validator    = cb_backups_golden_read( 'src/Restore/ArchiveValidator.php' );
+$migration    = cb_backups_golden_read( 'src/Restore/MigrationPlan.php' );
+$transformer  = cb_backups_golden_read( 'src/Restore/MigrationTransformer.php' );
+$restore      = cb_backups_golden_read( 'src/Restore/Engine.php' );
 $css          = cb_backups_golden_read( 'assets/css/admin.css' );
 $builder      = cb_backups_golden_read( 'tools/build-release' );
 
@@ -59,6 +64,14 @@ cb_backups_golden_expect( str_contains( $bootstrap, "'foundations' => [ 'modal',
 cb_backups_golden_expect( str_contains( $bootstrap, "'nav-tabs'" ) && str_contains( $bootstrap, "'form-controls'" ), 'Operational page must declare shared component requirements.' );
 cb_backups_golden_expect( str_contains( $css, 'var(--cb-' ), 'Backups admin CSS must consume Base design tokens.' );
 cb_backups_golden_expect( ! str_contains( $assets, 'cb-core-css-' ), 'Backups must not depend on Base-private CSS handles.' );
+
+cb_backups_golden_expect( str_contains( $admin_page, 'Confirm that you understand the destination data will be replaced before starting a restore or migration.' ), 'Restore warning must acknowledge both restore and migration without contradicting the portable migration contract.' );
+cb_backups_golden_expect( ! str_contains( $admin_page, 'Migration and URL replacement are intentionally blocked.' ), 'Pre-migration blocked copy must not return.' );
+cb_backups_golden_expect( ! str_contains( $admin_page, 'only restores to the same site URL and table prefix' ), 'Same-site-only restore copy must not return.' );
+cb_backups_golden_expect( str_contains( $validator, 'MigrationPlan::build( $manifest );' ), 'Archive validation must retain destination-aware migration preflight.' );
+cb_backups_golden_expect( str_contains( $migration, "'requires_migration'" ) && str_contains( $migration, "'table_map'" ), 'Migration plan must retain explicit mode detection and table mapping.' );
+cb_backups_golden_expect( str_contains( $transformer, 'replace_serialized_strings' ) && str_contains( $transformer, "'guid' !== $column" ), 'Migration transform must remain serialization-aware and preserve post GUIDs.' );
+cb_backups_golden_expect( str_contains( $restore, "'migrate_database'" ) && str_contains( $restore, 'assert_site_identity' ), 'Restore engine must retain a dedicated migration stage and destination identity verification.' );
 
 cb_backups_golden_expect( ! is_file( $root . '/tools/build-release.py' ), 'Superseded build-release.py must stay removed.' );
 cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0-rc1"' ), 'Release builder must pin RC1.' );

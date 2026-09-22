@@ -114,7 +114,7 @@ final class Page implements PageContract {
 		echo Notice::render( [
 			'variant' => Notice::WARNING,
 			'title'   => __( 'Restore replaces live site data.', 'core-blueprint-backups' ),
-			'message' => __( 'Backup format v1 only restores to the same site URL and table prefix. Migration and URL replacement are intentionally blocked. Core Blueprint Base and Backups code remain at their currently installed versions during recovery so the restore engine cannot replace itself mid-operation.', 'core-blueprint-backups' ),
+			'message' => __( 'Confirm that you understand the destination data will be replaced before starting a restore or migration.', 'core-blueprint-backups' ),
 			'class'   => 'cb-backups-restore-warning',
 		] );
 
