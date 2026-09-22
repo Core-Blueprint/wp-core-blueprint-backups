@@ -12,7 +12,7 @@ use CB\Backups\Jobs\Dispatcher;
 use CB\Backups\Jobs\Runner;
 use CB\Backups\Remote\Routes as RemoteRoutes;
 use CB\Backups\Restore\Maintenance;
-use CB\Backups\Restore\MigrationAccessRecovery;
+use CB\Backups\Integration\MigrationRecovery;
 use CB\Backups\Restore\CriticalRecovery;
 use CB\Backups\Schedule\Scheduler;
 use CB\Backups\Storage\LocalStorage;
@@ -57,7 +57,7 @@ final class Bootstrap {
 		Assets::boot();
 		RemoteRoutes::boot();
 		Maintenance::boot();
-		MigrationAccessRecovery::boot();
+		MigrationRecovery::boot();
 		CriticalRecovery::recover_terminal_markers();
 		SiteHealth::boot();
 
