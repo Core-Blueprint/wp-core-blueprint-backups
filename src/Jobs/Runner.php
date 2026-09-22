@@ -63,7 +63,16 @@ final class Runner {
 				}
 
 				if ( 'restore' === (string) $job['kind'] ) {
+					if ( 'await_recovery' === (string) ( $job['stage'] ?? '' ) ) {
+						break;
+					}
 					RestoreEngine::tick( $job );
+					$after_restore = Repository::get( $job_id );
+					if ( is_array( $after_restore ) && in_array( (string) ( $after_restore['stage'] ?? '' ), [ 'reconcile_destination', 'await_recovery' ], true ) ) {
+						$processed = true;
+						++$iterations;
+						break;
+					}
 				} elseif ( 'verify' === (string) $job['kind'] ) {
 					VerificationEngine::tick( $job );
 				} else {
