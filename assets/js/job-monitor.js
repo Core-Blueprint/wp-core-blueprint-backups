@@ -180,7 +180,7 @@
     node.replaceChildren();
   };
 
-  const showMonitorState = (message, kind, actionLabel = '') => {
+  const showMonitorState = (message, kind, actionLabel = '', actionHref = '') => {
     const node = ensureMonitorState();
     node.hidden = false;
     node.className = `cb-backups-monitor-state cb-backups-monitor-state--${kind}`;
@@ -190,10 +190,11 @@
     text.textContent = message;
     node.appendChild(text);
 
-    if (actionLabel && config.reconnectUrl) {
+    const href = actionHref || config.reconnectUrl || '';
+    if (actionLabel && href) {
       const action = document.createElement('a');
       action.className = 'button button-primary';
-      action.href = config.reconnectUrl;
+      action.href = href;
       action.textContent = actionLabel;
       node.appendChild(action);
     }
@@ -402,7 +403,8 @@
       showMonitorState(
         isLiveRestoreTransition() ? liveRestoreMessage(true) : (error.message || config.labels?.authRequired),
         'auth',
-        config.labels?.signInAgain || 'Sign in again'
+        config.labels?.signInAgain || 'Sign in again',
+        config.loginUrl || ''
       );
       return;
     }
