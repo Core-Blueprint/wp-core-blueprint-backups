@@ -108,7 +108,17 @@ final class MigrationRecovery {
 	}
 
 	/** @param array<string,mixed> $meta */
+	public static function requires_probe( array $meta ): bool {
+		return self::required( $meta )
+			&& self::supported()
+			&& BaseRecovery::requires_pretty_routing();
+	}
+
+	/** @param array<string,mixed> $meta */
 	public static function probe_url( array $meta ): string {
+		if ( ! self::requires_probe( $meta ) ) {
+			return '';
+		}
 		$recovery = self::recovery_meta( $meta );
 		$token = (string) ( $recovery['probe_token'] ?? '' );
 		return '' !== $token ? home_url( '/' . self::PROBE_PREFIX . $token . '/' ) : '';
@@ -210,7 +220,10 @@ final class MigrationRecovery {
 			throw new RuntimeException( 'Migration recovery metadata is incomplete.' );
 		}
 		$user_id = get_current_user_id();
-		if ( $user_id < 1 || $user_id !== (int) get_transient( self::probe_key( $meta ) ) ) {
+		if ( $user_id < 1 ) {
+			throw new RuntimeException( __( 'Migration recovery authentication is incomplete.', 'core-blueprint-backups' ) );
+		}
+		if ( self::requires_probe( $meta ) && $user_id !== (int) get_transient( self::probe_key( $meta ) ) ) {
 			throw new RuntimeException( __( 'Destination rewrite verification has not completed yet. Retry the verification before finishing migration.', 'core-blueprint-backups' ) );
 		}
 
@@ -243,7 +256,7 @@ final class MigrationRecovery {
 			'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ),
 			'runtime_preserved'      => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [],
 			'recovery_user_id'       => $user_id,
-			'rewrite_verified'       => true,
+			'rewrite_verified'       => self::requires_probe( $meta ),
 		] );
 
 		return Repository::get( $job_id ) ?? $job;
