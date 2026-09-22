@@ -396,7 +396,7 @@
 
   const verifyMigrationRecovery = async (job) => {
     if (migrationRecoveryInFlight) return;
-    if (!config.recoveryProbeUrl || !config.recoveryFinalizeAction) {
+    if (!config.recoveryFinalizeAction || (config.recoveryRequiresProbe && !config.recoveryProbeUrl)) {
       showMonitorState(
         config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
         'error',
@@ -414,19 +414,21 @@
     );
 
     try {
-      const probe = await fetch(config.recoveryProbeUrl, {
-        method: 'GET',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        redirect: 'manual',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-      if (probe.status !== 204) {
-        throw new MonitorRequestError(
-          config.labels?.recoveryProbeFailed || 'Destination rewrite verification did not reach WordPress. You remain signed in safely; check the destination permalink or web-server rewrite configuration and retry.',
-          'recovery_probe_failed',
-          probe.status
-        );
+      if (config.recoveryRequiresProbe) {
+        const probe = await fetch(config.recoveryProbeUrl, {
+          method: 'GET',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          redirect: 'manual',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        if (probe.status !== 204) {
+          throw new MonitorRequestError(
+            config.labels?.recoveryProbeFailed || 'Destination rewrite verification did not reach WordPress. You remain signed in safely; check the destination permalink or web-server rewrite configuration and retry.',
+            'recovery_probe_failed',
+            probe.status
+          );
+        }
       }
 
       const completed = await request(config.recoveryFinalizeAction);
