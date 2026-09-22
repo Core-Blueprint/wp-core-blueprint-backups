@@ -81,6 +81,33 @@
 	font-weight: var(--cb-fw-semibold);
 }
 
+/* WordPress gives the interim-login dialog a compact fixed height. During a
+ * migration handoff Backups adds context above the native iframe, so opt that
+ * one dialog into a viewport-bounded flex layout instead of clipping it. */
+#wp-auth-check.cb-backups-auth-check--handoff {
+	display: flex;
+	box-sizing: border-box;
+	height: min(640px, calc(100vh - 80px));
+	max-height: calc(100vh - 80px);
+	flex-direction: column;
+	overflow: hidden;
+}
+
+#wp-auth-check.cb-backups-auth-check--handoff .cb-backups-auth-context {
+	flex: 0 0 auto;
+}
+
+#wp-auth-check.cb-backups-auth-check--handoff #wp-auth-check-form {
+	min-height: 0;
+	height: auto;
+	flex: 1 1 auto;
+}
+
+#wp-auth-check.cb-backups-auth-check--handoff #wp-auth-check-form iframe {
+	height: 100%;
+	min-height: 320px;
+}
+
 @media (max-width: 782px) {
 	.cb-backups-monitor-state {
 		align-items: flex-start;
