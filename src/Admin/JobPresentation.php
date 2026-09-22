@@ -71,8 +71,10 @@ final class JobPresentation {
 				'verify_database_content' => __( 'Verifying restored database…', 'core-blueprint-backups' ),
 				'prepare_live'            => __( 'Preparing safe switch…', 'core-blueprint-backups' ),
 				'commit_live'             => __( 'Applying restored website…', 'core-blueprint-backups' ),
+				'reconcile_destination'   => __( 'Reconciling destination…', 'core-blueprint-backups' ),
 				'verify_live'             => __( 'Verifying restored files and runtime…', 'core-blueprint-backups' ),
 				'finalize_live'           => __( 'Running final safety checks…', 'core-blueprint-backups' ),
+				'await_recovery'          => __( 'Secure sign-in required', 'core-blueprint-backups' ),
 				default                   => __( 'Processing restore…', 'core-blueprint-backups' ),
 			};
 		}
@@ -143,7 +145,7 @@ final class JobPresentation {
 			];
 		}
 
-		if ( in_array( $stage, [ 'migrate_database', 'restore_database', 'verify_database_content', 'prepare_live', 'commit_live' ], true ) ) {
+		if ( in_array( $stage, [ 'migrate_database', 'restore_database', 'verify_database_content', 'prepare_live', 'commit_live', 'reconcile_destination', 'await_recovery' ], true ) ) {
 			return [
 				self::metric( __( 'Files staged', 'core-blueprint-backups' ), $files, $files ),
 				self::metric( __( 'Filesystem snapshot', 'core-blueprint-backups' ), $bytes, 0 ),
