@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Admin;
 
+use CB\Backups\Integration\MigrationRecovery;
 use CB\Backups\Jobs\Repository;
 use CB\Core\Admin\PageRegistry;
 use CB\Core\Admin\SettingsRegistry;
@@ -15,6 +16,7 @@ final class Assets {
 
 	public static function boot(): void {
 		JobMonitor::boot();
+		add_filter( 'wp_auth_check_load', [ self::class, 'filter_wp_auth_check_load' ], 20, 2 );
 		add_action( 'admin_enqueue_scripts', [ self::class, 'enqueue' ] );
 	}
 
@@ -89,6 +91,21 @@ final class Assets {
 		}
 	}
 
+	public static function filter_wp_auth_check_load( bool $show, \WP_Screen $screen ): bool {
+		unset( $screen );
+		if ( ! $show ) {
+			return false;
+		}
+		$page = isset( $_GET['page'] ) ? sanitize_key( (string) wp_unslash( $_GET['page'] ) ) : '';
+		if ( 'core-blueprint-backups' !== $page ) {
+			return $show;
+		}
+		$job_id = self::current_job_id();
+		$job = '' !== $job_id ? Repository::get( $job_id ) : null;
+		$meta = is_array( $job ) && is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
+		return MigrationRecovery::required( $meta ) ? false : $show;
+	}
+
 	/** @return array<string,mixed> */
 	private static function module_data(): array {
 		return [
@@ -132,18 +149,23 @@ final class Assets {
 		$job_id = self::current_job_id();
 		$job = '' !== $job_id ? Repository::get( $job_id ) : null;
 		$meta = is_array( $job ) && is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
-
-		$site_url = untrailingslashit( (string) get_option( 'siteurl', '' ) );
+		$reconnect_url = self::reconnect_url( $job_id );
+		$awaiting_recovery = is_array( $job )
+			&& 'restore' === (string) ( $job['kind'] ?? '' )
+			&& 'await_recovery' === (string) ( $job['stage'] ?? '' )
+			&& MigrationRecovery::required( $meta );
 
 		return [
-			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-			'nonce'        => wp_create_nonce( 'cb_backups_admin' ),
-			'jobId'        => $job_id,
-			'jobKind'      => is_array( $job ) ? (string) ( $job['kind'] ?? '' ) : '',
-			'restoreMode'  => (string) ( $meta['restore_mode'] ?? '' ),
-			'reconnectUrl' => self::reconnect_url( $job_id ),
-			'loginUrl'     => '' !== $site_url ? $site_url . '/wp-login.php' : '/wp-login.php',
-			'labels'       => [
+			'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
+			'nonce'                  => wp_create_nonce( 'cb_backups_admin' ),
+			'jobId'                  => $job_id,
+			'jobKind'                => is_array( $job ) ? (string) ( $job['kind'] ?? '' ) : '',
+			'restoreMode'            => (string) ( $meta['restore_mode'] ?? '' ),
+			'reconnectUrl'           => $reconnect_url,
+			'loginUrl'               => MigrationRecovery::login_url( $meta, $reconnect_url ),
+			'recoveryProbeUrl'       => $awaiting_recovery ? MigrationRecovery::probe_url( $meta ) : '',
+			'recoveryFinalizeAction' => 'cb_backups_finalize_migration_recovery',
+			'labels'                 => [
 				'failed'                   => __( 'Failed', 'core-blueprint-backups' ),
 				'cancelled'                => __( 'Cancelled', 'core-blueprint-backups' ),
 				'cancelling'               => __( 'Cancelling…', 'core-blueprint-backups' ),
@@ -173,6 +195,10 @@ final class Assets {
 				'dismissResult'            => __( 'Dismiss', 'core-blueprint-backups' ),
 				'nonceExpired'             => __( 'Your monitoring session expired. Reload this page to continue monitoring the server-owned job.', 'core-blueprint-backups' ),
 				'signInAgain'              => __( 'Sign in again', 'core-blueprint-backups' ),
+				'secureSignIn'             => __( 'Continue to secure sign-in', 'core-blueprint-backups' ),
+				'recoveryVerifying'        => __( 'Verifying destination access and rewrite routing…', 'core-blueprint-backups' ),
+				'recoveryProbeFailed'      => __( 'Destination rewrite verification did not reach WordPress. You remain signed in safely; check the destination permalink or web-server rewrite configuration and retry.', 'core-blueprint-backups' ),
+				'recoveryFinalizeFailed'   => __( 'Destination recovery could not be finalized. Retry verification before completing the migration.', 'core-blueprint-backups' ),
 				'reloadMonitor'            => __( 'Reload monitoring', 'core-blueprint-backups' ),
 				'reconnected'              => __( 'Restore monitoring reconnected.', 'core-blueprint-backups' ),
 			],
