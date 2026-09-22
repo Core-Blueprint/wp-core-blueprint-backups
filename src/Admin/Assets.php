@@ -163,6 +163,7 @@ final class Assets {
 			'restoreMode'            => (string) ( $meta['restore_mode'] ?? '' ),
 			'reconnectUrl'           => $reconnect_url,
 			'loginUrl'               => MigrationRecovery::login_url( $meta, $reconnect_url ),
+			'recoveryRequiresProbe'  => $awaiting_recovery && MigrationRecovery::requires_probe( $meta ),
 			'recoveryProbeUrl'       => $awaiting_recovery ? MigrationRecovery::probe_url( $meta ) : '',
 			'recoveryFinalizeAction' => 'cb_backups_finalize_migration_recovery',
 			'labels'                 => [
