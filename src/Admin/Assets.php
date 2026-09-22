@@ -150,11 +150,6 @@ final class Assets {
 		$job = '' !== $job_id ? Repository::get( $job_id ) : null;
 		$meta = is_array( $job ) && is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
 		$reconnect_url = self::reconnect_url( $job_id );
-		$awaiting_recovery = is_array( $job )
-			&& 'restore' === (string) ( $job['kind'] ?? '' )
-			&& 'await_recovery' === (string) ( $job['stage'] ?? '' )
-			&& MigrationRecovery::required( $meta );
-
 		return [
 			'ajaxUrl'                => admin_url( 'admin-ajax.php' ),
 			'nonce'                  => wp_create_nonce( 'cb_backups_admin' ),
@@ -163,8 +158,7 @@ final class Assets {
 			'restoreMode'            => (string) ( $meta['restore_mode'] ?? '' ),
 			'reconnectUrl'           => $reconnect_url,
 			'loginUrl'               => MigrationRecovery::login_url( $meta, $reconnect_url ),
-			'recoveryRequiresProbe'  => $awaiting_recovery && MigrationRecovery::requires_probe( $meta ),
-			'recoveryProbeUrl'       => $awaiting_recovery ? MigrationRecovery::probe_url( $meta ) : '',
+			'recoveryPrepareAction'  => 'cb_backups_prepare_migration_recovery',
 			'recoveryFinalizeAction' => 'cb_backups_finalize_migration_recovery',
 			'labels'                 => [
 				'failed'                   => __( 'Failed', 'core-blueprint-backups' ),
