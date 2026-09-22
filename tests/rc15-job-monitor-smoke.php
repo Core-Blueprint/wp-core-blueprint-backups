@@ -12,6 +12,8 @@ $endpoint = (string) file_get_contents( $root . '/src/Admin/JobMonitor.php' );
 $assets = (string) file_get_contents( $root . '/src/Admin/Assets.php' );
 $monitor = (string) file_get_contents( $root . '/assets/js/job-monitor.js' );
 $terminal = (string) file_get_contents( $root . '/assets/js/job-terminal-recovery.js' );
+$handoff = (string) file_get_contents( $root . '/assets/js/job-handoff.js' );
+$monitor_css = (string) file_get_contents( $root . '/assets/css/job-monitor.css' );
 
 monitor_contract_assert( str_contains( $endpoint, 'wp_ajax_nopriv_cb_backups_job_monitor' ), 'Monitor must expose an unauthenticated JSON boundary for auth-loss detection.' );
 monitor_contract_assert( str_contains( $endpoint, "'auth_required'" ), 'Monitor must classify lost WordPress authentication.' );
@@ -21,6 +23,7 @@ monitor_contract_assert( str_contains( $assets, "'jobId'   => ''," ), 'Legacy ad
 monitor_contract_assert( str_contains( $assets, '@cb-backups/job-monitor' ), 'Dedicated job monitor module is not enqueued.' );
 monitor_contract_assert( str_contains( $assets, '@cb-backups/job-terminal-recovery' ), 'Terminal re-login recovery module is not enqueued.' );
 monitor_contract_assert( str_contains( $assets, 'cb_monitor_reconnect' ), 'Reconnect URL must preserve a monitor handoff marker.' );
+monitor_contract_assert( str_contains( $assets, "'loginUrl'" ) && str_contains( $assets, "'/wp-login.php'" ), 'Migration handoff must expose an unfiltered canonical wp-login.php URL.' );
 
 $auth_branch = strpos( $monitor, "code === 'auth_required'" );
 $network_retry = strpos( $monitor, 'schedulePoll(3000)' );
@@ -28,6 +31,9 @@ monitor_contract_assert( false !== $auth_branch && str_contains( substr( $monito
 monitor_contract_assert( false !== $network_retry, 'Transient monitor failures must retain an automatic retry path.' );
 monitor_contract_assert( str_contains( $monitor, "code === 'nonce_expired'" ), 'Nonce expiry must have its own monitor branch.' );
 monitor_contract_assert( str_contains( $monitor, 'config.reconnectUrl' ), 'Auth handoff must return through the same job reconnect URL.' );
+monitor_contract_assert( str_contains( $monitor, "config.loginUrl || ''" ), 'Authentication loss must offer the canonical login route instead of depending on a migrated custom login path.' );
+monitor_contract_assert( str_contains( $handoff, "classList.add('cb-backups-auth-check--handoff')" ), 'Migration handoff must tag the native WordPress auth dialog for bounded presentation.' );
+monitor_contract_assert( str_contains( $monitor_css, '#wp-auth-check.cb-backups-auth-check--handoff' ) && str_contains( $monitor_css, 'calc(100vh - 80px)' ), 'Migration auth overlay must remain bounded by the viewport.' );
 monitor_contract_assert( str_contains( $monitor, "event.persisted" ) && str_contains( $monitor, 'window.location.reload()' ), 'BFCache restoration must refresh stale job/nonces.' );
 
 monitor_contract_assert( str_contains( $terminal, "if (document.getElementById('cb-backups-job')) return;" ), 'Terminal probe must never compete with the active job monitor.' );
