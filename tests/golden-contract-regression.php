@@ -33,7 +33,9 @@ $validator    = cb_backups_golden_read( 'src/Restore/ArchiveValidator.php' );
 $migration    = cb_backups_golden_read( 'src/Restore/MigrationPlan.php' );
 $transformer  = cb_backups_golden_read( 'src/Restore/MigrationTransformer.php' );
 $restore      = cb_backups_golden_read( 'src/Restore/Engine.php' );
-$access_recovery = cb_backups_golden_read( 'src/Restore/MigrationAccessRecovery.php' );
+$restore_service = cb_backups_golden_read( 'src/Restore/Service.php' );
+$migration_recovery = cb_backups_golden_read( 'src/Integration/MigrationRecovery.php' );
+$runner       = cb_backups_golden_read( 'src/Jobs/Runner.php' );
 $css          = cb_backups_golden_read( 'assets/css/admin.css' );
 $builder      = cb_backups_golden_read( 'tools/build-release' );
 
@@ -77,10 +79,14 @@ cb_backups_golden_expect( str_contains( $transformer, 'replace_serialized_string
 cb_backups_golden_expect( str_contains( $restore, "'migrate_database'" ) && str_contains( $restore, 'assert_site_identity' ), 'Restore engine must retain a dedicated migration stage and destination identity verification.' );
 cb_backups_golden_expect( str_contains( $uploader, 'MigrationPlan::build( $manifest )' ) && str_contains( $uploader, "'source_site_url'" ) && str_contains( $uploader, "'source_prefix'" ) && str_contains( $uploader, "'requires_migration'" ), 'Chunked imports must retain source identity and destination-aware migration metadata.' );
 cb_backups_golden_expect( str_contains( $actions, "RestoreService::create( LocalStorage::import_path( \$archive ), 'manual_import'" ), 'Prepared imports must always enter the migration-aware restore service.' );
-cb_backups_golden_expect( str_contains( $restore, 'MigrationAccessRecovery::arm( $meta, $job_id )' ), 'Cross-site migration must retain the safe login recovery handoff after the live database switch.' );
-cb_backups_golden_expect( str_contains( $access_recovery, 'Failsafe::BYPASS_TRANSIENT' ) && str_contains( $access_recovery, 'filter_recovery_bypass' ), 'Migration access recovery must use request-scoped Base failsafe authority instead of mutating Login Shield configuration.' );
-cb_backups_golden_expect( str_contains( $access_recovery, 'flush_rewrite_rules( true )' ) && str_contains( $access_recovery, 'wp_safe_remote_get' ) && str_contains( $access_recovery, '204 ===' ), 'Migration access recovery must refresh and verify destination rewrite infrastructure from a fresh authenticated runtime.' );
-cb_backups_golden_expect( str_contains( $bootstrap, 'MigrationAccessRecovery::boot();' ), 'Migration access recovery must boot on restored admin requests.' );
+cb_backups_golden_expect( str_contains( $restore_service, 'MigrationRecovery::prepare( $plan )' ), 'Cross-site migration must prepare Base-owned destination recovery before destructive work starts.' );
+cb_backups_golden_expect( str_contains( $restore, 'MigrationRecovery::activate_destination( $meta )' ) && str_contains( $restore, 'MigrationRecovery::reconcile_destination( $meta )' ), 'Restore engine must delegate destination trust recovery to the Base-backed integration.' );
+cb_backups_golden_expect( str_contains( $restore, "'await_recovery'" ) && str_contains( $restore, "'progress' => 99" ), 'Migration must remain non-terminal until destination recovery is completed.' );
+cb_backups_golden_expect( str_contains( $runner, "'reconcile_destination'" ) && str_contains( $runner, "'await_recovery'" ), 'Restore runner must enforce a fresh runtime boundary after the live migration switch.' );
+cb_backups_golden_expect( str_contains( $migration_recovery, 'use CB\\Core\\Migration\\Recovery as BaseRecovery;' ), 'Backups migration recovery must consume Base authority instead of owning privileged trust.' );
+cb_backups_golden_expect( str_contains( $migration_recovery, 'BaseRecovery::finalize' ) && str_contains( $migration_recovery, 'BaseRecovery::requires_pretty_routing' ), 'Backups must finalize through Base and defer rewrite requirements to Base.' );
+cb_backups_golden_expect( str_contains( $bootstrap, 'MigrationRecovery::boot();' ), 'Base-backed migration recovery integration must boot on destination requests.' );
+cb_backups_golden_expect( ! is_file( $root . '/src/Restore/MigrationAccessRecovery.php' ), 'Backups-owned security recovery authority must stay removed.' );
 
 cb_backups_golden_expect( ! is_file( $root . '/tools/build-release.py' ), 'Superseded build-release.py must stay removed.' );
 cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0-rc1"' ), 'Release builder must pin RC1.' );
