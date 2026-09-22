@@ -234,13 +234,17 @@ final class MigrationRecovery {
 		) {
 			throw new RuntimeException( __( 'Migration recovery authentication is incomplete.', 'core-blueprint-backups' ) );
 		}
+		$requires_probe = self::requires_probe( $meta );
 		if ( ! BaseRecovery::finalize( $ticket ) ) {
 			throw new RuntimeException( __( 'Core Blueprint could not finalize migration recovery.', 'core-blueprint-backups' ) );
 		}
 
 		delete_transient( self::probe_key( $meta ) );
 		$meta['migration_recovery']['status'] = 'completed';
-		$meta['migration_recovery']['rewrite_verified_at'] = time();
+		$meta['migration_recovery']['rewrite_verification_required'] = $requires_probe;
+		if ( $requires_probe ) {
+			$meta['migration_recovery']['rewrite_verified_at'] = time();
+		}
 		$meta['migration_recovery']['approved_user_id'] = $user_id;
 		$meta['completed_timestamp'] = time();
 		Repository::update( $job_id, [ 'meta' => $meta ] );
@@ -256,7 +260,7 @@ final class MigrationRecovery {
 			'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ),
 			'runtime_preserved'      => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [],
 			'recovery_user_id'       => $user_id,
-			'rewrite_verified'       => self::requires_probe( $meta ),
+			'rewrite_verified'       => $requires_probe,
 		] );
 
 		return Repository::get( $job_id ) ?? $job;
