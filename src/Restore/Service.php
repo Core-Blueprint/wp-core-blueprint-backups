@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
+use CB\Backups\Integration\MigrationRecovery;
 use CB\Backups\Jobs\Dispatcher;
 use CB\Backups\Jobs\Repository;
 use CB\Backups\Storage\LocalStorage;
@@ -43,6 +44,8 @@ final class Service {
 			throw new RuntimeException( 'Restore requires more free local disk space for verified staging and migration preparation.' );
 		}
 
+		$migration_recovery = MigrationRecovery::prepare( $plan );
+
 		$confirmation = [
 			'accepted'     => true,
 			'version'      => 'replace-live-data-v1',
@@ -65,6 +68,7 @@ final class Service {
 			'preflight_staging_bytes'   => $staging_bytes,
 			'preflight_migration_bytes' => $migration_bytes,
 			'preflight_free_bytes'      => false === $free_bytes ? null : (int) $free_bytes,
+			'migration_recovery'          => $migration_recovery,
 		] );
 		if ( ! $job ) {
 			throw new RuntimeException( 'Restore job could not be created.' );
@@ -79,6 +83,7 @@ final class Service {
 			'target_site'   => (string) $plan['target_site_url'],
 			'source_prefix' => (string) $plan['source_prefix'],
 			'target_prefix' => (string) $plan['target_prefix'],
+			'recovery_id'  => (string) ( $migration_recovery['recovery_id'] ?? '' ),
 		] );
 		Dispatcher::dispatch( (string) $job['job_id'] );
 		wp_schedule_single_event( time() + 30, 'cb_backups_run_job', [ (string) $job['job_id'] ] );
