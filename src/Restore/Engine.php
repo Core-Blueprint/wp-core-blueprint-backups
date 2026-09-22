@@ -105,13 +105,13 @@ final class Engine {
 		if ( 'commit_live' === $stage ) {
 			$manifest = is_array( $meta['manifest'] ?? null ) ? $meta['manifest'] : []; $tables = self::manifest_tables( $meta );
 			if ( 'website' === $type ) {
-				CriticalRecovery::arm( $job_id ); Maintenance::activate( $job_id ); $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); $meta = FilesystemCommitter::commit_all( $staged . '/files/wp-content', $work, $meta );
+				CriticalRecovery::arm( $job_id ); Maintenance::activate( $job_id ); $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); $meta = MigrationAccessRecovery::arm( $meta, $job_id ); $meta = FilesystemCommitter::commit_all( $staged . '/files/wp-content', $work, $meta );
 				DatabaseImporter::assert_restored_snapshot( $meta, $tables ); self::assert_site_identity( $manifest ); FilesystemCommitter::assert_committed( (string) $meta['recovery_path'] ); FilesystemCommitter::assert_runtime_available();
 				$index = (string) ( $meta['restore_checksum_index'] ?? $work . '/restore-checksums.jsonl' ); $meta = LiveVerifier::prepare( $index, $meta ); $meta['runtime_preserved'] = FilesystemCommitter::runtime_protected_paths();
 				Repository::update( $job_id, [ 'stage' => 'verify_live', 'progress' => 98, 'meta' => $meta ] ); return;
 			}
 			Maintenance::activate( $job_id );
-			try { $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); DatabaseImporter::assert_restored_snapshot( $meta, $tables ); self::assert_site_identity( $manifest ); } catch ( \Throwable $e ) { DatabaseImporter::rollback( $meta, $tables, $job_id ); Maintenance::deactivate(); throw $e; }
+			try { $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); $meta = MigrationAccessRecovery::arm( $meta, $job_id ); DatabaseImporter::assert_restored_snapshot( $meta, $tables ); self::assert_site_identity( $manifest ); } catch ( \Throwable $e ) { DatabaseImporter::rollback( $meta, $tables, $job_id ); Maintenance::deactivate(); throw $e; }
 			self::complete_restore( $job, $meta, $tables, false ); return;
 		}
 
