@@ -58,7 +58,7 @@
 
   const terminalStatuses = new Set(['completed', 'failed', 'cancelled']);
   const terminalMonitorErrors = new Set(['auth_required', 'nonce_expired', 'capability_required', 'job_not_found']);
-  const liveRestoreStages = new Set(['commit_live', 'verify_live', 'finalize_live']);
+  const liveRestoreStages = new Set(['commit_live', 'reconcile_destination', 'verify_live', 'finalize_live', 'await_recovery']);
   let elapsedBase = 0;
   let elapsedUpdatedAt = performance.now();
   let typicalDuration = 0;
@@ -70,6 +70,7 @@
   let monitorState = null;
   let waitingForSession = false;
   let reconnecting = false;
+  let migrationRecoveryInFlight = false;
   let lastJob = null;
   const returnedFromReconnect = new URL(window.location.href).searchParams.get('cb_monitor_reconnect') === '1';
 
@@ -393,6 +394,64 @@
     }
   };
 
+  const verifyMigrationRecovery = async (job) => {
+    if (migrationRecoveryInFlight) return;
+    if (!config.recoveryProbeUrl || !config.recoveryFinalizeAction) {
+      showMonitorState(
+        config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
+        'error',
+        config.labels?.reloadMonitor || 'Reload monitoring'
+      );
+      return;
+    }
+
+    migrationRecoveryInFlight = true;
+    pollingStopped = true;
+    stopTimer();
+    showMonitorState(
+      config.labels?.recoveryVerifying || 'Verifying destination access and rewrite routing…',
+      'auth'
+    );
+
+    try {
+      const probe = await fetch(config.recoveryProbeUrl, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        redirect: 'manual',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (probe.status !== 204) {
+        throw new MonitorRequestError(
+          config.labels?.recoveryProbeFailed || 'Destination rewrite verification did not reach WordPress. You remain signed in safely; check the destination permalink or web-server rewrite configuration and retry.',
+          'recovery_probe_failed',
+          probe.status
+        );
+      }
+
+      const completed = await request(config.recoveryFinalizeAction);
+      clearMonitorState();
+      render(completed);
+      if (completed.status !== 'completed') {
+        throw new MonitorRequestError(
+          config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
+          'recovery_finalize_incomplete'
+        );
+      }
+
+      completionHandled = true;
+      forgetJob();
+      window.location.replace(completionUrl(completed));
+    } catch (error) {
+      migrationRecoveryInFlight = false;
+      showMonitorState(
+        error?.message || config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
+        'error',
+        config.labels?.reloadMonitor || 'Reload monitoring'
+      );
+    }
+  };
+
   const handleMonitorError = (error) => {
     const code = error?.code || 'request_failed';
 
@@ -403,7 +462,7 @@
       showMonitorState(
         isLiveRestoreTransition() ? liveRestoreMessage(true) : (error.message || config.labels?.authRequired),
         'auth',
-        config.labels?.signInAgain || 'Sign in again',
+        (lastJob?.restore_mode === 'migration' ? config.labels?.secureSignIn : config.labels?.signInAgain) || 'Sign in again',
         config.loginUrl || ''
       );
       return;
@@ -452,6 +511,11 @@
       const job = await request('cb_backups_job_monitor');
       clearMonitorState();
       render(job);
+
+      if (job.kind === 'restore' && job.restore_mode === 'migration' && job.stage === 'await_recovery') {
+        await verifyMigrationRecovery(job);
+        return;
+      }
 
       if (job.status === 'completed') {
         if (!completionHandled) {
