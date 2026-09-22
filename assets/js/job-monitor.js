@@ -456,6 +456,22 @@
 
   const handleMonitorError = (error) => {
     const code = error?.code || 'request_failed';
+    const migrationHandoffRequired = config.restoreMode === 'migration'
+      && Boolean(config.loginUrl)
+      && (isLiveRestoreTransition() || ['auth_required', 'nonce_expired', 'capability_required'].includes(code));
+
+    if (migrationHandoffRequired && ['auth_required', 'nonce_expired', 'capability_required'].includes(code)) {
+      pollingStopped = true;
+      waitingForSession = true;
+      stopTimer();
+      showMonitorState(
+        liveRestoreMessage(true),
+        'auth',
+        config.labels?.secureSignIn || 'Continue to secure sign-in',
+        config.loginUrl
+      );
+      return;
+    }
 
     if (code === 'auth_required') {
       pollingStopped = true;
