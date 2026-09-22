@@ -5,6 +5,7 @@ namespace {
 	define( 'ABSPATH', __DIR__ . '/' );
 	$GLOBALS['cb_test_user_id'] = 13;
 	$GLOBALS['cb_test_transients'] = [];
+	$GLOBALS['cb_test_rewrite_flushes'] = 0;
 
 	function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): void {}
 	function wp_generate_uuid4(): string { return '11111111-2222-4333-8444-555555555555'; }
@@ -12,6 +13,7 @@ namespace {
 	function get_current_user_id(): int { return (int) $GLOBALS['cb_test_user_id']; }
 	function get_transient( string $key ): mixed { return $GLOBALS['cb_test_transients'][ $key ] ?? false; }
 	function delete_transient( string $key ): bool { unset( $GLOBALS['cb_test_transients'][ $key ] ); return true; }
+	function flush_rewrite_rules( bool $hard = true ): void { if ( $hard ) ++$GLOBALS['cb_test_rewrite_flushes']; }
 	function __( string $text, string $domain = 'default' ): string { return $text; }
 
 	function migration_recovery_assert( bool $condition, string $message ): void {
@@ -139,6 +141,10 @@ namespace {
 		'progress' => 99,
 		'meta' => $meta,
 	];
+
+	$prepared_job = MigrationRecovery::prepare_destination( 'restore-1' );
+	migration_recovery_assert( 1 === $GLOBALS['cb_test_rewrite_flushes'], 'Pretty-routing recovery must flush destination rewrites in the explicit preparation request.' );
+	migration_recovery_assert( ! empty( $prepared_job['meta']['migration_recovery']['rewrite_flushed_at'] ), 'Preparation must persist rewrite evidence before the browser probe.' );
 
 	try {
 		MigrationRecovery::finalize( 'restore-1' );
