@@ -133,6 +133,8 @@ final class Assets {
 		$job = '' !== $job_id ? Repository::get( $job_id ) : null;
 		$meta = is_array( $job ) && is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
 
+		$site_url = untrailingslashit( (string) get_option( 'siteurl', '' ) );
+
 		return [
 			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
 			'nonce'        => wp_create_nonce( 'cb_backups_admin' ),
@@ -140,6 +142,7 @@ final class Assets {
 			'jobKind'      => is_array( $job ) ? (string) ( $job['kind'] ?? '' ) : '',
 			'restoreMode'  => (string) ( $meta['restore_mode'] ?? '' ),
 			'reconnectUrl' => self::reconnect_url( $job_id ),
+			'loginUrl'     => '' !== $site_url ? $site_url . '/wp-login.php' : '/wp-login.php',
 			'labels'       => [
 				'failed'                   => __( 'Failed', 'core-blueprint-backups' ),
 				'cancelled'                => __( 'Cancelled', 'core-blueprint-backups' ),
