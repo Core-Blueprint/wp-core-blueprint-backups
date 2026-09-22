@@ -114,7 +114,7 @@ final class Page implements PageContract {
 		echo Notice::render( [
 			'variant' => Notice::WARNING,
 			'title'   => __( 'Restore replaces live site data.', 'core-blueprint-backups' ),
-			'message' => __( 'Confirm that you understand the destination data will be replaced before starting a restore or migration.', 'core-blueprint-backups' ),
+			'message' => __( 'Full-site backups can be restored on the original site or migrated to another single-site WordPress installation. If the site URL or table prefix differs, Backups prepares a migration and updates the database for the destination before replacing live data. Multisite migration is not supported. Core Blueprint Base and Backups remain at their currently installed versions during recovery.', 'core-blueprint-backups' ),
 			'class'   => 'cb-backups-restore-warning',
 		] );
 
