@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\Restore;
 
+use CB\Backups\Integration\MigrationRecovery;
 use CB\Backups\Jobs\Repository;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\Audit;
@@ -103,16 +104,64 @@ final class Engine {
 		}
 
 		if ( 'commit_live' === $stage ) {
-			$manifest = is_array( $meta['manifest'] ?? null ) ? $meta['manifest'] : []; $tables = self::manifest_tables( $meta );
+			$manifest = is_array( $meta['manifest'] ?? null ) ? $meta['manifest'] : [];
+			$tables = self::manifest_tables( $meta );
+
 			if ( 'website' === $type ) {
-				CriticalRecovery::arm( $job_id ); Maintenance::activate( $job_id ); $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); $meta = MigrationAccessRecovery::arm( $meta, $job_id ); $meta = FilesystemCommitter::commit_all( $staged . '/files/wp-content', $work, $meta );
-				DatabaseImporter::assert_restored_snapshot( $meta, $tables ); self::assert_site_identity( $manifest ); FilesystemCommitter::assert_committed( (string) $meta['recovery_path'] ); FilesystemCommitter::assert_runtime_available();
-				$index = (string) ( $meta['restore_checksum_index'] ?? $work . '/restore-checksums.jsonl' ); $meta = LiveVerifier::prepare( $index, $meta ); $meta['runtime_preserved'] = FilesystemCommitter::runtime_protected_paths();
-				Repository::update( $job_id, [ 'stage' => 'verify_live', 'progress' => 98, 'meta' => $meta ] ); return;
+				CriticalRecovery::arm( $job_id );
+				Maintenance::activate( $job_id );
+				$meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id );
+				$meta = MigrationRecovery::activate_destination( $meta );
+				$meta = FilesystemCommitter::commit_all( $staged . '/files/wp-content', $work, $meta );
+
+				DatabaseImporter::assert_restored_snapshot( $meta, $tables );
+				self::assert_site_identity( $manifest );
+				FilesystemCommitter::assert_committed( (string) $meta['recovery_path'] );
+				FilesystemCommitter::assert_runtime_available();
+
+				$index = (string) ( $meta['restore_checksum_index'] ?? $work . '/restore-checksums.jsonl' );
+				$meta = LiveVerifier::prepare( $index, $meta );
+				$meta['runtime_preserved'] = FilesystemCommitter::runtime_protected_paths();
+				$meta['post_reconcile_stage'] = 'verify_live';
+				Repository::update( $job_id, [ 'stage' => 'reconcile_destination', 'progress' => 98, 'meta' => $meta ] );
+				return;
 			}
+
 			Maintenance::activate( $job_id );
-			try { $meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id ); $meta = MigrationAccessRecovery::arm( $meta, $job_id ); DatabaseImporter::assert_restored_snapshot( $meta, $tables ); self::assert_site_identity( $manifest ); } catch ( \Throwable $e ) { DatabaseImporter::rollback( $meta, $tables, $job_id ); Maintenance::deactivate(); throw $e; }
-			self::complete_restore( $job, $meta, $tables, false ); return;
+			try {
+				$meta = DatabaseImporter::commit_snapshot( $meta, $tables, $job_id );
+				$meta = MigrationRecovery::activate_destination( $meta );
+				DatabaseImporter::assert_restored_snapshot( $meta, $tables );
+				self::assert_site_identity( $manifest );
+			} catch ( \Throwable $e ) {
+				DatabaseImporter::rollback( $meta, $tables, $job_id );
+				Maintenance::deactivate();
+				throw $e;
+			}
+			$meta['post_reconcile_stage'] = 'finalize_database';
+			Repository::update( $job_id, [ 'stage' => 'reconcile_destination', 'progress' => 98, 'meta' => $meta ] );
+			return;
+		}
+
+		if ( 'reconcile_destination' === $stage ) {
+			$meta = MigrationRecovery::reconcile_destination( $meta );
+			$next = (string) ( $meta['post_reconcile_stage'] ?? '' );
+			unset( $meta['post_reconcile_stage'] );
+
+			if ( 'verify_live' === $next ) {
+				Repository::update( $job_id, [ 'stage' => 'verify_live', 'progress' => 98, 'meta' => $meta ] );
+				return;
+			}
+			if ( 'finalize_database' === $next ) {
+				$tables = self::manifest_tables( $meta );
+				self::complete_restore( $job, $meta, $tables, false );
+				return;
+			}
+			throw new RuntimeException( 'Migration destination recovery stage is incomplete.' );
+		}
+
+		if ( 'await_recovery' === $stage ) {
+			return;
 		}
 
 		if ( 'verify_live' === $stage ) {
@@ -148,15 +197,64 @@ final class Engine {
 
 	/** @param array<string,mixed> $job @param array<string,mixed> $meta @param string[] $tables */
 	private static function complete_restore( array $job, array $meta, array $tables, bool $critical ): void {
-		$job_id = (string) $job['job_id']; $type = (string) $job['backup_type']; wp_cache_flush();
-		// A worker can cross the live switch within one request. Its registered
-		// post types, taxonomies and locale may still belong to the old site.
-		// Let WordPress regenerate the cache on a fresh restored-site request.
+		$job_id = (string) $job['job_id'];
+		$type = (string) $job['backup_type'];
+
+		wp_cache_flush();
+		// The live switch can complete in a request that still carries the old
+		// runtime registry. Force the destination to build rewrites afresh.
 		delete_option( 'rewrite_rules' );
-		$completed = time(); $meta['completed_timestamp'] = $completed; $meta['duration_seconds'] = max( 0, $completed - (int) ( $meta['started_timestamp'] ?? $completed ) ); Repository::update( $job_id, [ 'meta' => $meta ] ); Repository::complete( $job_id ); if ( $critical ) CriticalRecovery::disarm( $job_id ); Maintenance::deactivate();
-		Audit::log( 'backups.restore.completed', 'warning', [ 'confirmation' => $meta['restore_confirmation'] ?? [], 'job_id' => $job_id, 'type' => $type, 'trigger' => (string) $job['trigger_source'], 'duration' => $meta['duration_seconds'], 'mode' => (string) ( $meta['restore_mode'] ?? 'restore' ), 'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ), 'runtime_preserved' => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [] ] );
-		try { DatabaseImporter::cleanup_recovery( $meta, $tables, $job_id ); } catch ( \Throwable $e ) { Audit::log( 'backups.restore.cleanup.warning', 'warning', [ 'job_id' => $job_id, 'error' => $e->getMessage() ] ); }
+
+		$applied = time();
+		$meta['data_applied_timestamp'] = $applied;
+		$meta['duration_seconds'] = max( 0, $applied - (int) ( $meta['started_timestamp'] ?? $applied ) );
+
+		if ( $critical ) {
+			CriticalRecovery::disarm( $job_id );
+		}
+		Maintenance::deactivate();
+
+		try {
+			DatabaseImporter::cleanup_recovery( $meta, $tables, $job_id );
+		} catch ( \Throwable $e ) {
+			Audit::log( 'backups.restore.cleanup.warning', 'warning', [ 'job_id' => $job_id, 'error' => $e->getMessage() ] );
+		}
 		LocalStorage::remove_tree( LocalStorage::work_dir( $job_id ) );
+
+		if ( MigrationRecovery::required( $meta ) ) {
+			$meta['migration_recovery']['status'] = 'awaiting_auth';
+			Repository::update( $job_id, [
+				'status'   => 'running',
+				'stage'    => 'await_recovery',
+				'progress' => 99,
+				'meta'     => $meta,
+			] );
+			Audit::log( 'backups.migration.applied', 'warning', [
+				'confirmation'           => $meta['restore_confirmation'] ?? [],
+				'job_id'                 => $job_id,
+				'type'                   => $type,
+				'trigger'                => (string) $job['trigger_source'],
+				'duration'               => $meta['duration_seconds'],
+				'mode'                   => 'migration',
+				'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ),
+				'recovery_id'            => (string) ( $meta['migration_recovery']['recovery_id'] ?? '' ),
+			] );
+			return;
+		}
+
+		$meta['completed_timestamp'] = $applied;
+		Repository::update( $job_id, [ 'meta' => $meta ] );
+		Repository::complete( $job_id );
+		Audit::log( 'backups.restore.completed', 'warning', [
+			'confirmation'           => $meta['restore_confirmation'] ?? [],
+			'job_id'                 => $job_id,
+			'type'                   => $type,
+			'trigger'                => (string) $job['trigger_source'],
+			'duration'               => $meta['duration_seconds'],
+			'mode'                   => (string) ( $meta['restore_mode'] ?? 'restore' ),
+			'migration_replacements' => (int) ( $meta['migration_replacements'] ?? 0 ),
+			'runtime_preserved'      => isset( $meta['runtime_preserved'] ) && is_array( $meta['runtime_preserved'] ) ? $meta['runtime_preserved'] : [],
+		] );
 	}
 
 	/** @param array<string,mixed> $manifest */
