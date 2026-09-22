@@ -22,6 +22,7 @@ The current pre-release line remains `1.0.0-rc1`; Golden hardening commits do no
 - Added documented release tooling and a controlled maintainer translation-refresh helper.
 - Replaced the old pre-v1 RC-focused README with the canonical `1.0.0-rc1` product, ownership, security and release contract.
 - Reconciled the Import & Restore interface with the existing portable single-site migration contract and added Golden regression coverage so stale same-site-only messaging cannot return.
+- Hardened cross-domain migration handoff so imported Login Shield settings cannot lock out the operator before destination rewrites are verified, and kept the interim sign-in overlay within the viewport.
 
 ### Existing v1 capability retained
 
