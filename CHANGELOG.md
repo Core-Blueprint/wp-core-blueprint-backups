@@ -21,6 +21,7 @@ The current pre-release line remains `1.0.0-rc1`; Golden hardening commits do no
 - Added translation quality validation so non-English catalogs cannot pass merely by copying the English source into `msgstr`.
 - Added documented release tooling and a controlled maintainer translation-refresh helper.
 - Replaced the old pre-v1 RC-focused README with the canonical `1.0.0-rc1` product, ownership, security and release contract.
+- Reconciled the Import & Restore interface with the existing portable single-site migration contract and added Golden regression coverage so stale same-site-only messaging cannot return.
 
 ### Existing v1 capability retained
 

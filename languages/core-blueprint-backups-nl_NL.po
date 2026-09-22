@@ -612,16 +612,8 @@ msgid "Restore replaces live site data."
 msgstr "Herstellen vervangt live sitegegevens."
 
 #: src/Admin/Page.php:117
-msgid ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
-"and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
-msgstr ""
-"Backup format v1 only restores to the same site URL and table prefix. "
-"Migration and URL replacement are intentionally blocked. Core Blueprint Base "
-"and Backups code remain at their currently installed versions during "
-"recovery so the restore engine cannot replace itself mid-operation."
+msgid "Full-site backups can be restored on the original site or migrated to another single-site WordPress installation. If the site URL or table prefix differs, Backups prepares a migration and updates the database for the destination before replacing live data. Multisite migration is not supported. Core Blueprint Base and Backups remain at their currently installed versions during recovery."
+msgstr "Volledige websiteback-ups kunnen op de oorspronkelijke site worden hersteld of naar een andere single-site WordPress-installatie worden gemigreerd. Als de site-URL of tabelprefix verschilt, bereidt Backups een migratie voor en past het de database aan de doelsite aan voordat livegegevens worden vervangen. Multisite-migratie wordt niet ondersteund. Core Blueprint Base en Backups blijven tijdens het herstel op de momenteel geïnstalleerde versies."
 
 #: src/Admin/Page.php:121
 msgid "Import a backup"
