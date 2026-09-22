@@ -31,7 +31,7 @@ final class MigrationRecovery {
 		self::$booted = true;
 
 		add_action( 'init', [ self::class, 'serve_probe' ], -1000 );
-		add_action( 'admin_init', [ self::class, 'prepare_destination_rewrites' ], 1 );
+		add_action( 'wp_ajax_cb_backups_prepare_migration_recovery', [ self::class, 'prepare_ajax' ] );
 		add_action( 'wp_ajax_cb_backups_finalize_migration_recovery', [ self::class, 'finalize_ajax' ] );
 	}
 
@@ -124,30 +124,60 @@ final class MigrationRecovery {
 		return '' !== $token ? home_url( '/' . self::PROBE_PREFIX . $token . '/' ) : '';
 	}
 
-	public static function prepare_destination_rewrites(): void {
-		if ( ! is_user_logged_in() ) {
-			return;
+	public static function prepare_ajax(): void {
+		if ( ! current_user_can( Capabilities::MANAGE ) ) {
+			wp_send_json_error( [ 'message' => __( 'You are not allowed to manage backups.', 'core-blueprint-backups' ) ], 403 );
 		}
-		foreach ( Repository::active( 5 ) as $job ) {
-			if ( 'restore' !== (string) ( $job['kind'] ?? '' ) || 'await_recovery' !== (string) ( $job['stage'] ?? '' ) ) {
-				continue;
-			}
+		check_ajax_referer( 'cb_backups_admin', 'nonce' );
+		$job_id = sanitize_text_field( (string) ( isset( $_POST['job_id'] ) ? wp_unslash( $_POST['job_id'] ) : '' ) );
+
+		try {
+			$job = self::prepare_destination( $job_id );
 			$meta = is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
-			if ( ! self::required( $meta ) || ! self::supported() ) {
-				continue;
-			}
-			$status = BaseRecovery::status( (string) $meta['migration_recovery']['ticket'] );
-			if ( 'authenticated' !== (string) ( $status['status'] ?? '' )
-				|| get_current_user_id() !== (int) ( $status['approved_user_id'] ?? 0 )
-			) {
-				continue;
-			}
-			if ( empty( $meta['migration_recovery']['rewrite_flushed_at'] ) ) {
-				flush_rewrite_rules( true );
-				$meta['migration_recovery']['rewrite_flushed_at'] = time();
-				Repository::update( (string) $job['job_id'], [ 'meta' => $meta ] );
-			}
+			wp_send_json_success( [
+				'job_id'         => (string) $job['job_id'],
+				'requires_probe' => self::requires_probe( $meta ),
+				'probe_url'      => self::probe_url( $meta ),
+			] );
+		} catch ( \Throwable $e ) {
+			wp_send_json_error( [ 'message' => $e->getMessage() ], 409 );
 		}
+	}
+
+	/** @return array<string,mixed> */
+	public static function prepare_destination( string $job_id ): array {
+		self::assert_supported();
+		$job = Repository::get( $job_id );
+		if ( ! is_array( $job )
+			|| 'restore' !== (string) ( $job['kind'] ?? '' )
+			|| 'await_recovery' !== (string) ( $job['stage'] ?? '' )
+		) {
+			throw new RuntimeException( 'Migration recovery job is not awaiting destination verification.' );
+		}
+
+		$meta = is_array( $job['meta'] ?? null ) ? $job['meta'] : [];
+		if ( ! self::required( $meta ) ) {
+			throw new RuntimeException( 'Migration recovery metadata is incomplete.' );
+		}
+
+		$ticket = (string) $meta['migration_recovery']['ticket'];
+		$status = BaseRecovery::status( $ticket );
+		$user_id = get_current_user_id();
+		if ( 'authenticated' !== (string) ( $status['status'] ?? '' )
+			|| $user_id < 1
+			|| $user_id !== (int) ( $status['approved_user_id'] ?? 0 )
+		) {
+			throw new RuntimeException( __( 'Migration recovery authentication is incomplete.', 'core-blueprint-backups' ) );
+		}
+
+		if ( self::requires_probe( $meta ) && empty( $meta['migration_recovery']['rewrite_flushed_at'] ) ) {
+			flush_rewrite_rules( true );
+			$meta['migration_recovery']['rewrite_flushed_at'] = time();
+			Repository::update( $job_id, [ 'meta' => $meta ] );
+			$job = Repository::get( $job_id ) ?? $job;
+		}
+
+		return $job;
 	}
 
 	public static function serve_probe(): void {
