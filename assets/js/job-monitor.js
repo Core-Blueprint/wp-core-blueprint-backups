@@ -396,7 +396,7 @@
 
   const verifyMigrationRecovery = async (job) => {
     if (migrationRecoveryInFlight) return;
-    if (!config.recoveryFinalizeAction || (config.recoveryRequiresProbe && !config.recoveryProbeUrl)) {
+    if (!config.recoveryPrepareAction || !config.recoveryFinalizeAction) {
       showMonitorState(
         config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
         'error',
@@ -414,8 +414,15 @@
     );
 
     try {
-      if (config.recoveryRequiresProbe) {
-        const probe = await fetch(config.recoveryProbeUrl, {
+      const recovery = await request(config.recoveryPrepareAction);
+      if (recovery.requires_probe) {
+        if (!recovery.probe_url) {
+          throw new MonitorRequestError(
+            config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
+            'recovery_probe_missing'
+          );
+        }
+        const probe = await fetch(recovery.probe_url, {
           method: 'GET',
           credentials: 'same-origin',
           cache: 'no-store',
