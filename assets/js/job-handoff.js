@@ -117,6 +117,7 @@
     const dialog = authWrap?.querySelector('#wp-auth-check');
     if (!dialog) return;
 
+    dialog.classList.add('cb-backups-auth-check--handoff');
     const copy = appliedCopy();
     let notice = dialog.querySelector('#cb-backups-auth-context');
     if (!notice) {
@@ -142,6 +143,13 @@
     notice.append(title, body);
   };
 
+  const clearAuthOverlay = () => {
+    const dialog = authWrap?.querySelector('#wp-auth-check');
+    if (!dialog) return;
+    dialog.classList.remove('cb-backups-auth-check--handoff');
+    dialog.querySelector('#cb-backups-auth-context')?.remove();
+  };
+
   const renderApplied = () => {
     if (!isFinalWindow()) return;
     const copy = appliedCopy();
@@ -161,6 +169,7 @@
   const renderFinalizing = () => {
     if (!isFinalWindow()) {
       clearOwnState();
+      clearAuthOverlay();
       return;
     }
 
@@ -190,6 +199,7 @@
     refreshQueued = false;
     if (terminalStatuses.has(jobBox.dataset.status || '')) {
       clearOwnState();
+      clearAuthOverlay();
       return;
     }
     if (authVisible() || signInState()) renderApplied();
