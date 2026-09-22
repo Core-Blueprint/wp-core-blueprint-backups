@@ -85,6 +85,7 @@ cb_backups_golden_expect( str_contains( $restore, "'await_recovery'" ) && str_co
 cb_backups_golden_expect( str_contains( $runner, "'reconcile_destination'" ) && str_contains( $runner, "'await_recovery'" ), 'Restore runner must enforce a fresh runtime boundary after the live migration switch.' );
 cb_backups_golden_expect( str_contains( $migration_recovery, 'use CB\\Core\\Migration\\Recovery as BaseRecovery;' ), 'Backups migration recovery must consume Base authority instead of owning privileged trust.' );
 cb_backups_golden_expect( str_contains( $migration_recovery, 'BaseRecovery::finalize' ) && str_contains( $migration_recovery, 'BaseRecovery::requires_pretty_routing' ), 'Backups must finalize through Base and defer rewrite requirements to Base.' );
+cb_backups_golden_expect( str_contains( $migration_recovery, "wp_ajax_cb_backups_prepare_migration_recovery" ) && str_contains( $migration_recovery, 'prepare_destination( string $job_id )' ) && str_contains( $migration_recovery, 'flush_rewrite_rules( true )' ), 'Destination rewrites must be prepared through an explicit fresh authenticated request before browser verification.' );
 cb_backups_golden_expect( str_contains( $bootstrap, 'MigrationRecovery::boot();' ), 'Base-backed migration recovery integration must boot on destination requests.' );
 cb_backups_golden_expect( ! is_file( $root . '/src/Restore/MigrationAccessRecovery.php' ), 'Backups-owned security recovery authority must stay removed.' );
 
