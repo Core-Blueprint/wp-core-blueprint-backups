@@ -181,7 +181,7 @@
     node.replaceChildren();
   };
 
-  const showMonitorState = (message, kind, actionLabel = '', actionHref = '') => {
+  const showMonitorState = (message, kind, actionLabel = '', actionHref = null) => {
     const node = ensureMonitorState();
     node.hidden = false;
     node.className = `cb-backups-monitor-state cb-backups-monitor-state--${kind}`;
@@ -191,7 +191,7 @@
     text.textContent = message;
     node.appendChild(text);
 
-    const href = actionHref || config.reconnectUrl || '';
+    const href = actionHref === null ? (config.reconnectUrl || '') : actionHref;
     if (actionLabel && href) {
       const action = document.createElement('a');
       action.className = 'button button-primary';
@@ -398,11 +398,22 @@
     pollingStopped = true;
     waitingForSession = true;
     stopTimer();
+
+    if (!config.loginUrl) {
+      showMonitorState(
+        config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Reload monitoring before continuing.',
+        'error',
+        config.labels?.reloadMonitor || 'Reload monitoring',
+        config.reconnectUrl || ''
+      );
+      return;
+    }
+
     showMonitorState(
       message || liveRestoreMessage(true),
       'auth',
       config.labels?.secureSignIn || 'Continue to secure sign-in',
-      config.loginUrl || ''
+      config.loginUrl
     );
   };
 
