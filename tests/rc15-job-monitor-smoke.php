@@ -23,6 +23,7 @@ monitor_contract_assert( str_contains( $endpoint, "'capability_required'" ), 'Mo
 monitor_contract_assert( str_contains( $assets, "'jobId'   => ''," ), 'Legacy admin.js job polling must remain disabled when the dedicated monitor is active.' );
 monitor_contract_assert( str_contains( $assets, '@cb-backups/job-monitor' ), 'Dedicated job monitor module is not enqueued.' );
 monitor_contract_assert( str_contains( $assets, '@cb-backups/job-terminal-recovery' ), 'Terminal re-login recovery module is not enqueued.' );
+monitor_contract_assert( str_contains( $assets, 'private static function asset_version' ) && str_contains( $assets, "hash_file( 'sha256'" ), 'Mutable rc builds must cache-bust admin assets by content instead of relying only on the plugin version.' );
 monitor_contract_assert( str_contains( $assets, 'cb_monitor_reconnect' ), 'Reconnect URL must preserve a monitor handoff marker.' );
 monitor_contract_assert( str_contains( $assets, "'loginUrl'" ) && str_contains( $assets, 'MigrationRecovery::login_url' ), 'Migration handoff must receive its canonical sign-in URL from Base-owned recovery.' );
 monitor_contract_assert( str_contains( $assets, "add_filter( 'wp_auth_check_load'" ) && str_contains( $assets, 'MigrationRecovery::required( $meta ) ? false : $show' ), 'Cross-site migration must disable the native interim-login iframe in favour of top-level recovery.' );
