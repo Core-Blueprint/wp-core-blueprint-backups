@@ -57,7 +57,7 @@
   };
 
   const terminalStatuses = new Set(['completed', 'failed', 'cancelled']);
-  const terminalMonitorErrors = new Set(['auth_required', 'nonce_expired', 'capability_required', 'job_not_found']);
+  const terminalMonitorErrors = new Set(['auth_required', 'nonce_expired', 'capability_required', 'migration_recovery_auth_required', 'job_not_found']);
   const liveRestoreStages = new Set(['commit_live', 'reconcile_destination', 'verify_live', 'finalize_live', 'await_recovery']);
   let elapsedBase = 0;
   let elapsedUpdatedAt = performance.now();
@@ -394,6 +394,18 @@
     }
   };
 
+  const showSecureMigrationSignIn = (message = '') => {
+    pollingStopped = true;
+    waitingForSession = true;
+    stopTimer();
+    showMonitorState(
+      message || liveRestoreMessage(true),
+      'auth',
+      config.labels?.secureSignIn || 'Continue to secure sign-in',
+      config.loginUrl || ''
+    );
+  };
+
   const verifyMigrationRecovery = async (job) => {
     if (migrationRecoveryInFlight) return;
     if (!config.recoveryPrepareAction || !config.recoveryFinalizeAction) {
@@ -453,10 +465,18 @@
       window.location.replace(completionUrl(completed));
     } catch (error) {
       migrationRecoveryInFlight = false;
+      const recoveryAuthRequired = config.restoreMode === 'migration'
+        && Boolean(config.loginUrl)
+        && ['migration_recovery_auth_required', 'auth_required', 'capability_required'].includes(error?.code || '');
+      if (recoveryAuthRequired) {
+        showSecureMigrationSignIn(error?.message || liveRestoreMessage(true));
+        return;
+      }
       showMonitorState(
         error?.message || config.labels?.recoveryFinalizeFailed || 'Destination recovery could not be finalized. Retry verification before completing the migration.',
         'error',
-        config.labels?.reloadMonitor || 'Reload monitoring'
+        config.labels?.reloadMonitor || 'Reload monitoring',
+        config.reconnectUrl || ''
       );
     }
   };
@@ -465,18 +485,10 @@
     const code = error?.code || 'request_failed';
     const migrationHandoffRequired = config.restoreMode === 'migration'
       && Boolean(config.loginUrl)
-      && (isLiveRestoreTransition() || ['auth_required', 'nonce_expired', 'capability_required'].includes(code));
+      && (isLiveRestoreTransition() || ['auth_required', 'nonce_expired', 'capability_required', 'migration_recovery_auth_required'].includes(code));
 
-    if (migrationHandoffRequired && ['auth_required', 'nonce_expired', 'capability_required'].includes(code)) {
-      pollingStopped = true;
-      waitingForSession = true;
-      stopTimer();
-      showMonitorState(
-        liveRestoreMessage(true),
-        'auth',
-        config.labels?.secureSignIn || 'Continue to secure sign-in',
-        config.loginUrl
-      );
+    if (migrationHandoffRequired && ['auth_required', 'nonce_expired', 'capability_required', 'migration_recovery_auth_required'].includes(code)) {
+      showSecureMigrationSignIn(error?.message || liveRestoreMessage(true));
       return;
     }
 
