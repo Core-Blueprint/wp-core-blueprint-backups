@@ -31,7 +31,7 @@ final class Assets {
 			'cb-backups-admin',
 			CB_BACKUPS_URL . 'assets/css/admin.css',
 			[],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/css/admin.css' )
 		);
 
 		if ( $is_settings ) {
@@ -42,32 +42,32 @@ final class Assets {
 			'cb-backups-job-monitor',
 			CB_BACKUPS_URL . 'assets/css/job-monitor.css',
 			[ 'cb-backups-admin' ],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/css/job-monitor.css' )
 		);
 
 		wp_enqueue_script_module(
 			'@cb-backups/admin',
 			CB_BACKUPS_URL . 'assets/js/admin.js',
 			[],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/js/admin.js' )
 		);
 		wp_enqueue_script_module(
 			'@cb-backups/job-monitor',
 			CB_BACKUPS_URL . 'assets/js/job-monitor.js',
 			[],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/js/job-monitor.js' )
 		);
 		wp_enqueue_script_module(
 			'@cb-backups/job-handoff',
 			CB_BACKUPS_URL . 'assets/js/job-handoff.js',
 			[ '@cb-backups/job-monitor' ],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/js/job-handoff.js' )
 		);
 		wp_enqueue_script_module(
 			'@cb-backups/job-terminal-recovery',
 			CB_BACKUPS_URL . 'assets/js/job-terminal-recovery.js',
 			[],
-			CB_BACKUPS_VERSION
+			self::asset_version( 'assets/js/job-terminal-recovery.js' )
 		);
 
 		if ( ! self::$module_data_registered ) {
@@ -256,6 +256,15 @@ final class Assets {
 			$args['tab'] = is_array( $job ) && 'restore' === (string) ( $job['kind'] ?? '' ) ? 'restore' : 'backups';
 		}
 		return add_query_arg( $args, admin_url( 'admin.php' ) );
+	}
+
+	private static function asset_version( string $relative_path ): string {
+		$path = CB_BACKUPS_DIR . ltrim( $relative_path, '/' );
+		$hash = is_file( $path ) ? hash_file( 'sha256', $path ) : false;
+		if ( ! is_string( $hash ) || '' === $hash ) {
+			return CB_BACKUPS_VERSION;
+		}
+		return CB_BACKUPS_VERSION . '.' . substr( $hash, 0, 12 );
 	}
 
 	private static function is_settings_request(): bool {
