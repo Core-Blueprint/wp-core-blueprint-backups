@@ -35,6 +35,9 @@ monitor_contract_assert( str_contains( $monitor, "code === 'nonce_expired'" ), '
 monitor_contract_assert( str_contains( $monitor, 'config.reconnectUrl' ), 'Auth handoff must return through the same job reconnect URL.' );
 monitor_contract_assert( str_contains( $monitor, "config.loginUrl || ''" ) && str_contains( $monitor, 'config.labels?.secureSignIn' ), 'Migration authentication loss must offer Base recovery instead of depending on a migrated custom login path.' );
 monitor_contract_assert( str_contains( $monitor, 'config.recoveryPrepareAction' ) && str_contains( $monitor, 'config.recoveryFinalizeAction' ) && str_contains( $monitor, 'recovery.requires_probe' ) && str_contains( $monitor, 'recovery.probe_url' ), 'Migration monitor must prepare and verify the destination before final completion.' );
+monitor_contract_assert( str_contains( $migration_recovery, "'migration_recovery_auth_required'" ), 'Quarantined migration recovery requests must return an explicit secure-sign-in code.' );
+monitor_contract_assert( str_contains( $monitor, "['migration_recovery_auth_required', 'auth_required', 'capability_required']" ) && str_contains( $monitor, 'showSecureMigrationSignIn' ), 'Await-recovery permission loss must hand off to the Base secure login instead of the generic reconnect URL.' );
+
 monitor_contract_assert( str_contains( $monitor, 'probe.status !== 204' ), 'Pretty-routing migrations must require a successful browser rewrite probe.' );
 monitor_contract_assert( str_contains( $migration_recovery, 'BaseRecovery::requires_pretty_routing' ) && str_contains( $migration_recovery, 'BaseRecovery::finalize' ), 'Backups must defer routing policy and trust finalization to Base.' );
 monitor_contract_assert( ! str_contains( $handoff, 'wp-auth-check' ) && ! str_contains( $monitor_css, 'cb-backups-auth-context' ), 'Migration handoff must not depend on the clipped WordPress interim-login overlay.' );
