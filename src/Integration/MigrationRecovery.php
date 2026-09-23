@@ -126,7 +126,13 @@ final class MigrationRecovery {
 
 	public static function prepare_ajax(): void {
 		if ( ! current_user_can( Capabilities::MANAGE ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not allowed to manage backups.', 'core-blueprint-backups' ) ], 403 );
+			wp_send_json_error(
+				[
+					'code'    => 'migration_recovery_auth_required',
+					'message' => __( 'Secure sign-in is required before destination recovery can continue.', 'core-blueprint-backups' ),
+				],
+				403
+			);
 		}
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		$job_id = sanitize_text_field( (string) ( isset( $_POST['job_id'] ) ? wp_unslash( $_POST['job_id'] ) : '' ) );
@@ -221,7 +227,13 @@ final class MigrationRecovery {
 
 	public static function finalize_ajax(): void {
 		if ( ! current_user_can( Capabilities::MANAGE ) ) {
-			wp_send_json_error( [ 'message' => __( 'You are not allowed to manage backups.', 'core-blueprint-backups' ) ], 403 );
+			wp_send_json_error(
+				[
+					'code'    => 'migration_recovery_auth_required',
+					'message' => __( 'Secure sign-in is required before destination recovery can continue.', 'core-blueprint-backups' ),
+				],
+				403
+			);
 		}
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		$job_id = sanitize_text_field( (string) ( isset( $_POST['job_id'] ) ? wp_unslash( $_POST['job_id'] ) : '' ) );
