@@ -4,8 +4,8 @@ msgstr ""
 "Project-Id-Version: Core Blueprint Backups 1.0.0-rc1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-core-blueprint-"
 "backups-migration\n"
-"POT-Creation-Date: 2026-09-22 17:53+0000\n"
-"PO-Revision-Date: 2026-09-22 17:53+0000\n"
+"POT-Creation-Date: 2026-09-23 07:30+0000\n"
+"PO-Revision-Date: 2026-09-23 07:30+0000\n"
 "Last-Translator: Core Blueprint\n"
 "Language-Team: it_IT\n"
 "Language: it_IT\n"
@@ -72,8 +72,6 @@ msgid "%1$d backups deleted; %2$d could not be deleted."
 msgstr "%1$d backups deleted; %2$dnon è stato possibile eliminarlo."
 
 #: src/Admin/Actions.php:440 src/Admin/Page.php:43 src/Admin/Settings.php:14
-#: src/Integration/MigrationRecovery.php:129
-#: src/Integration/MigrationRecovery.php:224
 msgid "You are not allowed to manage backups."
 msgstr "You are not allowed to manage backups."
 
@@ -1487,13 +1485,20 @@ msgstr "Importazione backup preparato eliminata"
 msgid "Backup import cancelled"
 msgstr "Importazione del backup annullata"
 
-#: src/Integration/MigrationRecovery.php:170
-#: src/Integration/MigrationRecovery.php:254
-#: src/Integration/MigrationRecovery.php:265
+#: src/Integration/MigrationRecovery.php:132
+#: src/Integration/MigrationRecovery.php:233
+msgid "Secure sign-in is required before destination recovery can continue."
+msgstr ""
+"È richiesto un accesso sicuro prima di poter continuare il ripristino della "
+"destinazione."
+
+#: src/Integration/MigrationRecovery.php:176
+#: src/Integration/MigrationRecovery.php:266
+#: src/Integration/MigrationRecovery.php:277
 msgid "Migration recovery authentication is incomplete."
 msgstr "L’autenticazione per il ripristino della migrazione è incompleta."
 
-#: src/Integration/MigrationRecovery.php:257
+#: src/Integration/MigrationRecovery.php:269
 msgid ""
 "Destination rewrite verification has not completed yet. Retry the "
 "verification before finishing migration."
@@ -1501,12 +1506,12 @@ msgstr ""
 "La verifica delle riscritture della destinazione non è ancora completata. "
 "Ripetila prima di terminare la migrazione."
 
-#: src/Integration/MigrationRecovery.php:269
+#: src/Integration/MigrationRecovery.php:281
 msgid "Core Blueprint could not finalize migration recovery."
 msgstr ""
 "Core Blueprint non ha potuto finalizzare il ripristino della migrazione."
 
-#: src/Integration/MigrationRecovery.php:308
+#: src/Integration/MigrationRecovery.php:320
 msgid ""
 "Cross-site migration requires a Core Blueprint Base version with Migration "
 "Recovery support."

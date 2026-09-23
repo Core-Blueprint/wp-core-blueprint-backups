@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-22 17:53+0000\n"
+"POT-Creation-Date: 2026-09-23 07:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: core-blueprint-backups\n"
@@ -70,8 +70,6 @@ msgstr ""
 #: src/Admin/Actions.php:440
 #: src/Admin/Page.php:43
 #: src/Admin/Settings.php:14
-#: src/Integration/MigrationRecovery.php:129
-#: src/Integration/MigrationRecovery.php:224
 msgid "You are not allowed to manage backups."
 msgstr ""
 
@@ -1318,21 +1316,26 @@ msgstr ""
 msgid "Backup import cancelled"
 msgstr ""
 
-#: src/Integration/MigrationRecovery.php:170
-#: src/Integration/MigrationRecovery.php:254
-#: src/Integration/MigrationRecovery.php:265
+#: src/Integration/MigrationRecovery.php:132
+#: src/Integration/MigrationRecovery.php:233
+msgid "Secure sign-in is required before destination recovery can continue."
+msgstr ""
+
+#: src/Integration/MigrationRecovery.php:176
+#: src/Integration/MigrationRecovery.php:266
+#: src/Integration/MigrationRecovery.php:277
 msgid "Migration recovery authentication is incomplete."
 msgstr ""
 
-#: src/Integration/MigrationRecovery.php:257
+#: src/Integration/MigrationRecovery.php:269
 msgid "Destination rewrite verification has not completed yet. Retry the verification before finishing migration."
 msgstr ""
 
-#: src/Integration/MigrationRecovery.php:269
+#: src/Integration/MigrationRecovery.php:281
 msgid "Core Blueprint could not finalize migration recovery."
 msgstr ""
 
-#: src/Integration/MigrationRecovery.php:308
+#: src/Integration/MigrationRecovery.php:320
 msgid "Cross-site migration requires a Core Blueprint Base version with Migration Recovery support."
 msgstr ""
 
