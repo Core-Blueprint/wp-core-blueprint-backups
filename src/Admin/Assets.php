@@ -5,8 +5,8 @@ namespace CB\Backups\Admin;
 
 use CB\Backups\Integration\MigrationRecovery;
 use CB\Backups\Jobs\Repository;
-use CB\Core\Admin\PageRegistry;
-use CB\Core\Admin\SettingsRegistry;
+use CoreBlueprint\Core\Admin\PageRegistry;
+use CoreBlueprint\Core\Admin\SettingsRegistry;
 
 defined( 'ABSPATH' ) || exit;
 

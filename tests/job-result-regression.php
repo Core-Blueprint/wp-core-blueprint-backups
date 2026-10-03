@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-namespace CB\Core\Admin { interface Page {} }
-namespace CB\Core\UI {
+namespace CoreBlueprint\Core\Admin { interface Page {} }
+namespace CoreBlueprint\Core\UI {
 	final class Notice {
 		public const SUCCESS = 'success'; public const WARNING = 'warning'; public const ERROR = 'error';
 		public static array $calls = [];
@@ -103,7 +103,7 @@ namespace {
 	ob_start(); $render->invoke($page); $html = ob_get_clean();
 	check_result( str_contains($html, '<aside class="success">Migration completed</aside>'), 'Completion must render without JavaScript or a toast.' );
 	check_result( str_contains($html, 'Next steps: save permalinks and clear caches') && str_contains($html, 'without changing your permalink structure') && str_contains($html, 'CDN caches'), 'Completed migrations must retain actionable permalink and cache guidance after reload.' );
-	$followup_notices = array_values(array_filter(\CB\Core\UI\Notice::$calls, static fn($args) => ($args['title'] ?? '') === 'Next steps: save permalinks and clear caches'));
+	$followup_notices = array_values(array_filter(\CoreBlueprint\Core\UI\Notice::$calls, static fn($args) => ($args['title'] ?? '') === 'Next steps: save permalinks and clear caches'));
 	check_result(1 === count($followup_notices) && 'warning' === $followup_notices[0]['variant'] && 2 === count($followup_notices[0]['items']), 'Migration follow-up must use the prominent Base attention notice with both steps.');
 	check_result(str_contains($html, 'class="button button-primary cb-core-button cb-core-button--primary"'), 'Permalink action must use the Base primary button.');
 	check_result( str_contains($html, 'href="https://destination.test/wordpress/wp-admin/options-permalink.php"'), 'Permalink action must use the destination admin URL, including subdirectory installations.' );

@@ -23,7 +23,7 @@ namespace {
 	}
 }
 
-namespace CB\Core\Migration {
+namespace CoreBlueprint\Core\Migration {
 	final class Recovery {
 		public static bool $pretty = true;
 		public static array $calls = [];
@@ -103,7 +103,7 @@ namespace {
 
 	use CB\Backups\Integration\MigrationRecovery;
 	use CB\Backups\Jobs\Repository;
-	use CB\Core\Migration\Recovery as BaseRecovery;
+	use CoreBlueprint\Core\Migration\Recovery as BaseRecovery;
 
 	migration_recovery_assert( [] === MigrationRecovery::prepare( [ 'mode' => 'restore' ] ), 'Same-site restore must not prepare migration recovery.' );
 

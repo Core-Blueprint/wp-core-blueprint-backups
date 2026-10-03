@@ -18,10 +18,10 @@ use CB\Backups\Schedule\Scheduler;
 use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\SiteHealth;
 use CB\Backups\Support\Capabilities;
-use CB\Core\Admin\PageRegistry;
-use CB\Core\Admin\SettingsRegistry;
-use CB\Core\Dashboard\CardRegistry;
-use CB\Core\ExtensionRegistry;
+use CoreBlueprint\Core\Admin\PageRegistry;
+use CoreBlueprint\Core\Admin\SettingsRegistry;
+use CoreBlueprint\Core\Dashboard\CardRegistry;
+use CoreBlueprint\Core\ExtensionRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -163,9 +163,9 @@ final class Bootstrap {
 	}
 
 	public static function register_presentation_hooks(): void {
-		if ( class_exists( '\\CB\\Core\\Governance\\EventRegistry' ) ) {
+		if ( class_exists( '\\CoreBlueprint\\Core\\Governance\\EventRegistry' ) ) {
 			foreach ( self::event_labels( [] ) as $id => $label ) {
-				\CB\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
+				\CoreBlueprint\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
 			}
 		}
 		add_filter( 'cb_core_module_status_definitions', [ self::class, 'register_status_definition' ] );

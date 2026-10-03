@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace CB\Core\Governance {
+namespace CoreBlueprint\Core\Governance {
 	final class Audit {
 		public static array $events = [];
 		public static function record(string $event, string $severity, array $context): bool { self::$events[] = compact('event', 'severity', 'context'); return true; }
@@ -76,7 +76,7 @@ namespace {
 	use CB\Backups\Restore\Service;
 	use CB\Backups\Restore\Engine;
 	use CB\Backups\Storage\LocalStorage;
-	use CB\Core\Governance\Audit;
+	use CoreBlueprint\Core\Governance\Audit;
 
 	$GLOBALS['actor'] = 42; $GLOBALS['allowed'] = true; $GLOBALS['nonce'] = true;
 	$GLOBALS['type'] = 'database'; $GLOBALS['mode'] = 'restore';

@@ -11,9 +11,9 @@ use CB\Backups\Storage\LocalStorage;
 use CB\Backups\Support\Capabilities;
 use CB\Backups\Support\SiteIdentity;
 use CB\Backups\Support\Telemetry;
-use CB\Core\Admin\Page as PageContract;
-use CB\Core\UI\Notice;
-use CB\Core\UI\StateBadge;
+use CoreBlueprint\Core\Admin\Page as PageContract;
+use CoreBlueprint\Core\UI\Notice;
+use CoreBlueprint\Core\UI\StateBadge;
 
 defined( 'ABSPATH' ) || exit;
 

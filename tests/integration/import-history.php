@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 // Only the Base page/UI contracts are doubled. WordPress, SQL, Repository and
 // Page rendering are real; no archive is restored by this presentation regression.
-namespace CB\Core\Admin { interface Page {} }
-namespace CB\Core\UI {
+namespace CoreBlueprint\Core\Admin { interface Page {} }
+namespace CoreBlueprint\Core\UI {
 	final class StateBadge {
 		public const NEUTRAL = 'neutral';
 		public const SUCCESS = 'success';

@@ -100,13 +100,13 @@ final class Requirements {
 
 	/** Product-specific public Base contracts; intentionally outside Bootstrap v1. */
 	public static function base_contracts_ready(): bool {
-		return class_exists( '\\CB\\Core\\Database\\SchemaRegistry' )
-			&& interface_exists( '\\CB\\Core\\Admin\\Page' )
-			&& class_exists( '\\CB\\Core\\Admin\\PageRegistry' )
-			&& class_exists( '\\CB\\Core\\Admin\\SettingsRegistry' )
-			&& class_exists( '\\CB\\Core\\ExtensionRegistry' )
-			&& class_exists( '\\CB\\Core\\Governance\\Audit' )
-			&& class_exists( '\\CB\\Core\\Governance\\EventRegistry' );
+		return class_exists( '\\CoreBlueprint\\Core\\Database\\SchemaRegistry' )
+			&& interface_exists( '\\CoreBlueprint\\Core\\Admin\\Page' )
+			&& class_exists( '\\CoreBlueprint\\Core\\Admin\\PageRegistry' )
+			&& class_exists( '\\CoreBlueprint\\Core\\Admin\\SettingsRegistry' )
+			&& class_exists( '\\CoreBlueprint\\Core\\ExtensionRegistry' )
+			&& class_exists( '\\CoreBlueprint\\Core\\Governance\\Audit' )
+			&& class_exists( '\\CoreBlueprint\\Core\\Governance\\EventRegistry' );
 	}
 
 	public static function product_ready(): bool {

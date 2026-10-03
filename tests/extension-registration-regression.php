@@ -34,7 +34,7 @@ namespace {
 	}
 }
 
-namespace CB\Core {
+namespace CoreBlueprint\Core {
 	final class ExtensionRegistry {
 		/** @var array<string,mixed>|null */
 		public static ?array $registered = null;
@@ -71,7 +71,7 @@ namespace CB\Backups\Schedule {
 namespace CB\Backups {
 	use CB\Backups\Schedule\Scheduler;
 	use CB\Backups\Storage\LocalStorage;
-	use CB\Core\ExtensionRegistry;
+	use CoreBlueprint\Core\ExtensionRegistry;
 
 	require_once __DIR__ . '/../src/Bootstrap.php';
 

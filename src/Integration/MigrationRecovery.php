@@ -8,7 +8,7 @@ use CB\Backups\Admin\JobPresentation;
 use CB\Backups\Jobs\Repository;
 use CB\Backups\Support\Audit;
 use CB\Backups\Support\Capabilities;
-use CB\Core\Migration\Recovery as BaseRecovery;
+use CoreBlueprint\Core\Migration\Recovery as BaseRecovery;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
