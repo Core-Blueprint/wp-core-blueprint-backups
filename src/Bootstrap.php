@@ -39,7 +39,7 @@ final class Bootstrap {
 		}
 		self::$suite_integration_registered = true;
 
-		add_action( 'cb_core_register_extensions', [ self::class, 'register_extension' ] );
+		add_action( 'core_blueprint_register_extensions', [ self::class, 'register_extension' ] );
 		add_action( 'init', [ self::class, 'register_presentation_hooks' ], 1 );
 	}
 
@@ -61,7 +61,7 @@ final class Bootstrap {
 		CriticalRecovery::recover_terminal_markers();
 		SiteHealth::boot();
 
-		add_action( 'cb_core_register_pages', static function (): void {
+		add_action( 'core_blueprint_register_pages', static function (): void {
 			PageRegistry::register(
 				new Page(),
 				[
@@ -79,7 +79,7 @@ final class Bootstrap {
 			);
 		} );
 
-		add_action( 'cb_core_register_settings', static function (): void {
+		add_action( 'core_blueprint_register_settings', static function (): void {
 			SettingsRegistry::register(
 				'core-blueprint-backups',
 				[
@@ -99,8 +99,8 @@ final class Bootstrap {
 
 		add_action( 'cb_backups_run_job', [ Runner::class, 'scheduled_tick' ], 10, 1 );
 		add_action( 'cb_backups_scheduler_tick', [ Scheduler::class, 'run_due' ] );
-		add_filter( 'cb_core_cli_register_commands', [ self::class, 'register_cli_commands' ] );
-		add_action( 'cb_core_dashboard_register_cards', [ self::class, 'register_dashboard_shortcuts' ] );
+		add_filter( 'core_blueprint_cli_register_commands', [ self::class, 'register_cli_commands' ] );
+		add_action( 'core_blueprint_dashboard_register_cards', [ self::class, 'register_dashboard_shortcuts' ] );
 	}
 
 	/** Register Backups with Base's canonical extension inventory. */
@@ -168,7 +168,7 @@ final class Bootstrap {
 				\CoreBlueprint\Core\Governance\EventRegistry::register( [ 'id' => (string) $id, 'label' => (string) $label ] );
 			}
 		}
-		add_filter( 'cb_core_module_status_definitions', [ self::class, 'register_status_definition' ] );
+		add_filter( 'core_blueprint_module_status_definitions', [ self::class, 'register_status_definition' ] );
 	}
 
 	/** @param array<string,array<string,mixed>> $definitions

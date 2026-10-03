@@ -86,7 +86,7 @@ namespace CB\Backups {
 	Bootstrap::register_suite_integration();
 	Bootstrap::register_suite_integration();
 
-	$extension_hooks = $GLOBALS['cb_backups_test_actions']['cb_core_register_extensions'] ?? [];
+	$extension_hooks = $GLOBALS['cb_backups_test_actions']['core_blueprint_register_extensions'] ?? [];
 	$init_hooks      = $GLOBALS['cb_backups_test_actions']['init'] ?? [];
 	expect( 1 === count( $extension_hooks ), 'Suite integration must attach ExtensionRegistry registration exactly once.' );
 	expect( [ Bootstrap::class, 'register_extension' ] === $extension_hooks[0]['callback'], 'Suite integration must attach the canonical extension registration callback.' );

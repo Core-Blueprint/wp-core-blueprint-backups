@@ -36,7 +36,7 @@ cb_backups_settings_hub_expect( str_contains( $plugin, "define( 'CB_BACKUPS_VERS
 cb_backups_settings_hub_expect( str_contains( $requirements, 'SettingsRegistry' ), 'Runtime dependency gate must require the canonical SettingsRegistry contract.' );
 
 // Operational Backups workspace remains registered and authoritative.
-cb_backups_settings_hub_expect( str_contains( $bootstrap, "add_action( 'cb_core_register_pages'" ), 'Backups operational workspace must remain registered through PageRegistry.' );
+cb_backups_settings_hub_expect( str_contains( $bootstrap, "add_action( 'core_blueprint_register_pages'" ), 'Backups operational workspace must remain registered through PageRegistry.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, 'PageRegistry::register(' ), 'Backups operational workspace must remain a Base admin page.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "'menu_url'     => admin_url( 'admin.php?page=core-blueprint-backups' )" ), 'Extension menu URL must remain operational.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "'url'      => admin_url( 'admin.php?page=core-blueprint-backups' )" ), 'Health/status URL must remain operational.' );
@@ -47,7 +47,7 @@ cb_backups_settings_hub_expect( ! str_contains( $page, "'settings'  => __( 'Sett
 cb_backups_settings_hub_expect( ! str_contains( $page, 'settings_tab()' ), 'Old settings renderer must not remain duplicated in the operational page.' );
 
 // Canonical Extensions provider.
-cb_backups_settings_hub_expect( str_contains( $bootstrap, "add_action( 'cb_core_register_settings'" ), 'Backups settings must register through the Base settings lifecycle.' );
+cb_backups_settings_hub_expect( str_contains( $bootstrap, "add_action( 'core_blueprint_register_settings'" ), 'Backups settings must register through the Base settings lifecycle.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, 'SettingsRegistry::register(' ), 'Backups settings must use SettingsRegistry.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, "'core-blueprint-backups'" ), 'Settings provider must use the canonical extension identity.' );
 cb_backups_settings_hub_expect( str_contains( $bootstrap, 'SettingsRegistry::GROUP_INFRASTRUCTURE' ), 'Backups settings must remain in Infrastructure.' );

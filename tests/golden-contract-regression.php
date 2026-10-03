@@ -56,6 +56,34 @@ $updates_init        = false !== $integration_section ? strpos( $main, 'Integrat
 cb_backups_golden_expect( false !== $product_gate && false !== $suite_init && $product_gate < $suite_init, 'Product Base contracts must be proven before suite integration.' );
 cb_backups_golden_expect( false !== $product_gate && false !== $updates_init && $product_gate < $updates_init, 'Product Base contracts must be proven before Updates integration.' );
 
+foreach ( [
+	'cb_core_register_extensions',
+	'cb_core_register_pages',
+	'cb_core_register_settings',
+	'cb_core_cli_register_commands',
+	'cb_core_dashboard_register_cards',
+	'cb_core_module_status_definitions',
+] as $legacy_base_hook ) {
+	cb_backups_golden_expect(
+		! str_contains( $bootstrap, $legacy_base_hook ),
+		"Legacy Base public contract must not return: {$legacy_base_hook}"
+	);
+}
+
+foreach ( [
+	'core_blueprint_register_extensions',
+	'core_blueprint_register_pages',
+	'core_blueprint_register_settings',
+	'core_blueprint_cli_register_commands',
+	'core_blueprint_dashboard_register_cards',
+	'core_blueprint_module_status_definitions',
+] as $canonical_base_hook ) {
+	cb_backups_golden_expect(
+		str_contains( $bootstrap, $canonical_base_hook ),
+		"Canonical Base public contract must remain registered: {$canonical_base_hook}"
+	);
+}
+
 cb_backups_golden_expect( str_contains( $routes, 'use CB\\Beacon\\Rest\\RemoteRouteRegistry;' ), 'Backups must use canonical Beacon RemoteRouteRegistry.' );
 cb_backups_golden_expect( str_contains( $routes, 'use CB\\Beacon\\Tickets\\Service as TicketService;' ), 'Backups must use canonical Beacon ticket service.' );
 cb_backups_golden_expect( ! str_contains( $routes, 'CB\\Core\\Beacon' ), 'Legacy Beacon namespace must not return.' );

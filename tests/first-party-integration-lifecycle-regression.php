@@ -32,7 +32,7 @@ cb_backups_lifecycle_expect( $suite_registration < $runtime_boot, 'Feature runti
 
 $bootstrap = file_get_contents( __DIR__ . '/../src/Bootstrap.php' );
 cb_backups_lifecycle_expect( false !== $bootstrap, 'Could not read Backups Bootstrap class.' );
-cb_backups_lifecycle_expect( str_contains( $bootstrap, "add_action( 'cb_core_register_extensions', [ self::class, 'register_extension' ] );" ), 'Suite integration must own ExtensionRegistry hook attachment.' );
+cb_backups_lifecycle_expect( str_contains( $bootstrap, "add_action( 'core_blueprint_register_extensions', [ self::class, 'register_extension' ] );" ), 'Suite integration must own ExtensionRegistry hook attachment.' );
 cb_backups_lifecycle_expect( str_contains( $bootstrap, "add_action( 'init', [ self::class, 'register_presentation_hooks' ], 1 );" ), 'Suite integration must own status/presentation hook attachment.' );
 cb_backups_lifecycle_expect( ! str_contains( $bootstrap, "LocalStorage::ensure();\n\t\t\t\$storage_path" ), 'Dashboard health must not initialize or mutate storage.' );
 cb_backups_lifecycle_expect( str_contains( $bootstrap, 'LocalStorage::health_path();' ), 'Dashboard health must use the read-only storage projection.' );
