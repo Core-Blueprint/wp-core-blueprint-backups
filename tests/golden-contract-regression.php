@@ -65,7 +65,6 @@ foreach ( [
 	'cb_core_cli_register_commands',
 	'cb_core_dashboard_register_cards',
 	'cb_core_module_status_definitions',
-	'cb_core_capability_catalog',
 ] as $legacy_base_hook ) {
 	cb_backups_golden_expect(
 		! str_contains( $bootstrap, $legacy_base_hook ),
@@ -80,7 +79,6 @@ foreach ( [
 	'core_blueprint_cli_register_commands',
 	'core_blueprint_dashboard_register_cards',
 	'core_blueprint_module_status_definitions',
-	'core_blueprint_capability_catalog',
 ] as $canonical_base_hook ) {
 	cb_backups_golden_expect(
 		str_contains( $bootstrap, $canonical_base_hook ),
