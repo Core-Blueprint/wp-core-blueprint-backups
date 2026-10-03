@@ -23,6 +23,7 @@ namespace CB\Backups\Jobs {
 namespace CB\Backups\Integration {
 	final class MigrationRecovery {
 		public static function prepare(array $plan): array { return []; }
+		public static function required(array $meta): bool { return false; }
 	}
 }
 namespace CB\Backups\Storage {
