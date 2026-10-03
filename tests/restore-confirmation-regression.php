@@ -20,6 +20,11 @@ namespace CB\Backups\Jobs {
 	}
 	final class Dispatcher { public static int $calls = 0; public static function dispatch(string $id): void { ++self::$calls; } }
 }
+namespace CB\Backups\Integration {
+	final class MigrationRecovery {
+		public static function prepare(array $plan): array { return []; }
+	}
+}
 namespace CB\Backups\Storage {
 	final class LocalStorage {
 		public static string $archive;
