@@ -12,7 +12,7 @@ final class Capabilities {
 
 	public static function boot(): void {
 		add_filter( 'user_has_cap', [ self::class, 'derive_manage_cap' ], 20, 4 );
-		add_filter( 'cb_core_capability_catalog', [ self::class, 'catalog' ] );
+		add_filter( 'core_blueprint_capability_catalog', [ self::class, 'catalog' ] );
 	}
 
 	/**

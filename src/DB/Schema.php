@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace CB\Backups\DB;
 
-use CB\Core\Database\SchemaRegistry;
+use CoreBlueprint\Core\Database\SchemaRegistry;
 
 defined( 'ABSPATH' ) || exit;
 

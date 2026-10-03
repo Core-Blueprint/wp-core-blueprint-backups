@@ -23,6 +23,8 @@ function cb_backups_golden_read( string $relative ): string {
 $main         = cb_backups_golden_read( 'core-blueprint-backups.php' );
 $bootstrap    = cb_backups_golden_read( 'src/Bootstrap.php' );
 $requirements = cb_backups_golden_read( 'src/Support/Requirements.php' );
+$schema       = cb_backups_golden_read( 'src/DB/Schema.php' );
+$capabilities = cb_backups_golden_read( 'src/Support/Capabilities.php' );
 $routes       = cb_backups_golden_read( 'src/Remote/Routes.php' );
 $updates      = cb_backups_golden_read( 'src/Integration/Updates.php' );
 $assets       = cb_backups_golden_read( 'src/Admin/Assets.php' );
@@ -63,6 +65,7 @@ foreach ( [
 	'cb_core_cli_register_commands',
 	'cb_core_dashboard_register_cards',
 	'cb_core_module_status_definitions',
+	'cb_core_capability_catalog',
 ] as $legacy_base_hook ) {
 	cb_backups_golden_expect(
 		! str_contains( $bootstrap, $legacy_base_hook ),
@@ -77,12 +80,18 @@ foreach ( [
 	'core_blueprint_cli_register_commands',
 	'core_blueprint_dashboard_register_cards',
 	'core_blueprint_module_status_definitions',
+	'core_blueprint_capability_catalog',
 ] as $canonical_base_hook ) {
 	cb_backups_golden_expect(
 		str_contains( $bootstrap, $canonical_base_hook ),
 		"Canonical Base public contract must remain registered: {$canonical_base_hook}"
 	);
 }
+
+cb_backups_golden_expect( str_contains( $schema, 'use CoreBlueprint\\Core\\Database\\SchemaRegistry;' ), 'Backups schema must consume the canonical Base SchemaRegistry namespace.' );
+cb_backups_golden_expect( ! str_contains( $schema, 'use CB\\Core\\Database\\SchemaRegistry;' ), 'Legacy Base SchemaRegistry namespace must not return.' );
+cb_backups_golden_expect( str_contains( $capabilities, "add_filter( 'core_blueprint_capability_catalog'" ), 'Backups capabilities must register through the canonical Base capability catalog hook.' );
+cb_backups_golden_expect( ! str_contains( $capabilities, "add_filter( 'cb_core_capability_catalog'" ), 'Legacy Base capability catalog hook must not return.' );
 
 cb_backups_golden_expect( str_contains( $routes, 'use CB\\Beacon\\Rest\\RemoteRouteRegistry;' ), 'Backups must use canonical Beacon RemoteRouteRegistry.' );
 cb_backups_golden_expect( str_contains( $routes, 'use CB\\Beacon\\Tickets\\Service as TicketService;' ), 'Backups must use canonical Beacon ticket service.' );
