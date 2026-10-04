@@ -178,8 +178,23 @@ for locale in LOCALES:
         for msgid, translation in TRANSLATIONS[locale].items()
         if msgid not in existing
     ]
+
+    repaired = 0
+    for msgid, translation in TRANSLATIONS[locale].items():
+        empty = block(msgid, "")
+        filled = block(msgid, translation)
+        if empty in text and empty != filled:
+            text = text.replace(empty, filled, 1)
+            repaired += 1
+
     if additions:
-        po.write_text(text.rstrip() + "\n\n" + "\n\n".join(additions) + "\n", encoding="utf-8")
-        print(f"{locale}: seeded {len(additions)} reviewed product translations")
+        text = text.rstrip() + "\n\n" + "\n\n".join(additions) + "\n"
+
+    if additions or repaired:
+        po.write_text(text, encoding="utf-8")
+        print(
+            f"{locale}: seeded {len(additions)} reviewed product translations"
+            f"; repaired {repaired} empty translations"
+        )
     else:
         print(f"{locale}: reviewed product translations already present")
