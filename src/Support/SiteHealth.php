@@ -34,7 +34,7 @@ final class SiteHealth {
 	public static function storage_test(): array {
 		try {
 			LocalStorage::ensure();
-			$writable = is_writable( LocalStorage::base_path() );
+			$writable = wp_is_writable( LocalStorage::base_path() );
 		} catch ( \Throwable ) {
 			$writable = false;
 		}
