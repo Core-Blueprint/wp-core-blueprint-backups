@@ -340,7 +340,7 @@ final class MigrationRecovery {
 	}
 
 	private static function request_path(): string {
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( (string) wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$path = wp_parse_url( $uri, PHP_URL_PATH );
 		return is_string( $path ) ? $path : '';
 	}
