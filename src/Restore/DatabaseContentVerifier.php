@@ -9,6 +9,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+
 /** Re-read the immutable shadow snapshot before any live table is renamed. */
 final class DatabaseContentVerifier {
 	public static function tick( string $work, array $meta, array $tables, array $inventory, string $job_id ): array {
