@@ -98,6 +98,8 @@ cb_backups_golden_expect( str_contains( $routes, "add_action( 'cb_core_beacon_re
 
 cb_backups_golden_expect( str_contains( $updates, "PRODUCT_KEY = 'core-blueprint-backups'" ), 'Updates product key must remain canonical.' );
 cb_backups_golden_expect( str_contains( $updates, "VENDOR_ID   = 'core-blueprint'" ), 'Updates vendor identity must remain canonical.' );
+cb_backups_golden_expect( str_contains( $updates, "'\\\\CoreBlueprint\\\\Updates\\\\ProductRegistry'" ), 'Backups must consume the canonical Updates ProductRegistry namespace.' );
+cb_backups_golden_expect( ! str_contains( $updates, "'\\\\CB\\\\Updates\\\\ProductRegistry'" ), 'Legacy Updates ProductRegistry namespace must not return.' );
 cb_backups_golden_expect( str_contains( $main, 'Update URI:  https://coreblueprint.io/' ), 'Canonical Update URI must remain declared.' );
 
 cb_backups_golden_expect( str_contains( $bootstrap, "'foundations' => [ 'modal', 'toast', 'time-picker' ]" ), 'Operational page must declare its Foundation requirements.' );
