@@ -212,7 +212,7 @@ final class Assets {
 		$notice = sanitize_key( (string) ( isset( $_GET['cb_notice'] ) ? wp_unslash( $_GET['cb_notice'] ) : '' ) );
 
 		if ( 'backups_bulk_deleted' === $notice ) {
-			$count = max( 0, (int) ( isset( $_GET['deleted'] ) ? wp_unslash( $_GET['deleted'] ) : 0 ) );
+			$count = max( 0, (int) sanitize_text_field( (string) ( isset( $_GET['deleted'] ) ? wp_unslash( $_GET['deleted'] ) : '0' ) ) );
 			$message = sprintf(
 				/* translators: %d: number of deleted backups. */
 				_n( '%d backup deleted.', '%d backups deleted.', $count, 'core-blueprint-backups' ),
