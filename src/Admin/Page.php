@@ -111,12 +111,12 @@ final class Page implements PageContract {
 	}
 
 	private function restore_tab(): void {
-		echo Notice::render( [
+		echo wp_kses_post( Notice::render( [
 			'variant' => Notice::WARNING,
 			'title'   => __( 'Restore replaces live site data.', 'core-blueprint-backups' ),
 			'message' => __( 'Full-site backups can be restored on the original site or migrated to another single-site WordPress installation. If the site URL or table prefix differs, Backups prepares a migration and updates the database for the destination before replacing live data. Multisite migration is not supported. Core Blueprint Base and Backups remain at their currently installed versions during recovery.', 'core-blueprint-backups' ),
 			'class'   => 'cb-backups-restore-warning',
-		] );
+		] ) );
 
 		echo '<section class="cb-core-panel cb-backups-wide-card"><h2>' . esc_html__( 'Import a backup', 'core-blueprint-backups' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Upload a .cbbackup file in resumable chunks. Uploading only prepares the archive; restoring live data is a separate confirmed action.', 'core-blueprint-backups' ) . '</p>';
@@ -206,15 +206,15 @@ final class Page implements PageContract {
 			}
 			echo '</td>';
 			if ( ! $history_available ) {
-				echo '<td>' . StateBadge::render( __( 'Status unavailable', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) . '</td><td><div class="cb-backups-actions">';
+				echo '<td>' . wp_kses_post( StateBadge::render( __( 'Status unavailable', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( $job ) {
-				echo '<td>' . $this->import_execution_status( $job ) . '</td><td><div class="cb-backups-actions">';
+				echo '<td>' . wp_kses_post( $this->import_execution_status( $job ) ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( '' !== $preflight_error ) {
-				echo '<td>' . StateBadge::render( __( 'Needs review', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) . '</td><td><div class="cb-backups-actions">';
+				echo '<td>' . wp_kses_post( StateBadge::render( __( 'Needs review', 'core-blueprint-backups' ), [ 'variant' => StateBadge::ERROR ] ) ) . '</td><td><div class="cb-backups-actions">';
 			} elseif ( $is_migration ) {
-				echo '<td>' . StateBadge::render( __( 'Migration ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) . '</td><td><div class="cb-backups-actions">';
+				echo '<td>' . wp_kses_post( StateBadge::render( __( 'Migration ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) ) . '</td><td><div class="cb-backups-actions">';
 			} else {
-				echo '<td>' . StateBadge::render( __( 'Restore ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) . '</td><td><div class="cb-backups-actions">';
+				echo '<td>' . wp_kses_post( StateBadge::render( __( 'Restore ready', 'core-blueprint-backups' ), [ 'variant' => StateBadge::SUCCESS ] ) ) . '</td><td><div class="cb-backups-actions">';
 			}
 
 			if ( $job ) {
@@ -282,12 +282,19 @@ final class Page implements PageContract {
 		$migration = 'migration' === ( $job['restore_mode'] ?? '' );
 		$status = (string) ( $job['status'] ?? '' );
 		$variant = StateBadge::NEUTRAL;
+		/* translators: %s: formatted date/time of the latest restore or migration attempt. */
 		$date_label = __( 'Last attempt: %s', 'core-blueprint-backups' );
 		$date = (string) ( $job['completed_at'] ?? '' );
 		switch ( $status ) {
 			case 'completed':
 				$label = $migration ? __( 'Migrated successfully', 'core-blueprint-backups' ) : __( 'Restored successfully', 'core-blueprint-backups' );
-				$date_label = $migration ? __( 'Last migrated: %s', 'core-blueprint-backups' ) : __( 'Last restored: %s', 'core-blueprint-backups' );
+				if ( $migration ) {
+					/* translators: %s: formatted date/time of the latest successful migration. */
+					$date_label = __( 'Last migrated: %s', 'core-blueprint-backups' );
+				} else {
+					/* translators: %s: formatted date/time of the latest successful restore. */
+					$date_label = __( 'Last restored: %s', 'core-blueprint-backups' );
+				}
 				$variant = StateBadge::SUCCESS;
 				break;
 			case 'failed':
@@ -364,10 +371,10 @@ final class Page implements PageContract {
 		$health = Scheduler::health();
 		$status = (string) ( $health['status'] ?? 'idle' );
 		if ( in_array( $status, [ 'warning', 'critical' ], true ) ) {
-			echo Notice::render( [
+			echo wp_kses_post( Notice::render( [
 				'variant' => Notice::WARNING,
 				'message' => __( 'Automatic backup schedules are enabled, but the scheduler heartbeat is not recent. Configure a server cron running “cb backup run-due” when WP-Cron is disabled or site traffic is too low.', 'core-blueprint-backups' ),
-			] );
+			] ) );
 		}
 
 		echo '<section class="cb-core-panel"><h2>' . esc_html__( 'Scheduler health', 'core-blueprint-backups' ) . '</h2>';
@@ -471,7 +478,11 @@ final class Page implements PageContract {
 			$duration = (int) ( $backup['duration_seconds'] ?? 0 );
 			echo '<tr>';
 			if ( ! $restore_mode ) {
-				echo '<th scope="row" class="check-column"><input type="checkbox" name="archives[]" value="' . esc_attr( $name ) . '" form="' . esc_attr( $bulk_form_id ) . '" data-cb-backups-select aria-label="' . esc_attr( sprintf( __( 'Select backup created %s', 'core-blueprint-backups' ), $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : $name ) ) . '"></th>';
+				echo '<th scope="row" class="check-column"><input type="checkbox" name="archives[]" value="' . esc_attr( $name ) . '" form="' . esc_attr( $bulk_form_id ) . '" data-cb-backups-select aria-label="' . esc_attr( sprintf(
+				/* translators: %s: formatted backup creation date/time or archive name. */
+				__( 'Select backup created %s', 'core-blueprint-backups' ),
+				$created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : $name
+			) ) . '"></th>';
 			}
 			echo '<td>' . esc_html( $created > 0 ? wp_date( 'Y-m-d H:i:s', $created ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? __( 'Full website', 'core-blueprint-backups' ) : __( 'Database', 'core-blueprint-backups' ) ) . '</td><td>' . esc_html( size_format( $size ) ) . '</td><td>' . esc_html( $rows > 0 ? number_format_i18n( $rows ) : '—' ) . '</td><td>' . esc_html( 'website' === $type ? number_format_i18n( $files ) : '—' ) . '</td><td>' . esc_html( $duration > 0 ? Telemetry::format_duration( $duration ) : '—' ) . '</td><td>' . ( ! empty( $backup['verified'] ) ? '<span class="cb-backups-ok">✓ ' . esc_html__( 'Archive verified', 'core-blueprint-backups' ) . '</span>' : esc_html__( 'Not verified', 'core-blueprint-backups' ) ) . '</td><td><div class="cb-backups-actions">';
 			if ( $restore_mode ) {
@@ -511,10 +522,13 @@ final class Page implements PageContract {
 	}
 
 	private function restore_acknowledgement( string $type, string $target ): void {
-		/* translators: %s: destination website URL whose data will be replaced. */
-		$template = 'website' === $type
-			? __( 'I understand that this action replaces the current database and site files on %s. Changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' )
-			: __( 'I understand that this action replaces the current database on %s. Database changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' );
+		if ( 'website' === $type ) {
+			/* translators: %s: destination website URL whose database and files will be replaced. */
+			$template = __( 'I understand that this action replaces the current database and site files on %s. Changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' );
+		} else {
+			/* translators: %s: destination website URL whose database will be replaced. */
+			$template = __( 'I understand that this action replaces the current database on %s. Database changes on this site that are not in this backup will be lost.', 'core-blueprint-backups' );
+		}
 		echo '<input type="hidden" name="restore_acknowledged" value="" data-cb-restore-acknowledgement="' . esc_attr( sprintf( $template, $target ) ) . '">';
 	}
 
@@ -538,13 +552,13 @@ final class Page implements PageContract {
 			} elseif ( 'cancelled' === $status ) {
 				$message = __( 'Backup cancelled.', 'core-blueprint-backups' );
 			}
-			echo Notice::render( [
+			echo wp_kses_post( Notice::render( [
 				'variant' => 'completed' === $status ? Notice::SUCCESS : ( 'failed' === $status ? Notice::ERROR : Notice::WARNING ),
 				'message' => $message,
-			] );
+			] ) );
 			if ( 'completed' === $status && 'restore' === $job['kind'] && 'migration' === ( $job['meta']['restore_mode'] ?? '' ) ) {
 				echo '<div class="cb-backups-next-steps">';
-				echo Notice::render( [
+				echo wp_kses_post( Notice::render( [
 					'variant' => Notice::WARNING,
 					'title'   => __( 'Next steps: save permalinks and clear caches', 'core-blueprint-backups' ),
 					'message' => __( 'Recommended before using the migrated site:', 'core-blueprint-backups' ),
@@ -552,7 +566,7 @@ final class Page implements PageContract {
 						__( 'Open Settings → Permalinks and click Save Changes without changing your permalink structure.', 'core-blueprint-backups' ),
 						__( 'Clear any page-cache plugin, hosting/server and CDN caches you use, then refresh your browser.', 'core-blueprint-backups' ),
 					],
-				] );
+				] ) );
 				echo '<p><a class="button button-primary cb-core-button cb-core-button--primary" href="' . esc_url( admin_url( 'options-permalink.php' ) ) . '">' . esc_html__( 'Open permalink settings', 'core-blueprint-backups' ) . '</a></p>';
 				echo '</div>';
 			}
@@ -579,10 +593,10 @@ final class Page implements PageContract {
 		if ( $is_website ) {
 			echo '<p class="cb-backups-current" id="cb-backups-current-file-wrap"' . ( '' === (string) ( $data['current_file'] ?? '' ) ? ' hidden' : '' ) . '><strong>' . esc_html__( 'Current file:', 'core-blueprint-backups' ) . '</strong> <code id="cb-backups-current-file">' . esc_html( (string) ( $data['current_file'] ?? '' ) ) . '</code></p>';
 		}
-		echo '<div id="cb-backups-long-warning" class="cb-backups-long-warning" hidden>' . Notice::render( [
+		echo '<div id="cb-backups-long-warning" class="cb-backups-long-warning" hidden>' . wp_kses_post( Notice::render( [
 			'variant' => Notice::WARNING,
 			'message' => __( 'This backup is taking significantly longer than its recent baseline. You can inspect the current stage and cancel it safely at the next checkpoint.', 'core-blueprint-backups' ),
-		] ) . '</div>';
+		] ) ) . '</div>';
 		echo '<p id="cb-backups-job-error" class="cb-backups-error">' . esc_html( (string) ( $job['error_text'] ?? '' ) ) . '</p>';
 
 		if ( $is_backup ) {
