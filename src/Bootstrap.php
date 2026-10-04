@@ -204,7 +204,7 @@ final class Bootstrap {
 			];
 		}
 
-		if ( ! is_writable( $storage_path ) ) {
+		if ( ! wp_is_writable( $storage_path ) ) {
 			return [
 				'state'  => 'err',
 				'detail' => __( 'Backup storage is not writable', 'core-blueprint-backups' ),
