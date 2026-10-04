@@ -29,6 +29,10 @@ namespace {
 		return $text;
 	}
 
+	function wp_is_writable( string $path ): bool {
+		return is_writable( $path );
+	}
+
 	if ( ! class_exists( 'ZipArchive' ) ) {
 		class ZipArchive {}
 	}
