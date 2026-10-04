@@ -13,6 +13,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+
 /**
  * Orchestrates Backups migration jobs against Base's public recovery authority.
  * Base owns trust and login recovery; Backups owns job/rewrite verification.
