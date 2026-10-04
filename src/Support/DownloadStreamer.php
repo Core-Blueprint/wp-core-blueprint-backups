@@ -24,7 +24,7 @@ final class DownloadStreamer {
 		if ( function_exists( 'session_status' ) && PHP_SESSION_ACTIVE === session_status() ) {
 			session_write_close();
 		}
-		@ini_set( 'zlib.output_compression', '0' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		@ini_set( 'zlib.output_compression', '0' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- Streaming backup downloads must not be recompressed by PHP.
 		header_remove( 'Content-Encoding' );
 		nocache_headers();
 		header( 'X-Content-Type-Options: nosniff' );
