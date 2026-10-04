@@ -2,9 +2,18 @@
 
 All notable release-facing changes to Core Blueprint Backups are recorded here.
 
-The current pre-release line remains `1.0.0-rc1`; Golden hardening commits do not increment the version.
+The first stable WordPress.org submission release is `1.0.0`.
 
-## 1.0.0-rc1
+## 1.0.0
+
+### WordPress.org submission hardening
+
+- Promoted the Golden release candidate to stable version `1.0.0`.
+- Added the canonical WordPress.org `readme.txt`.
+- Removed the external update authority so WordPress.org provides plugin updates.
+- Kept Core Blueprint Base as the native `Requires Plugins: core-blueprint` dependency.
+
+### Golden hardening
 
 ### Golden hardening
 
@@ -15,7 +24,7 @@ The current pre-release line remains `1.0.0-rc1`; Golden hardening commits do no
   - `CB\Beacon\Tickets\Service`
 - Preserved the existing server-owned backup, verification, restore, migration, scheduling, remote-ticket and browser-direct streaming behavior.
 - Confirmed the operational admin page delegates shared presentation to the Core Blueprint Design Foundation.
-- Added a Golden source-contract regression covering version, Base API, Beacon integration, Updates identity, Foundation requirements and package boundaries.
+- Added a Golden source-contract regression covering version, Base API, Beacon integration, WordPress.org update authority, Foundation requirements and package boundaries.
 - Replaced the development-oriented release packager with a production-only deterministic builder.
 - Added mandatory PHP 8.4 and PHP 8.5 lint gates, JavaScript syntax QC, CSS structure QC, gettext validation and SHA-256 release output.
 - Added translation quality validation so non-English catalogs cannot pass merely by copying the English source into `msgstr`.
