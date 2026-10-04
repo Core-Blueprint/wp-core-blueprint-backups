@@ -9,6 +9,9 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class DatabaseExporter {
 	private const DEFAULT_ROWS_PER_CHUNK = 2000;
 	private const MIN_ROWS_PER_CHUNK = 500;
