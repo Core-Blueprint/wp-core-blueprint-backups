@@ -60,6 +60,7 @@ namespace {
 	function check_admin_referer(string $action): void { if (!$GLOBALS['nonce']) throw new RuntimeException('Invalid nonce'); }
 	function wp_die(string $message, mixed $code = null): never { throw new RuntimeException('Permission denied'); }
 	function sanitize_file_name(string $s): string { return basename($s); }
+	function sanitize_text_field(string $s): string { return $s; }
 	function wp_unslash(string $s): string { return $s; }
 	function admin_url(string $path): string { return 'https://target.test/wp-admin/' . $path; }
 	function add_query_arg(array $args, string $url): string { return $url . '?' . http_build_query($args); }
