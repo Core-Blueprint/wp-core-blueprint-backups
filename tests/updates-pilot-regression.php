@@ -1,91 +1,32 @@
 <?php
 declare(strict_types=1);
 
-namespace CB\Updates {
-	final class ProductRegistry {
-		/** @var array<int,array<string,mixed>> */
-		public static array $registered = [];
-		public static function register( array $descriptor ): true {
-			self::$registered[] = $descriptor;
-			return true;
-		}
-	}
+$root      = dirname( __DIR__ );
+$bootstrap = file_get_contents( $root . '/core-blueprint-backups.php' );
+$readme    = file_get_contents( $root . '/readme.txt' );
+
+$fail = static function ( string $message ): never {
+	fwrite( STDERR, "FAIL: {$message}\n" );
+	exit( 1 );
+};
+
+if ( false === $bootstrap || false === $readme ) {
+	$fail( 'WordPress.org distribution sources must be readable.' );
+}
+if ( ! str_contains( $bootstrap, 'Version:     1.0.0' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0' );" ) ) {
+	$fail( 'Plugin and runtime version declarations must both use 1.0.0.' );
+}
+if ( str_contains( $bootstrap, 'Update URI:' ) ) {
+	$fail( 'WordPress.org builds must not declare an external Update URI.' );
+}
+if ( str_contains( $bootstrap, 'Integration\\Updates::init();' ) ) {
+	$fail( 'WordPress.org builds must not attach the external Core Blueprint Updates adapter.' );
+}
+if ( is_file( $root . '/src/Integration/Updates.php' ) ) {
+	$fail( 'External Updates adapter must not ship in the WordPress.org source.' );
+}
+if ( ! str_contains( $readme, 'Stable tag: 1.0.0' ) ) {
+	$fail( 'WordPress.org readme Stable tag must match 1.0.0.' );
 }
 
-namespace {
-	define( 'ABSPATH', __DIR__ );
-	define( 'CB_BACKUPS_BASENAME', 'core-blueprint-backups/core-blueprint-backups.php' );
-	define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );
-
-	$GLOBALS['cb_backups_pilot_actions'] = [];
-	function add_action( string $hook, mixed $callback, int $priority = 10, int $accepted_args = 1 ): bool {
-		unset( $accepted_args );
-		$GLOBALS['cb_backups_pilot_actions'][ $hook ][ $priority ][] = $callback;
-		return true;
-	}
-
-	require_once dirname( __DIR__ ) . '/src/Integration/Updates.php';
-
-	$fail = static function ( string $message ): never {
-		fwrite( STDERR, "FAIL: {$message}\n" );
-		exit( 1 );
-	};
-
-	$bootstrap = file_get_contents( dirname( __DIR__ ) . '/core-blueprint-backups.php' );
-	if ( false === $bootstrap ) {
-		$fail( 'Backups bootstrap must be readable.' );
-	}
-	if ( ! str_contains( $bootstrap, 'Version:     1.0.0-rc1' ) || ! str_contains( $bootstrap, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );" ) ) {
-		$fail( 'Backups package/runtime version declarations must both use the suite-wide v1.0.0-rc1 release baseline.' );
-	}
-	if ( ! str_contains( $bootstrap, 'Update URI:  https://coreblueprint.io/' ) ) {
-		$fail( 'Premium Backups must pin WordPress update authority to coreblueprint.io.' );
-	}
-
-	\CB\Backups\Integration\Updates::init();
-	$hook = $GLOBALS['cb_backups_pilot_actions']['cb_updates_register_products'][10][0] ?? null;
-	if ( ! is_callable( $hook ) ) {
-		$fail( 'Backups must register lazily through the central Updates product hook.' );
-	}
-
-	$hook();
-	$descriptor = \CB\Updates\ProductRegistry::$registered[0] ?? null;
-	if ( ! is_array( $descriptor ) ) {
-		$fail( 'Backups must publish one Updates product descriptor when the Updates registry is available.' );
-	}
-	if ( 'Core Blueprint Backups' !== ( $descriptor['name'] ?? null ) ) {
-		$fail( 'Backups update descriptor name drifted.' );
-	}
-	if ( CB_BACKUPS_BASENAME !== ( $descriptor['plugin'] ?? null ) ) {
-		$fail( 'Backups update descriptor must use the real plugin basename.' );
-	}
-	if ( CB_BACKUPS_VERSION !== ( $descriptor['version'] ?? null ) ) {
-		$fail( 'Backups update descriptor must expose the installed runtime version.' );
-	}
-	if ( 'core-blueprint-backups' !== ( $descriptor['product_key'] ?? null ) ) {
-		$fail( 'Backups must use the canonical pilot License Product key.' );
-	}
-	if ( 'core-blueprint' !== ( $descriptor['vendor_id'] ?? null ) ) {
-		$fail( 'Backups must declare the durable Core Blueprint vendor identity.' );
-	}
-	if ( '' !== ( $descriptor['software_uuid'] ?? null ) ) {
-		$fail( 'The Marketplace software UUID must not be invented or hard-coded into Backups.' );
-	}
-	foreach ( [ 'vendor_origin', 'canonical_origin', 'services', 'endpoints' ] as $authority_field ) {
-		if ( array_key_exists( $authority_field, $descriptor ) ) {
-			$fail( 'Backups must not declare vendor origin or service authority: ' . $authority_field );
-		}
-	}
-
-	$source = file_get_contents( dirname( __DIR__ ) . '/src/Integration/Updates.php' );
-	if ( false === $source ) {
-		$fail( 'Updates adapter source must be readable.' );
-	}
-	foreach ( [ 'wp_remote_', 'license_key', 'activation_token', 'CB\\LicenseManager', 'CB\\Marketplace', 'CB\\Repository' ] as $forbidden ) {
-		if ( str_contains( $source, $forbidden ) ) {
-			$fail( 'Backups pilot adapter must remain a thin registration-only integration: ' . $forbidden );
-		}
-	}
-
-	echo "Core Blueprint Backups PILOT-1 vendor-aware Updates registration regression PASS\n";
-}
+echo "Core Blueprint Backups WordPress.org distribution regression PASS\n";
