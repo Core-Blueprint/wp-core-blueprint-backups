@@ -6,9 +6,9 @@ The plugin is designed around one rule: backup and restore execution belongs to 
 
 ## Release candidate
 
-Canonical release line: **`1.0.0-rc1`**.
+Canonical release line: **`1.0.0`**.
 
-The version remains `1.0.0-rc1` throughout the current Golden hardening cycle. Patch commits do not increment the plugin version.
+Version `1.0.0` is the first stable WordPress.org submission release.
 
 Requirements:
 
@@ -127,7 +127,7 @@ A Golden release requires complete PO catalogs, valid printf placeholders and co
 
 ## Development and validation
 
-The repository includes source and integration regressions for backup creation, SQL fidelity, migration, filesystem policy, restore acknowledgement, result presentation, job monitoring, update registration and extension lifecycle.
+The repository includes source and integration regressions for backup creation, SQL fidelity, migration, filesystem policy, restore acknowledgement, result presentation, job monitoring, WordPress.org distribution authority and extension lifecycle.
 
 The Golden contract regression is:
 
@@ -146,6 +146,7 @@ Release archives contain only:
 ```text
 core-blueprint-backups.php
 uninstall.php
+readme.txt
 src/
 assets/
 languages/
