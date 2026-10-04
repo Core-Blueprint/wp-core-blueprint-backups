@@ -35,7 +35,7 @@ final class Repository {
 	/** @return array<string,mixed>|null */
 	public static function get( string $job_id ): ?array {
 		global $wpdb;
-		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . Schema::table() . ' WHERE job_id = %s LIMIT 1', $job_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE job_id = %s LIMIT 1', Schema::table(), $job_id ), ARRAY_A );
 		return is_array( $row ) ? self::normalise( $row ) : null;
 	}
 
@@ -65,7 +65,8 @@ final class Repository {
 
 		$needle = '%"run_id":"' . $wpdb->esc_like( $run_id ) . '"%';
 		$sql    = $wpdb->prepare(
-			'SELECT * FROM ' . Schema::table() . ' WHERE kind = %s AND backup_type = %s AND trigger_source = %s AND meta LIKE %s ORDER BY id DESC LIMIT 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			'SELECT * FROM %i WHERE kind = %s AND backup_type = %s AND trigger_source = %s AND meta LIKE %s ORDER BY id DESC LIMIT 1',
+			Schema::table(),
 			'backup',
 			$type,
 			'hub',
@@ -142,18 +143,33 @@ final class Repository {
 
 	public static function has_active( string $kind = '' ): bool {
 		global $wpdb;
-		$sql = "SELECT COUNT(*) FROM " . Schema::table() . " WHERE status IN ('queued','running','cancelling')"; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		if ( '' !== $kind ) {
-			$sql .= $wpdb->prepare( ' AND kind = %s', $kind );
+			$sql = $wpdb->prepare(
+				"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling') AND kind = %s",
+				Schema::table(),
+				$kind
+			);
+		} else {
+			$sql = $wpdb->prepare(
+				"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling')",
+				Schema::table()
+			);
 		}
-		return (int) $wpdb->get_var( $sql ) > 0; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return (int) $wpdb->get_var( $sql ) > 0; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/** @return array<int,array<string,mixed>> */
 	public static function active( int $limit = 10 ): array {
 		global $wpdb;
 		$limit = max( 1, min( 50, $limit ) );
-		$rows  = $wpdb->get_results( "SELECT * FROM " . Schema::table() . " WHERE status IN ('queued','running','cancelling') ORDER BY id ASC LIMIT {$limit}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM %i WHERE status IN ('queued','running','cancelling') ORDER BY id ASC LIMIT %d",
+				Schema::table(),
+				$limit
+			),
+			ARRAY_A
+		);
 		return array_map( [ self::class, 'normalise' ], is_array( $rows ) ? $rows : [] );
 	}
 
@@ -161,7 +177,10 @@ final class Repository {
 	public static function recent( int $limit = 20 ): array {
 		global $wpdb;
 		$limit = max( 1, min( 100, $limit ) );
-		$rows  = $wpdb->get_results( "SELECT * FROM " . Schema::table() . " ORDER BY id DESC LIMIT {$limit}", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT * FROM %i ORDER BY id DESC LIMIT %d', Schema::table(), $limit ),
+			ARRAY_A
+		);
 		return array_map( [ self::class, 'normalise' ], is_array( $rows ) ? $rows : [] );
 	}
 
