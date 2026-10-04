@@ -2,9 +2,8 @@
 /**
  * Plugin Name: Core Blueprint Backups
  * Plugin URI:  https://coreblueprint.io
- * Update URI:  https://coreblueprint.io/
  * Description: Governed database and full-site backups for Core Blueprint, with local restore/migration, scheduling, CLI and optional Beacon remote orchestration.
- * Version:     1.0.0-rc1
+ * Version:     1.0.0
  * Author:      Core Blueprint
  * Author URI:  https://coreblueprint.io
  * License:     GPL-2.0+
@@ -27,7 +26,7 @@ if ( defined( 'CB_BACKUPS_FILE' ) ) {
 }
 
 define( 'CB_BACKUPS_NAME', 'Core Blueprint Backups' );
-define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );
+define( 'CB_BACKUPS_VERSION', '1.0.0' );
 define( 'CB_BACKUPS_MIN_PHP', '8.4' );
 define( 'CB_BACKUPS_REQUIRED_API', '1.0' );
 define( 'CB_BACKUPS_DB_VERSION', '1.0' );
@@ -112,7 +111,7 @@ add_action( 'init', static function (): void {
 	load_plugin_textdomain( 'core-blueprint-backups', false, dirname( CB_BACKUPS_BASENAME ) . '/languages' );
 }, 0 );
 
-/* Suite/update integrations attach only after complete Backups readiness. */
+/* Suite integrations attach only after complete Backups readiness. */
 add_action( 'plugins_loaded', static function (): void {
 	if ( ! \CB\Backups\Support\Requirements::runtime_ready() ) {
 		if ( is_admin() ) {
@@ -147,6 +146,5 @@ add_action( 'plugins_loaded', static function (): void {
 	}
 
 	\CB\Backups\Bootstrap::register_suite_integration();
-	\CB\Backups\Integration\Updates::init();
 	\CB\Backups\Bootstrap::boot();
 }, 2 );
