@@ -9,6 +9,9 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class DatabaseExporter {
 	private const DEFAULT_ROWS_PER_CHUNK = 2000;
 	private const MIN_ROWS_PER_CHUNK = 500;
@@ -171,12 +174,12 @@ final class DatabaseExporter {
 	private static function initialise_table( string $sql_file, string $table, array $meta ): array {
 		global $wpdb;
 
-		$create_row = $wpdb->get_row( 'SHOW CREATE TABLE `' . self::escape_identifier( $table ) . '`', ARRAY_N ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$create_row = $wpdb->get_row( $wpdb->prepare( 'SHOW CREATE TABLE %i', $table ), ARRAY_N );
 		if ( '' !== (string) $wpdb->last_error || ! is_array( $create_row ) || empty( $create_row[1] ) ) {
 			throw new RuntimeException( sprintf( 'Could not read table definition for %s.', $table ) );
 		}
 
-		$columns = $wpdb->get_results( 'SHOW FULL COLUMNS FROM `' . self::escape_identifier( $table ) . '`', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$columns = $wpdb->get_results( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i', $table ), ARRAY_A );
 		if ( '' !== (string) $wpdb->last_error || ! is_array( $columns ) || ! $columns ) {
 			throw new RuntimeException( sprintf( 'Could not read column metadata for %s.', $table ) );
 		}
@@ -256,7 +259,7 @@ final class DatabaseExporter {
 		}
 
 		$sql   = 'SELECT * FROM `' . self::escape_identifier( $table ) . '` WHERE ' . $where . ' ORDER BY ' . $identifiers . ' ASC LIMIT ' . $limit; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = $wpdb->prepare( $sql, ...$values );
+		$query = $wpdb->prepare( $sql, ...$values ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- SQL template contains only verified identifiers and placeholders; values are prepared here.
 		$rows  = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new RuntimeException( sprintf( 'Could not export rows from %s: %s', $table, $wpdb->last_error ) );
@@ -268,7 +271,7 @@ final class DatabaseExporter {
 	private static function primary_watermark( string $table, array $primary_key ): array {
 		global $wpdb;
 		$order = implode( ', ', array_map( static fn ( string $column ): string => '`' . self::escape_identifier( $column ) . '` DESC', $primary_key ) );
-		$row   = $wpdb->get_row( 'SELECT * FROM `' . self::escape_identifier( $table ) . '` ORDER BY ' . $order . ' LIMIT 1', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i ORDER BY ' . $order . ' LIMIT 1', $table ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- ORDER BY contains only verified primary-key identifiers.
 		if ( '' !== (string) $wpdb->last_error ) throw new RuntimeException( 'Could not read database primary-key watermark: ' . $wpdb->last_error );
 		if ( ! is_array( $row ) ) {
 			return [];
@@ -283,7 +286,7 @@ final class DatabaseExporter {
 	/** @return string[] */
 	private static function primary_key_columns( string $table ): array {
 		global $wpdb;
-		$rows = $wpdb->get_results( "SHOW KEYS FROM `" . self::escape_identifier( $table ) . "` WHERE Key_name = 'PRIMARY'", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( "SHOW KEYS FROM %i WHERE Key_name = 'PRIMARY'", $table ), ARRAY_A );
 		if ( '' !== (string) $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new RuntimeException( 'Could not inspect primary keys: ' . $wpdb->last_error );
 		}

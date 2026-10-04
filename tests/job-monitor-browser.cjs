@@ -26,6 +26,9 @@ async function fixture(browser, options = {}) {
     jobKind: options.jobKind ?? 'restore',
     restoreMode: options.restoreMode ?? 'migration',
     reconnectUrl: `${origin}/wp-admin/admin.php?page=core-blueprint-backups&job=${jobId}&cb_monitor_reconnect=1`,
+    loginUrl: options.loginUrl ?? '',
+    recoveryPrepareAction: 'cb_backups_prepare_migration_recovery',
+    recoveryFinalizeAction: 'cb_backups_finalize_migration_recovery',
     labels: {
       networkInterrupted: 'Network interrupted; result unconfirmed.',
       migrationSwitching: 'Migration switch in progress; final checks are still running.',
@@ -143,25 +146,33 @@ async function resultUrl(page) {
       assert.equal(stateText.includes('Network interrupted; result unconfirmed.'), false);
       assert.deepEqual(f.errors, []); await f.page.close();
     });
-    await test('95 percent migration re-auth clearly communicates applied success before final confirmation', async () => {
-      const f = await fixture(browser, { responses: [verifyingMigration, error('auth_required'), completed] });
-      await waitText(f.page, 'Migration applied successfully');
-      const state = f.page.locator('.cb-backups-monitor-state--success:not([hidden])');
-      assert.equal((await state.textContent()).includes('sign in to complete final verification'), true);
+    await test('95 percent migration auth loss hands off to secure sign-in without a false success claim', async () => {
+      const authRequired = {
+        success: false,
+        data: {
+          code: 'auth_required',
+          message: 'Your WordPress session changed during migration. Sign in again to continue monitoring. The restore continues safely in the background.',
+        },
+      };
+      const f = await fixture(browser, {
+        responses: [verifyingMigration, authRequired],
+        loginUrl: `${origin}/wp-login.php?cb_recovery=1`,
+      });
+
+      await waitText(f.page, 'Your WordPress session changed during migration');
+      const state = f.page.locator('.cb-backups-monitor-state--auth:not([hidden])');
+      assert.equal((await state.textContent()).includes('Migration applied successfully'), false);
+
+      const action = state.locator('a.button');
+      assert.equal(await action.textContent(), 'Continue to secure sign-in');
+      assert.equal(await action.getAttribute('href'), `${origin}/wp-login.php?cb_recovery=1`);
+
       const toasts = await f.page.evaluate(() => window.__toasts);
-      assert.equal(toasts.some(item => item.variant === 'success' && item.message.includes('Migration applied successfully')), true);
-
-      await showAuthModal(f.page);
-      const context = f.page.locator('#cb-backups-auth-context');
-      await context.waitFor();
-      assert.equal((await context.textContent()).includes('Migration applied successfully'), true);
-      assert.equal((await context.textContent()).includes('sign in to complete final verification'), true);
-
-      await hideAuthModal(f.page);
-      await waitText(f.page, 'Migration completed');
-      assert.equal(f.calls.length, 3);
-      assert.equal(f.calls[2].job_id, jobId);
-      assert.deepEqual(f.errors, []); await f.page.close();
+      assert.equal(toasts.some(item => item.variant === 'success'), false);
+      assert.equal(await f.page.locator('#cb-backups-auth-context').count(), 0);
+      assert.equal(f.calls.length, 2);
+      assert.deepEqual(f.errors, []);
+      await f.page.close();
     });
     await test('Terminal server card remains visible without polling or redirect', async () => {
       const f = await fixture(browser, { status: 'completed', pending: true }); await f.page.waitForTimeout(200);

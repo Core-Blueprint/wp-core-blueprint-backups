@@ -19,6 +19,7 @@ DESCRIPTION = (
 TRANSLATIONS = {
     "nl_NL": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Plugins",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Beheerde database- en volledige siteback-ups voor Core Blueprint, met lokaal herstel/migratie, planning, CLI en optionele externe orkestratie via Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -38,6 +39,7 @@ TRANSLATIONS = {
     },
     "de_DE": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Plugins",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Verwaltete Datenbank- und vollständige Website-Backups für Core Blueprint mit lokaler Wiederherstellung/Migration, Zeitplanung, CLI und optionaler Remote-Orchestrierung über Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -57,6 +59,7 @@ TRANSLATIONS = {
     },
     "fr_FR": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Extensions",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Sauvegardes gérées de la base de données et du site complet pour Core Blueprint, avec restauration/migration locale, planification, CLI et orchestration à distance facultative via Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -76,6 +79,7 @@ TRANSLATIONS = {
     },
     "es_ES": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Plugins",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Copias de seguridad gestionadas de la base de datos y del sitio completo para Core Blueprint, con restauración/migración local, programación, CLI y orquestación remota opcional mediante Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -95,6 +99,7 @@ TRANSLATIONS = {
     },
     "it_IT": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Plugin",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Backup gestiti del database e dell’intero sito per Core Blueprint, con ripristino/migrazione locale, pianificazione, CLI e orchestrazione remota opzionale tramite Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -114,6 +119,7 @@ TRANSLATIONS = {
     },
     "pt_PT": {
         "Core Blueprint Backups": "Core Blueprint Backups",
+        "Plugins": "Plugins",
         "https://coreblueprint.io": "https://coreblueprint.io",
         DESCRIPTION: "Cópias de segurança geridas da base de dados e do site completo para o Core Blueprint, com restauro/migração local, agendamento, CLI e orquestração remota opcional através do Beacon.",
         "Core Blueprint Backups:": "Core Blueprint Backups:",
@@ -172,8 +178,23 @@ for locale in LOCALES:
         for msgid, translation in TRANSLATIONS[locale].items()
         if msgid not in existing
     ]
+
+    repaired = 0
+    for msgid, translation in TRANSLATIONS[locale].items():
+        empty = block(msgid, "")
+        filled = block(msgid, translation)
+        if empty in text and empty != filled:
+            text = text.replace(empty, filled, 1)
+            repaired += 1
+
     if additions:
-        po.write_text(text.rstrip() + "\n\n" + "\n\n".join(additions) + "\n", encoding="utf-8")
-        print(f"{locale}: seeded {len(additions)} reviewed product translations")
+        text = text.rstrip() + "\n\n" + "\n\n".join(additions) + "\n"
+
+    if additions or repaired:
+        po.write_text(text, encoding="utf-8")
+        print(
+            f"{locale}: seeded {len(additions)} reviewed product translations"
+            f"; repaired {repaired} empty translations"
+        )
     else:
         print(f"{locale}: reviewed product translations already present")

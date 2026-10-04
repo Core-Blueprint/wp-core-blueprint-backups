@@ -5,6 +5,9 @@ namespace CB\Backups\Support;
 
 use RuntimeException;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class DownloadStreamer {
 	private const DEFAULT_CHUNK_BYTES = 1048576;
 
@@ -21,7 +24,7 @@ final class DownloadStreamer {
 		if ( function_exists( 'session_status' ) && PHP_SESSION_ACTIVE === session_status() ) {
 			session_write_close();
 		}
-		@ini_set( 'zlib.output_compression', '0' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		@ini_set( 'zlib.output_compression', '0' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,Squiz.PHP.DiscouragedFunctions.Discouraged -- Streaming backup downloads must not be recompressed by PHP.
 		header_remove( 'Content-Encoding' );
 		nocache_headers();
 		header( 'X-Content-Type-Options: nosniff' );

@@ -42,6 +42,7 @@ namespace {
 	function sanitize_text_field( string $text ): string { return $text; }
 	function wp_unslash( string $text ): string { return $text; }
 	function wp_kses( string $text, array $tags ): string { return $text; }
+	function wp_kses_post( string $text ): string { return $text; }
 	function size_format( int $bytes ): string { return (string) $bytes; }
 	function number_format_i18n( int|float $value, int $decimals = 0 ): string { return number_format( $value, $decimals ); }
 	function current_user_can( string $cap ): bool { return $GLOBALS['allowed']; }

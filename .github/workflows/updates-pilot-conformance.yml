@@ -1,30 +1,23 @@
-name: Backups Updates pilot conformance
+name: Backups WordPress.org distribution conformance
 
 on:
-  push:
-    paths:
-      - 'core-blueprint-backups.php'
-      - 'src/Integration/Updates.php'
-      - 'tests/updates-pilot-regression.php'
-      - 'docs/pilot-1-updates.md'
-      - '.github/workflows/updates-pilot-conformance.yml'
+  workflow_dispatch:
   pull_request:
     paths:
       - 'core-blueprint-backups.php'
-      - 'src/Integration/Updates.php'
       - 'tests/updates-pilot-regression.php'
-      - 'docs/pilot-1-updates.md'
+      - 'readme.txt'
       - '.github/workflows/updates-pilot-conformance.yml'
 
 permissions:
   contents: read
 
 jobs:
-  pilot:
+  distribution:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v4
 
       - name: Set up PHP 8.4
         uses: shivammathur/setup-php@v2
@@ -32,11 +25,10 @@ jobs:
           php-version: '8.4'
           coverage: none
 
-      - name: Lint pilot PHP surface
+      - name: Lint WordPress.org distribution surface
         run: |
           php -l core-blueprint-backups.php
-          php -l src/Integration/Updates.php
           php -l tests/updates-pilot-regression.php
 
-      - name: Run Updates registration regression
+      - name: Run WordPress.org distribution regression
         run: php tests/updates-pilot-regression.php

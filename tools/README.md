@@ -1,6 +1,14 @@
-# Backups release tooling
+# Backups developer and release tooling
 
-`tools/build-release` is the single canonical customer-release entrypoint for Core Blueprint Backups.
+Core Blueprint Backups uses three canonical validation levels:
+
+- Level 1: `tools/check`
+- Level 2: `tools/check-integration 7.0` and `tools/check-integration 7.1`
+- Level 3: `tools/build-release`
+
+CI and release workflows should invoke these canonical entrypoints instead of duplicating their test logic.
+
+`tools/build-release` is the canonical customer-package builder for Core Blueprint Backups.
 
 ## Requirements
 
@@ -10,6 +18,20 @@
 - Node.js for JavaScript syntax validation
 - an actual PHP 8.4 CLI binary
 - an actual PHP 8.5 CLI binary
+
+Level 1 (`tools/check`) additionally requires:
+
+- npm dependencies installed with `npm ci`
+- the pinned Playwright Chromium runtime
+
+Level 2 (`tools/check-integration`) additionally requires:
+
+- Docker
+- the canonical local Base source checkout at `~/Downloads/wp-core-blueprint`
+
+The integration runner provisions its own disposable WordPress root and canonical MariaDB 10.11.19 test service. The operator does not provide a WordPress root manually.
+
+By default, Level 2 resolves Base `main` to an exact Git commit and stages an immutable snapshot. Use `CB_TEST_BASE_SOURCE` or `CB_TEST_BASE_REF` only when intentionally validating another Base authority.
 
 `tools/i18n/update` additionally requires GNU gettext `msgmerge` and `msgattrib` when catalogs are intentionally refreshed.
 
@@ -24,7 +46,7 @@ tools/build-release \
   --php-bin /path/to/php8.5
 ```
 
-The version remains `1.0.0-rc1` during the current Golden release-candidate patch cycle.
+Version `1.0.0` is the stable WordPress.org submission release.
 
 ## Localization authority
 
@@ -43,8 +65,8 @@ There is no machine-translation refresh path, compatibility alias or second POT/
 
 A successful build creates:
 
-- `dist/core-blueprint-backups-1.0.0-rc1.zip`
-- `dist/core-blueprint-backups-1.0.0-rc1.zip.sha256`
+- `dist/core-blueprint-backups-1.0.0.zip`
+- `dist/core-blueprint-backups-1.0.0.zip.sha256`
 
 The ZIP contains exactly one canonical WordPress plugin root:
 
@@ -56,6 +78,7 @@ Only production runtime material is packaged:
 
 - `core-blueprint-backups.php`
 - `uninstall.php`
+- `readme.txt`
 - `src/`
 - `assets/`
 - `languages/`

@@ -16,6 +16,8 @@ use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Runner {
 	/** @return array<string,mixed>|null */
 	public static function tick( string $job_id ): ?array {

@@ -12,6 +12,9 @@ use ZipArchive;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup restore uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Engine {
 	/** @param array<string,mixed> $job */
 	public static function tick( array $job ): void {
@@ -260,7 +263,7 @@ final class Engine {
 	/** @param array<string,mixed> $manifest */
 	private static function assert_site_identity( array $manifest ): void {
 		global $wpdb; $site = is_array( $manifest['site'] ?? null ) ? $manifest['site'] : [];
-		$siteurl = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM `' . str_replace( '`', '``', (string) $wpdb->options ) . '` WHERE option_name = %s LIMIT 1', 'siteurl' ) ); $home = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM `' . str_replace( '`', '``', (string) $wpdb->options ) . '` WHERE option_name = %s LIMIT 1', 'home' ) ); if ( '' === $home ) $home = $siteurl;
+		$siteurl = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s LIMIT 1', $wpdb->options, 'siteurl' ) ); $home = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s LIMIT 1', $wpdb->options, 'home' ) ); if ( '' === $home ) $home = $siteurl;
 		if ( untrailingslashit( $siteurl ) !== untrailingslashit( (string) ( $site['site_url'] ?? '' ) ) || untrailingslashit( $home ) !== untrailingslashit( (string) ( $site['home_url'] ?? '' ) ) ) throw new RuntimeException( 'Restored WordPress site identity does not match the verified restore target.' );
 	}
 

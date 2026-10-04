@@ -15,6 +15,8 @@ use Throwable;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Scheduler {
 	private const OPTION = 'cb_backups_schedules';
 	private const STATE_OPTION = 'cb_backups_scheduler_state';

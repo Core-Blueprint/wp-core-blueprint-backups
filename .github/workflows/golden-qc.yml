@@ -29,6 +29,8 @@ jobs:
           sudo add-apt-repository ppa:ondrej/php -y
           sudo apt-get update
           sudo apt-get install -y php8.4-cli php8.5-cli gettext
+          sudo update-alternatives --set php /usr/bin/php8.4
+          php -v
           php8.4 -v
           php8.5 -v
           msgfmt --version | head -n1
@@ -41,42 +43,22 @@ jobs:
           wp --info
           wp i18n make-pot --help >/dev/null
 
-      - name: Canonical i18n check
-        run: tools/i18n/check
-
-      - name: Golden contract regression
+      - name: Install browser regression dependencies
         run: |
-          php8.4 tests/golden-contract-regression.php
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Canonical Level 1 checks
+        run: tools/check
+
+      - name: PHP 8.5 compatibility gate
+        run: |
+          find . -type f -name '*.php' \
+            -not -path './.git/*' \
+            -not -path './dist/*' \
+            -not -path './node_modules/*' \
+            -print0 | xargs -0 -n1 php8.5 -l
           php8.5 tests/golden-contract-regression.php
-
-      - name: Lint all PHP on 8.4
-        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php8.4 -l
-
-      - name: Lint all PHP on 8.5
-        run: find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php8.5 -l
-
-      - name: JavaScript syntax
-        run: |
-          node --check assets/js/admin.js
-          node --check assets/js/job-monitor.js
-          node --check assets/js/job-handoff.js
-          node --check assets/js/job-terminal-recovery.js
-          node --check assets/js/restore-confirmation.js
-
-      - name: Existing source regressions
-        run: |
-          php8.4 tests/rc15-migration-smoke.php
-          php8.4 tests/rc15-filesystem-policy-smoke.php
-          php8.4 tests/rc15-filesystem-commit-policy-smoke.php
-          php8.4 tests/filesystem-recovery-reconciliation-regression.php
-          php8.4 tests/rc15-job-presentation-smoke.php
-          php8.4 tests/rc15-job-monitor-smoke.php
-          php8.4 tests/job-result-regression.php
-          php8.4 tests/restore-confirmation-regression.php
-          php8.4 tests/extension-registration-regression.php
-          php8.4 tests/first-party-integration-lifecycle-regression.php
-          php8.4 tests/settings-hub-regression.php
-          php8.4 tests/updates-pilot-regression.php
 
       - name: Build validated production package twice
         run: |
@@ -86,29 +68,29 @@ jobs:
             --output dist \
             --php-bin php8.4 \
             --php-bin php8.5
-          first_sha="$(sha256sum dist/core-blueprint-backups-1.0.0-rc1.zip | awk '{print $1}')"
-          first_sidecar="$(cat dist/core-blueprint-backups-1.0.0-rc1.zip.sha256)"
+          first_sha="$(sha256sum dist/core-blueprint-backups-1.0.0.zip | awk '{print $1}')"
+          first_sidecar="$(cat dist/core-blueprint-backups-1.0.0.zip.sha256)"
           tools/build-release \
             --output dist \
             --php-bin php8.4 \
             --php-bin php8.5
-          second_sha="$(sha256sum dist/core-blueprint-backups-1.0.0-rc1.zip | awk '{print $1}')"
-          second_sidecar="$(cat dist/core-blueprint-backups-1.0.0-rc1.zip.sha256)"
+          second_sha="$(sha256sum dist/core-blueprint-backups-1.0.0.zip | awk '{print $1}')"
+          second_sidecar="$(cat dist/core-blueprint-backups-1.0.0.zip.sha256)"
           test "$first_sha" = "$second_sha"
           test "$first_sidecar" = "$second_sidecar"
 
       - name: Verify package outputs
         run: |
-          test -s dist/core-blueprint-backups-1.0.0-rc1.zip
-          test -s dist/core-blueprint-backups-1.0.0-rc1.zip.sha256
-          (cd dist && sha256sum -c core-blueprint-backups-1.0.0-rc1.zip.sha256)
+          test -s dist/core-blueprint-backups-1.0.0.zip
+          test -s dist/core-blueprint-backups-1.0.0.zip.sha256
+          (cd dist && sha256sum -c core-blueprint-backups-1.0.0.zip.sha256)
 
       - name: Upload validated release candidate
         uses: actions/upload-artifact@v4
         with:
-          name: core-blueprint-backups-1.0.0-rc1
+          name: core-blueprint-backups-1.0.0
           path: |
-            dist/core-blueprint-backups-1.0.0-rc1.zip
-            dist/core-blueprint-backups-1.0.0-rc1.zip.sha256
+            dist/core-blueprint-backups-1.0.0.zip
+            dist/core-blueprint-backups-1.0.0.zip.sha256
           if-no-files-found: error
           retention-days: 7

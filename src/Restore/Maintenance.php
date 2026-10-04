@@ -7,6 +7,8 @@ use CB\Backups\Storage\LocalStorage;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Maintenance {
 	public static function boot(): void {
 		add_action( 'template_redirect', [ self::class, 'protect_frontend' ], -1000 );

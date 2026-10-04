@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace CB\Backups\Import;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 use CB\Backups\Restore\ArchiveValidator;
 use CB\Backups\Restore\MigrationPlan;
 use CB\Backups\Storage\LocalStorage;

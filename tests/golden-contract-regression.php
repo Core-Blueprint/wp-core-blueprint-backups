@@ -26,7 +26,6 @@ $requirements = cb_backups_golden_read( 'src/Support/Requirements.php' );
 $schema       = cb_backups_golden_read( 'src/DB/Schema.php' );
 $capabilities = cb_backups_golden_read( 'src/Support/Capabilities.php' );
 $routes       = cb_backups_golden_read( 'src/Remote/Routes.php' );
-$updates      = cb_backups_golden_read( 'src/Integration/Updates.php' );
 $assets       = cb_backups_golden_read( 'src/Admin/Assets.php' );
 $admin_page   = cb_backups_golden_read( 'src/Admin/Page.php' );
 $actions      = cb_backups_golden_read( 'src/Admin/Actions.php' );
@@ -40,9 +39,10 @@ $migration_recovery = cb_backups_golden_read( 'src/Integration/MigrationRecovery
 $runner       = cb_backups_golden_read( 'src/Jobs/Runner.php' );
 $css          = cb_backups_golden_read( 'assets/css/admin.css' );
 $builder      = cb_backups_golden_read( 'tools/build-release' );
+$readme       = cb_backups_golden_read( 'readme.txt' );
 
-cb_backups_golden_expect( str_contains( $main, 'Version:     1.0.0-rc1' ), 'Plugin header must remain 1.0.0-rc1.' );
-cb_backups_golden_expect( str_contains( $main, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );" ), 'Runtime version must remain 1.0.0-rc1.' );
+cb_backups_golden_expect( str_contains( $main, 'Version:     1.0.0' ), 'Plugin header must remain 1.0.0.' );
+cb_backups_golden_expect( str_contains( $main, "define( 'CB_BACKUPS_VERSION', '1.0.0' );" ), 'Runtime version must remain 1.0.0.' );
 cb_backups_golden_expect( str_contains( $main, "define( 'CB_BACKUPS_REQUIRED_API', '1.0' );" ), 'Backups must require Base API 1.0.' );
 cb_backups_golden_expect( str_contains( $main, 'Requires Plugins: core-blueprint' ), 'Backups must declare the native Base dependency.' );
 cb_backups_golden_expect( ! str_contains( $main, 'function cb_backups_api_compatible' ), 'Pre-v1 API compatibility wrapper must stay removed.' );
@@ -51,12 +51,10 @@ cb_backups_golden_expect( str_contains( $requirements, 'public static function b
 cb_backups_golden_expect( str_contains( $requirements, 'public static function product_ready()' ), 'Product readiness must be owned by Requirements.' );
 cb_backups_golden_expect( str_contains( $main, "register_activation_hook( __FILE__, 'cb_backups_activate' );" ), 'Activation must pass through the readiness gate.' );
 
-$integration_section = strpos( $main, '/* Suite/update integrations attach only after complete Backups readiness. */' );
+$integration_section = strpos( $main, '/* Suite integrations attach only after complete Backups readiness. */' );
 $product_gate        = false !== $integration_section ? strpos( $main, 'Requirements::product_ready()', $integration_section ) : false;
 $suite_init          = false !== $integration_section ? strpos( $main, 'Bootstrap::register_suite_integration();', $integration_section ) : false;
-$updates_init        = false !== $integration_section ? strpos( $main, 'Integration\\Updates::init();', $integration_section ) : false;
 cb_backups_golden_expect( false !== $product_gate && false !== $suite_init && $product_gate < $suite_init, 'Product Base contracts must be proven before suite integration.' );
-cb_backups_golden_expect( false !== $product_gate && false !== $updates_init && $product_gate < $updates_init, 'Product Base contracts must be proven before Updates integration.' );
 
 foreach ( [
 	'cb_core_register_extensions',
@@ -96,9 +94,9 @@ cb_backups_golden_expect( str_contains( $routes, 'use CB\\Beacon\\Tickets\\Servi
 cb_backups_golden_expect( ! str_contains( $routes, 'CB\\Core\\Beacon' ), 'Legacy Beacon namespace must not return.' );
 cb_backups_golden_expect( str_contains( $routes, "add_action( 'cb_core_beacon_register_remote_routes', [ self::class, 'register' ], 10, 0 );" ), 'Beacon remote registration hook must remain argument-free.' );
 
-cb_backups_golden_expect( str_contains( $updates, "PRODUCT_KEY = 'core-blueprint-backups'" ), 'Updates product key must remain canonical.' );
-cb_backups_golden_expect( str_contains( $updates, "VENDOR_ID   = 'core-blueprint'" ), 'Updates vendor identity must remain canonical.' );
-cb_backups_golden_expect( str_contains( $main, 'Update URI:  https://coreblueprint.io/' ), 'Canonical Update URI must remain declared.' );
+cb_backups_golden_expect( ! str_contains( $main, 'Update URI:' ), 'WordPress.org builds must use WordPress.org as update authority.' );
+cb_backups_golden_expect( ! is_file( $root . '/src/Integration/Updates.php' ), 'External Updates adapter must not ship in the WordPress.org source.' );
+cb_backups_golden_expect( str_contains( $readme, 'Stable tag: 1.0.0' ), 'WordPress.org readme Stable tag must match the plugin version.' );
 
 cb_backups_golden_expect( str_contains( $bootstrap, "'foundations' => [ 'modal', 'toast', 'time-picker' ]" ), 'Operational page must declare its Foundation requirements.' );
 cb_backups_golden_expect( str_contains( $bootstrap, "'nav-tabs'" ) && str_contains( $bootstrap, "'form-controls'" ), 'Operational page must declare shared component requirements.' );
@@ -126,9 +124,10 @@ cb_backups_golden_expect( str_contains( $bootstrap, 'MigrationRecovery::boot();'
 cb_backups_golden_expect( ! is_file( $root . '/src/Restore/MigrationAccessRecovery.php' ), 'Backups-owned security recovery authority must stay removed.' );
 
 cb_backups_golden_expect( ! is_file( $root . '/tools/build-release.py' ), 'Superseded build-release.py must stay removed.' );
-cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0-rc1"' ), 'Release builder must pin RC1.' );
+cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0"' ), 'Release builder must pin stable 1.0.0.' );
 cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_API = "1.0"' ), 'Release builder must pin Base API 1.0.' );
 cb_backups_golden_expect( str_contains( $builder, 'REQUIRED_PHP_MINORS = {(8, 4), (8, 5)}' ), 'Release builder must require PHP 8.4 and 8.5.' );
+cb_backups_golden_expect( str_contains( $builder, 'RUNTIME_FILES = ("core-blueprint-backups.php", "uninstall.php", "readme.txt")' ), 'Release builder must package readme.txt.' );
 cb_backups_golden_expect( str_contains( $builder, 'RUNTIME_DIRS = ("src", "assets", "languages")' ), 'Release builder must package runtime directories only.' );
 cb_backups_golden_expect( str_contains( $builder, 'run_i18n_check()' ), 'Release builder must use canonical tools/i18n/check authority.' );
 cb_backups_golden_expect( str_contains( $builder, 'msgfmt' ), 'Release builder must compile staged MO catalogs with GNU gettext.' );

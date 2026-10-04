@@ -12,6 +12,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+
 final class Service {
 	/** @return array<string,mixed> */
 	public static function create( string $archive_path, string $trigger = 'manual', bool $acknowledged = false ): array {

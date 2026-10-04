@@ -29,6 +29,12 @@ if ( ! is_blog_installed() ) wp_install( 'Disposable fidelity test', 'test-admin
 update_option( 'home', 'https://source.example.test' );
 update_option( 'siteurl', 'https://source.example.test' );
 
+$base_root = rtrim( (string) getenv( 'CB_TEST_BASE_ROOT' ), '/\\' );
+if ( '' === $base_root || ! is_file( $base_root . '/core-blueprint.php' ) ) {
+	throw new RuntimeException( 'CB_TEST_BASE_ROOT must point to the canonical Core Blueprint Base checkout.' );
+}
+require_once $base_root . '/core-blueprint.php';
+
 spl_autoload_register( static function ( string $class ): void {
 	$prefix = 'CB\\Backups\\';
 	if ( str_starts_with( $class, $prefix ) ) {

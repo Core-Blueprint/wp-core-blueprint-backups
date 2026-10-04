@@ -20,6 +20,8 @@ use WP_REST_Server;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Routes {
 	private const PREFIX = '/backups';
 

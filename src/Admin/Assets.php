@@ -136,9 +136,11 @@ final class Assets {
 				'importRequestFailed'=> __( 'Import request failed.', 'core-blueprint-backups' ),
 				'bulkDeleteTitle'   => __( 'Delete selected backups?', 'core-blueprint-backups' ),
 				'bulkDeleteOne'     => __( 'Permanently delete 1 selected backup? This restore point will be removed from local backup storage and cannot be recovered.', 'core-blueprint-backups' ),
+				/* translators: %d: number of selected backup archives. */
 				'bulkDeleteMany'    => __( 'Permanently delete %d selected backups? These restore points will be removed from local backup storage and cannot be recovered.', 'core-blueprint-backups' ),
 				'bulkDeleteConfirm' => __( 'Delete selected', 'core-blueprint-backups' ),
 				'bulkSelectedOne'    => __( '1 backup selected', 'core-blueprint-backups' ),
+				/* translators: %d: number of selected backup archives. */
 				'bulkSelectedMany'   => __( '%d backups selected', 'core-blueprint-backups' ),
 			],
 		];
@@ -210,7 +212,7 @@ final class Assets {
 		$notice = sanitize_key( (string) ( isset( $_GET['cb_notice'] ) ? wp_unslash( $_GET['cb_notice'] ) : '' ) );
 
 		if ( 'backups_bulk_deleted' === $notice ) {
-			$count = max( 0, (int) ( $_GET['deleted'] ?? 0 ) );
+			$count = max( 0, (int) sanitize_text_field( (string) ( isset( $_GET['deleted'] ) ? wp_unslash( $_GET['deleted'] ) : '0' ) ) );
 			$message = sprintf(
 				/* translators: %d: number of deleted backups. */
 				_n( '%d backup deleted.', '%d backups deleted.', $count, 'core-blueprint-backups' ),

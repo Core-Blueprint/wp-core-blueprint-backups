@@ -34,7 +34,7 @@ final class SiteHealth {
 	public static function storage_test(): array {
 		try {
 			LocalStorage::ensure();
-			$writable = is_writable( LocalStorage::base_path() );
+			$writable = wp_is_writable( LocalStorage::base_path() );
 		} catch ( \Throwable ) {
 			$writable = false;
 		}
@@ -64,11 +64,17 @@ final class SiteHealth {
 			$status = 'good';
 			$label = __( 'A recent Core Blueprint backup is available', 'core-blueprint-backups' );
 		}
+		if ( $timestamp > 0 ) {
+			/* translators: %s: formatted date/time of the latest successful backup. */
+			$description = sprintf( __( 'Latest successful backup: %s.', 'core-blueprint-backups' ), wp_date( 'Y-m-d H:i:s', $timestamp ) );
+		} else {
+			$description = __( 'Create a database or full website backup to establish the first restore point.', 'core-blueprint-backups' );
+		}
 		return [
 			'label'       => $label,
 			'status'      => $status,
 			'badge'       => [ 'label' => 'Core Blueprint', 'color' => 'blue' ],
-			'description' => '<p>' . esc_html( $timestamp > 0 ? sprintf( __( 'Latest successful backup: %s.', 'core-blueprint-backups' ), wp_date( 'Y-m-d H:i:s', $timestamp ) ) : __( 'Create a database or full website backup to establish the first restore point.', 'core-blueprint-backups' ) ) . '</p>',
+			'description' => '<p>' . esc_html( $description ) . '</p>',
 			'actions'     => '',
 			'test'        => 'cb_backups_recent',
 		];
@@ -85,6 +91,7 @@ final class SiteHealth {
 		} elseif ( 'healthy' === $status_key ) {
 			$status = 'good';
 			$label = __( 'The Core Blueprint backup scheduler is healthy', 'core-blueprint-backups' );
+			/* translators: %s: formatted date/time of the latest scheduler heartbeat. */
 			$description = sprintf( __( 'Last scheduler heartbeat: %s.', 'core-blueprint-backups' ), wp_date( 'Y-m-d H:i:s', (int) $health['last_tick'] ) );
 		} elseif ( 'warning' === $status_key ) {
 			$status = 'recommended';
