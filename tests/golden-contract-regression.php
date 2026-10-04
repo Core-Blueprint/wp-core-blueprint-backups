@@ -124,7 +124,7 @@ cb_backups_golden_expect( str_contains( $bootstrap, 'MigrationRecovery::boot();'
 cb_backups_golden_expect( ! is_file( $root . '/src/Restore/MigrationAccessRecovery.php' ), 'Backups-owned security recovery authority must stay removed.' );
 
 cb_backups_golden_expect( ! is_file( $root . '/tools/build-release.py' ), 'Superseded build-release.py must stay removed.' );
-cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0"' ), 'Release builder must pin RC1.' );
+cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_VERSION = "1.0.0"' ), 'Release builder must pin stable 1.0.0.' );
 cb_backups_golden_expect( str_contains( $builder, 'EXPECTED_API = "1.0"' ), 'Release builder must pin Base API 1.0.' );
 cb_backups_golden_expect( str_contains( $builder, 'REQUIRED_PHP_MINORS = {(8, 4), (8, 5)}' ), 'Release builder must require PHP 8.4 and 8.5.' );
 cb_backups_golden_expect( str_contains( $builder, 'RUNTIME_FILES = ("core-blueprint-backups.php", "uninstall.php", "readme.txt")' ), 'Release builder must package readme.txt.' );

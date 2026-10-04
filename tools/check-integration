@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+fail() {
+	printf 'Backups integration checks failed: %s\n' "$*" >&2
+	exit 1
+}
+
+WP_VERSION="${1:-${CB_TEST_WP_VERSION:-7.0}}"
+WP_SAFE_VERSION="${WP_VERSION//[^0-9A-Za-z._-]/_}"
+
+TEST_ROOT="${CB_TEST_ROOT:-/tmp/core-blueprint-tests/core-blueprint-backups}"
+WP_ROOT="$TEST_ROOT/wordpress-$WP_SAFE_VERSION"
+BASE_ROOT="$TEST_ROOT/base"
+
+DB_CONTAINER="cb-base-test-db"
+DB_IMAGE="mariadb:10.11.19"
+DB_NAME="cb_backups_test"
+DB_USER="root"
+DB_PASSWORD="root"
+DB_ROOT_PASSWORD="root"
+DB_HOST="127.0.0.1:3307"
+
+BASE_SOURCE="${CB_TEST_BASE_SOURCE:-$HOME/Downloads/wp-core-blueprint}"
+BASE_REF="${CB_TEST_BASE_REF:-main}"
+
+for command in php wp docker git grep sleep tar; do
+	command -v "$command" >/dev/null 2>&1 \
+		|| fail "missing required command: $command"
+done
+
+php -r '
+	exit(
+		version_compare(PHP_VERSION, "8.4", ">=")
+		&& extension_loaded("mysqli")
+		&& extension_loaded("mbstring")
+		&& class_exists("DOMDocument")
+		&& class_exists("ZipArchive")
+			? 0
+			: 1
+	);
+' || fail "PHP 8.4+ with mysqli, mbstring, DOM and ZipArchive is required"
+
+case "$WP_VERSION" in
+	7.0|7.1) ;;
+	*) fail "WordPress target must be one of the canonical versions: 7.0 or 7.1" ;;
+esac
+
+[[ -n "$TEST_ROOT" && "$TEST_ROOT" != "/" ]] \
+	|| fail "unsafe CB_TEST_ROOT"
+
+[[ "$TEST_ROOT" == /tmp/core-blueprint-tests/* ]] \
+	|| fail "CB_TEST_ROOT must stay under /tmp/core-blueprint-tests"
+
+[[ -f "$BASE_SOURCE/core-blueprint.php" ]] \
+	|| fail "Base source is unavailable: expected $BASE_SOURCE/core-blueprint.php"
+
+BASE_SHA="$(git -C "$BASE_SOURCE" rev-parse "$BASE_REF^{commit}" 2>/dev/null || true)"
+[[ -n "$BASE_SHA" ]] \
+	|| fail "could not resolve Base ref '$BASE_REF' from $BASE_SOURCE"
+
+echo "==> Canonical MariaDB"
+
+if docker inspect "$DB_CONTAINER" >/dev/null 2>&1; then
+	IMAGE="$(docker inspect --format '{{.Config.Image}}' "$DB_CONTAINER")"
+	PORTS="$(docker port "$DB_CONTAINER" 3306/tcp 2>/dev/null || true)"
+
+	[[ "$IMAGE" == "$DB_IMAGE" ]] \
+		|| fail "$DB_CONTAINER uses $IMAGE; expected canonical image $DB_IMAGE"
+
+	grep -q ':3307$' <<< "$PORTS" \
+		|| fail "$DB_CONTAINER must publish container port 3306 on host port 3307"
+
+	if [[ "$(docker inspect --format '{{.State.Running}}' "$DB_CONTAINER")" != "true" ]]; then
+		docker start "$DB_CONTAINER" >/dev/null \
+			|| fail "could not start $DB_CONTAINER"
+	fi
+else
+	docker run -d \
+		--name "$DB_CONTAINER" \
+		-e MARIADB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
+		-p 3307:3306 \
+		"$DB_IMAGE" >/dev/null \
+		|| fail "could not create canonical $DB_CONTAINER on host port 3307"
+fi
+
+ready=0
+for _ in {1..30}; do
+	if docker exec "$DB_CONTAINER" \
+		mariadb-admin ping \
+		-uroot "-p$DB_ROOT_PASSWORD" \
+		--silent >/dev/null 2>&1; then
+		ready=1
+		break
+	fi
+	sleep 1
+done
+
+[[ "$ready" == "1" ]] \
+	|| fail "$DB_CONTAINER did not become ready"
+
+docker exec "$DB_CONTAINER" mariadb \
+	-uroot "-p$DB_ROOT_PASSWORD" \
+	-e "SELECT VERSION() AS version;"
+
+reset_database() {
+	echo "==> Reset disposable database: $DB_NAME"
+
+	docker exec "$DB_CONTAINER" mariadb \
+		-uroot "-p$DB_ROOT_PASSWORD" \
+		-e "
+			DROP DATABASE IF EXISTS \`$DB_NAME\`;
+			CREATE DATABASE \`$DB_NAME\`
+				CHARACTER SET utf8mb4
+				COLLATE utf8mb4_unicode_ci;
+		"
+}
+
+echo "==> Provision immutable Base snapshot"
+rm -rf "$TEST_ROOT"
+mkdir -p "$WP_ROOT" "$BASE_ROOT"
+
+git -C "$BASE_SOURCE" archive --format=tar "$BASE_SHA" \
+	| tar -xf - -C "$BASE_ROOT"
+
+[[ -f "$BASE_ROOT/core-blueprint.php" ]] \
+	|| fail "staged Base snapshot is missing core-blueprint.php"
+
+echo "==> Provision WordPress ${WP_VERSION}"
+
+wp core download \
+	--path="$WP_ROOT" \
+	--version="$WP_VERSION" \
+	--locale=en_US \
+	--force
+
+ACTUAL_WP_VERSION="$(wp core version --path="$WP_ROOT")"
+[[ "$ACTUAL_WP_VERSION" == "$WP_VERSION" ]] \
+	|| fail "requested WordPress ${WP_VERSION}, provisioned ${ACTUAL_WP_VERSION}"
+
+BACKUPS_SHA="$(git -C "$ROOT" rev-parse HEAD)"
+
+printf '==> Backups integration context\n'
+printf 'WordPress: %s\n' "$WP_VERSION"
+printf 'MariaDB: %s (%s -> %s)\n' "$DB_IMAGE" "$DB_CONTAINER" "$DB_HOST"
+printf 'Database: %s\n' "$DB_NAME"
+printf 'Backups HEAD: %s\n' "$BACKUPS_SHA"
+printf 'Base source: %s\n' "$BASE_SOURCE"
+printf 'Base ref: %s\n' "$BASE_REF"
+printf 'Base SHA: %s\n' "$BASE_SHA"
+printf 'WordPress root: %s\n' "$WP_ROOT"
+
+run_test() {
+	local test="$1"
+
+	echo "---- $test"
+
+	CB_BACKUPS_TEST_DISPOSABLE=1 \
+	CB_TEST_WP_ROOT="$WP_ROOT" \
+	CB_TEST_BASE_ROOT="$BASE_ROOT" \
+	CB_TEST_DB_NAME="$DB_NAME" \
+	CB_TEST_DB_USER="$DB_USER" \
+	CB_TEST_DB_PASSWORD="$DB_PASSWORD" \
+	CB_TEST_DB_HOST="$DB_HOST" \
+	php "$ROOT/$test"
+}
+
+echo "==> Database fidelity / restore integration"
+reset_database
+
+run_test tests/integration/database-roundtrip.php
+run_test tests/integration/database-robustness.php
+run_test tests/integration/database-engine-e2e.php
+run_test tests/integration/import-history.php
+
+echo "==> Database timezone portability"
+reset_database
+
+run_test tests/integration/database-timezone-portability.php
+
+echo "Backups WordPress ${WP_VERSION} integration checks: PASS"

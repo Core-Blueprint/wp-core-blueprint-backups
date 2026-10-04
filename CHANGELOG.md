@@ -29,7 +29,7 @@ The first stable WordPress.org submission release is `1.0.0`.
 - Added mandatory PHP 8.4 and PHP 8.5 lint gates, JavaScript syntax QC, CSS structure QC, gettext validation and SHA-256 release output.
 - Added translation quality validation so non-English catalogs cannot pass merely by copying the English source into `msgstr`.
 - Added documented release tooling and a controlled maintainer translation-refresh helper.
-- Replaced the old pre-v1 RC-focused README with the canonical `1.0.0-rc1` product, ownership, security and release contract.
+- Replaced the old pre-v1 RC-focused README with the canonical `1.0.0` product, ownership, security and release contract.
 - Reconciled the Import & Restore interface with the existing portable single-site migration contract and added Golden regression coverage so stale same-site-only messaging cannot return.
 - Replaced the temporary Backups-owned migration access workaround with the Base-owned Migration Recovery contract: cross-site migrations now pause at 99%, require top-level destination re-authentication, reconcile destination trust on a fresh runtime, prepare rewrites through an authenticated request and complete only after any required browser rewrite probe succeeds.
 

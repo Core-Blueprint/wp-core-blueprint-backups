@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+fail() {
+	printf 'Backups checks failed: %s\n' "$*" >&2
+	exit 1
+}
+
+for command in php node npm python3 wp msgfmt find; do
+	command -v "$command" >/dev/null 2>&1 || fail "missing required command: $command"
+done
+
+php -r 'exit(version_compare(PHP_VERSION, "8.4", ">=") ? 0 : 1);' \
+	|| fail "PHP 8.4 or newer is required"
+
+echo "==> Canonical i18n"
+"$ROOT/tools/i18n/check"
+
+echo "==> PHP syntax"
+while IFS= read -r -d '' file; do
+	php -l "$file" >/dev/null || fail "PHP syntax failed: $file"
+done < <(
+	find "$ROOT" \
+		\( -path "$ROOT/.git" -o -path "$ROOT/dist" -o -path "$ROOT/node_modules" \) -prune -o \
+		-type f -name '*.php' -print0
+)
+
+echo "==> JavaScript syntax"
+while IFS= read -r -d '' file; do
+	node --check "$file" >/dev/null || fail "JavaScript syntax failed: $file"
+done < <(
+	find "$ROOT/assets" "$ROOT/tests" \
+		-type f \( -name '*.js' -o -name '*.cjs' \) -print0
+)
+
+echo "==> PHP regressions"
+for test in "$ROOT"/tests/*.php; do
+	echo "---- ${test#$ROOT/}"
+	php "$test"
+done
+
+echo "==> Browser regressions"
+node -e "require.resolve('playwright')" >/dev/null 2>&1 \
+	|| fail "Playwright dependency missing; run: npm ci"
+
+node - <<'NODE' || {
+const fs = require('node:fs');
+const { chromium } = require('playwright');
+process.exit(fs.existsSync(chromium.executablePath()) ? 0 : 1);
+NODE
+	echo "Backups checks failed: Playwright Chromium runtime missing; run: npx playwright install chromium" >&2
+	exit 1
+}
+
+npm run test:browser
+
+echo "==> WordPress integration regressions"
+echo "SKIP: dedicated disposable WordPress/database gate runs separately."
+
+echo "Backups checks: PASS"

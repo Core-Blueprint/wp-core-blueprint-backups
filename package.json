@@ -1,0 +1,12 @@
+{
+  "name": "core-blueprint-backups-dev",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development and browser-regression tooling for Core Blueprint Backups.",
+  "scripts": {
+    "test:browser": "node tests/job-monitor-browser.cjs && node tests/restore-confirmation-browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
