@@ -31,8 +31,8 @@ $scheduler    = cb_backups_settings_hub_read( 'src/Schedule/Scheduler.php' );
 $capabilities = cb_backups_settings_hub_read( 'src/Support/Capabilities.php' );
 
 // Release/dependency baseline.
-cb_backups_settings_hub_expect( str_contains( $plugin, 'Version:     1.0.0-rc1' ), 'Backups must remain on 1.0.0-rc1.' );
-cb_backups_settings_hub_expect( str_contains( $plugin, "define( 'CB_BACKUPS_VERSION', '1.0.0-rc1' );" ), 'Runtime version must remain 1.0.0-rc1.' );
+cb_backups_settings_hub_expect( str_contains( $plugin, 'Version:     1.0.0' ), 'Backups must remain on 1.0.0.' );
+cb_backups_settings_hub_expect( str_contains( $plugin, "define( 'CB_BACKUPS_VERSION', '1.0.0' );" ), 'Runtime version must remain 1.0.0.' );
 cb_backups_settings_hub_expect( str_contains( $requirements, 'SettingsRegistry' ), 'Runtime dependency gate must require the canonical SettingsRegistry contract.' );
 
 // Operational Backups workspace remains registered and authoritative.
