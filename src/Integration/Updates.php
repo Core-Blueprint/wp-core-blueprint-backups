@@ -21,7 +21,7 @@ final class Updates {
 	}
 
 	public static function register_product(): void {
-		$registry = '\\CB\\Updates\\ProductRegistry';
+		$registry = '\\CoreBlueprint\\Updates\\ProductRegistry';
 		if ( ! class_exists( $registry ) ) {
 			return;
 		}
