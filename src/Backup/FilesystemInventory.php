@@ -8,6 +8,8 @@ use CB\Backups\Support\FilesystemPolicy;
 use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class FilesystemInventory {
 	private const MAX_DIRECTORIES_PER_TICK = 40;
 	private const MAX_ENTRIES_PER_TICK = 2000;
