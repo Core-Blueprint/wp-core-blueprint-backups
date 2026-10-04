@@ -104,8 +104,8 @@ final class Actions {
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		try {
 			$name = sanitize_file_name( (string) ( isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '' ) );
-			$size = max( 0, (int) ( isset( $_POST['size'] ) ? wp_unslash( $_POST['size'] ) : 0 ) );
-			$last_modified = max( 0, (int) ( isset( $_POST['last_modified'] ) ? wp_unslash( $_POST['last_modified'] ) : 0 ) );
+			$size = max( 0, (int) sanitize_text_field( (string) ( isset( $_POST['size'] ) ? wp_unslash( $_POST['size'] ) : '0' ) ) );
+			$last_modified = max( 0, (int) sanitize_text_field( (string) ( isset( $_POST['last_modified'] ) ? wp_unslash( $_POST['last_modified'] ) : '0' ) ) );
 			$upload_id = sanitize_text_field( (string) ( isset( $_POST['upload_id'] ) ? wp_unslash( $_POST['upload_id'] ) : '' ) );
 			wp_send_json_success( ChunkedUploader::initialise( $name, $size, $last_modified, $upload_id ) );
 		} catch ( \Throwable $e ) {
@@ -118,7 +118,7 @@ final class Actions {
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		try {
 			$upload_id = sanitize_text_field( (string) ( isset( $_POST['upload_id'] ) ? wp_unslash( $_POST['upload_id'] ) : '' ) );
-			$offset = max( 0, (int) ( isset( $_POST['offset'] ) ? wp_unslash( $_POST['offset'] ) : 0 ) );
+			$offset = max( 0, (int) sanitize_text_field( (string) ( isset( $_POST['offset'] ) ? wp_unslash( $_POST['offset'] ) : '0' ) ) );
 			$file = $_FILES['chunk'] ?? null;
 			if ( ! is_array( $file ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || empty( $file['tmp_name'] ) || ! is_uploaded_file( (string) $file['tmp_name'] ) ) {
 				throw new \RuntimeException( 'Import chunk upload failed.' );
@@ -164,7 +164,7 @@ final class Actions {
 		$archive = sanitize_file_name( (string) ( isset( $_POST['archive'] ) ? wp_unslash( $_POST['archive'] ) : '' ) );
 		check_admin_referer( 'cb_backups_restore_import_' . $archive );
 		try {
-			$job = RestoreService::create( LocalStorage::import_path( $archive ), 'manual_import', '1' === ( $_POST['restore_acknowledged'] ?? null ) );
+			$job = RestoreService::create( LocalStorage::import_path( $archive ), 'manual_import', '1' === sanitize_text_field( (string) ( isset( $_POST['restore_acknowledged'] ) ? wp_unslash( $_POST['restore_acknowledged'] ) : '' ) ) );
 			self::redirect( [ 'tab' => 'restore', 'job' => (string) $job['job_id'], 'cb_notice' => 'restore_started' ] );
 		} catch ( \Throwable $e ) {
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => $e->getMessage() ] );
@@ -187,7 +187,7 @@ final class Actions {
 		$archive = sanitize_file_name( (string) ( isset( $_POST['archive'] ) ? wp_unslash( $_POST['archive'] ) : '' ) );
 		check_admin_referer( 'cb_backups_restore_' . $archive );
 		try {
-			$job = RestoreService::create( LocalStorage::archive_path( $archive ), 'manual', '1' === ( $_POST['restore_acknowledged'] ?? null ) );
+			$job = RestoreService::create( LocalStorage::archive_path( $archive ), 'manual', '1' === sanitize_text_field( (string) ( isset( $_POST['restore_acknowledged'] ) ? wp_unslash( $_POST['restore_acknowledged'] ) : '' ) ) );
 			self::redirect( [ 'tab' => 'restore', 'job' => (string) $job['job_id'], 'cb_notice' => 'restore_started' ] );
 		} catch ( \Throwable $e ) {
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => $e->getMessage() ] );
