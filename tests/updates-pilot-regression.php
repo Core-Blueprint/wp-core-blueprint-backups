@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace CB\Updates {
+namespace CoreBlueprint\Updates {
 	final class ProductRegistry {
 		/** @var array<int,array<string,mixed>> */
 		public static array $registered = [];
@@ -49,7 +49,7 @@ namespace {
 	}
 
 	$hook();
-	$descriptor = \CB\Updates\ProductRegistry::$registered[0] ?? null;
+	$descriptor = \CoreBlueprint\Updates\ProductRegistry::$registered[0] ?? null;
 	if ( ! is_array( $descriptor ) ) {
 		$fail( 'Backups must publish one Updates product descriptor when the Updates registry is available.' );
 	}
