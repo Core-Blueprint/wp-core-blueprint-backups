@@ -5,6 +5,9 @@ namespace CB\Backups\Support;
 
 use RuntimeException;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class DownloadStreamer {
 	private const DEFAULT_CHUNK_BYTES = 1048576;
 
