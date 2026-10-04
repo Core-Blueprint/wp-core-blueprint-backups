@@ -8,6 +8,9 @@ use CB\Backups\Support\FilesystemPolicy;
 use RuntimeException;
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class FilesystemCommitter {
 	private const PLAN_FILE = 'filesystem-commit-plan.json';
 	private const TIME_BUDGET_SECONDS = 1.25;
