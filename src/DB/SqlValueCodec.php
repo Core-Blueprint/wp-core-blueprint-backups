@@ -7,6 +7,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+
 /** The format-v1 SQL literal contract. Values are never sanitized as application data. */
 final class SqlValueCodec {
 	/**
