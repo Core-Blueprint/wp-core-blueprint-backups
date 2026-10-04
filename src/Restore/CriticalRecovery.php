@@ -10,6 +10,8 @@ use Throwable;
 
 \defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class CriticalRecovery {
 	private const MARKER = 'restore-critical.json';
 	private static string $armed_job_id = '';
