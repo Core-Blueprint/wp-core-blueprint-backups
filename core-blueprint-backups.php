@@ -108,6 +108,7 @@ register_activation_hook( __FILE__, 'cb_backups_activate' );
 register_deactivation_hook( __FILE__, [ \CB\Backups\Bootstrap::class, 'deactivate' ] );
 
 add_action( 'init', static function (): void {
+	// phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Reviewed bundled catalogs are also used by non-directory distributions.
 	load_plugin_textdomain( 'core-blueprint-backups', false, dirname( CB_BACKUPS_BASENAME ) . '/languages' );
 }, 0 );
 
