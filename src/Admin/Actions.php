@@ -66,6 +66,7 @@ final class Actions {
 		LocalStorage::ensure();
 		$archive_name = 'import-' . wp_generate_uuid4() . '.cbbackup';
 		$target = LocalStorage::import_path( $archive_name );
+		// phpcs:ignore Generic.PHP.ForbiddenFunctions.Found -- move_uploaded_file() preserves PHP upload provenance before archive validation.
 		if ( ! is_uploaded_file( (string) $file['tmp_name'] ) || ! move_uploaded_file( (string) $file['tmp_name'], $target ) ) {
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => 'Uploaded backup could not be moved into private storage.' ] );
 		}
@@ -90,8 +91,8 @@ final class Actions {
 			Audit::log( 'backups.import.prepared', 'notice', [ 'archive' => $archive_name, 'type' => (string) $meta['backup_type'], 'size' => (int) $meta['size'] ] );
 			self::redirect( [ 'tab' => 'restore', 'cb_notice' => 'import_prepared' ] );
 		} catch ( \Throwable $e ) {
-			@unlink( $target ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-			@unlink( $target . '.json' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			wp_delete_file( $target );
+			wp_delete_file( $target . '.json' );
 			self::redirect( [ 'tab' => 'restore', 'cb_error' => $e->getMessage() ] );
 		}
 	}
@@ -101,8 +102,8 @@ final class Actions {
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		try {
 			$name = sanitize_file_name( (string) ( isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '' ) );
-			$size = max( 0, (int) ( $_POST['size'] ?? 0 ) );
-			$last_modified = max( 0, (int) ( $_POST['last_modified'] ?? 0 ) );
+			$size = max( 0, (int) ( isset( $_POST['size'] ) ? wp_unslash( $_POST['size'] ) : 0 ) );
+			$last_modified = max( 0, (int) ( isset( $_POST['last_modified'] ) ? wp_unslash( $_POST['last_modified'] ) : 0 ) );
 			$upload_id = sanitize_text_field( (string) ( isset( $_POST['upload_id'] ) ? wp_unslash( $_POST['upload_id'] ) : '' ) );
 			wp_send_json_success( ChunkedUploader::initialise( $name, $size, $last_modified, $upload_id ) );
 		} catch ( \Throwable $e ) {
@@ -115,7 +116,7 @@ final class Actions {
 		check_ajax_referer( 'cb_backups_admin', 'nonce' );
 		try {
 			$upload_id = sanitize_text_field( (string) ( isset( $_POST['upload_id'] ) ? wp_unslash( $_POST['upload_id'] ) : '' ) );
-			$offset = max( 0, (int) ( $_POST['offset'] ?? 0 ) );
+			$offset = max( 0, (int) ( isset( $_POST['offset'] ) ? wp_unslash( $_POST['offset'] ) : 0 ) );
 			$file = $_FILES['chunk'] ?? null;
 			if ( ! is_array( $file ) || UPLOAD_ERR_OK !== (int) ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) || empty( $file['tmp_name'] ) || ! is_uploaded_file( (string) $file['tmp_name'] ) ) {
 				throw new \RuntimeException( 'Import chunk upload failed.' );
@@ -217,6 +218,7 @@ final class Actions {
 			try {
 				DownloadStreamer::send( $stream, $filename, 'application/sql; charset=utf-8', $length );
 			} finally {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- ZipArchive returns a native stream resource.
 				fclose( $stream );
 				$zip->close();
 			}
@@ -224,6 +226,7 @@ final class Actions {
 		}
 
 		$size = filesize( $path );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Downloads are streamed to avoid loading backup archives into memory.
 		$stream = fopen( $path, 'rb' );
 		if ( false === $stream ) {
 			wp_die( esc_html__( 'Backup archive could not be opened for download.', 'core-blueprint-backups' ) );
@@ -231,6 +234,7 @@ final class Actions {
 		try {
 			DownloadStreamer::send( $stream, $archive, 'application/octet-stream', false === $size ? null : (int) $size );
 		} finally {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Native download stream cleanup.
 			fclose( $stream );
 		}
 		exit;
