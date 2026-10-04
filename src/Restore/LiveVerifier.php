@@ -8,6 +8,8 @@ use RuntimeException;
 
 \defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class LiveVerifier {
 	private const TIME_BUDGET_SECONDS = 4.0;
 	private const MAX_ENTRIES_PER_TICK = 1000;
