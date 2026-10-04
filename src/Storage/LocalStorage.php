@@ -7,6 +7,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class LocalStorage {
 	/** Return the configured storage path without creating options or directories. */
 	public static function health_path(): ?string {
