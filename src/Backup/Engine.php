@@ -15,6 +15,9 @@ use ZipArchive;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Engine {
 	private const PACKAGE_TIME_BUDGET = 6.0;
 	private const PACKAGE_FILE_BUDGET = 4000;
