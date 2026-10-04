@@ -19,6 +19,8 @@ use CB\Backups\Support\Capabilities;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup processing uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Actions {
 	private const PAGE = 'core-blueprint-backups';
 
