@@ -36,8 +36,9 @@ final class DatabaseContentVerifier {
 		}
 		if ( empty( $meta['db_content_verify_read_done'] ) ) {
 			$offset = (int) $meta['db_content_verify_offset'];
-			$query = 'SELECT * FROM `' . str_replace( '`', '``', $shadow ) . '` ORDER BY ' . $meta['db_content_verify_order'] . ' LIMIT 500 OFFSET ' . $offset;
-			$rows = $wpdb->get_results( $query, ARRAY_A );
+			$order = (string) $meta['db_content_verify_order'];
+			$query = $wpdb->prepare( 'SELECT * FROM %i ORDER BY ' . $order . ' LIMIT %d OFFSET %d', $shadow, 500, $offset ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- ORDER BY is generated from verified schema identifiers by ContentDigest.
+			$rows = $wpdb->get_results( $query, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query is prepared above; ORDER BY is a verified internal fragment.
 			if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) throw new RuntimeException( 'Could not read shadow content: ' . $wpdb->last_error );
 			ContentDigest::append( $dir, $meta['db_content_verify_state'], $rows, $expected['columns'] );
 			$meta['db_content_verify_offset'] += count( $rows );
