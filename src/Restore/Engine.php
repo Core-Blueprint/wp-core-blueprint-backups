@@ -12,6 +12,9 @@ use ZipArchive;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Backup restore uses bounded native streams/atomic filesystem primitives; WP_Filesystem is not suitable for these server-owned jobs.
+
 final class Engine {
 	/** @param array<string,mixed> $job */
 	public static function tick( array $job ): void {
