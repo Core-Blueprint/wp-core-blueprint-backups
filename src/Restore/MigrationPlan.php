@@ -9,6 +9,8 @@ use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exceptions are internal diagnostics; UI/HTTP presentation boundaries escape them.
+
 final class MigrationPlan {
 	/** @param array<string,mixed> $manifest @return array<string,mixed> */
 	public static function build( array $manifest ): array {
