@@ -144,18 +144,22 @@ final class Repository {
 	public static function has_active( string $kind = '' ): bool {
 		global $wpdb;
 		if ( '' !== $kind ) {
-			$sql = $wpdb->prepare(
-				"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling') AND kind = %s",
-				Schema::table(),
-				$kind
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling') AND kind = %s",
+					Schema::table(),
+					$kind
+				)
 			);
 		} else {
-			$sql = $wpdb->prepare(
-				"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling')",
-				Schema::table()
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM %i WHERE status IN ('queued','running','cancelling')",
+					Schema::table()
+				)
 			);
 		}
-		return (int) $wpdb->get_var( $sql ) > 0; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $count > 0;
 	}
 
 	/** @return array<int,array<string,mixed>> */
