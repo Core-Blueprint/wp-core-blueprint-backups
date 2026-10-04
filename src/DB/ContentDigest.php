@@ -22,7 +22,7 @@ final class ContentDigest {
 
 	public static function table_order_by( string $table, array $columns ): string {
 		global $wpdb;
-		$keys = $wpdb->get_results( "SHOW KEYS FROM `" . str_replace( '`', '``', $table ) . "` WHERE Key_name = 'PRIMARY'", ARRAY_A );
+		$keys = $wpdb->get_results( $wpdb->prepare( "SHOW KEYS FROM %i WHERE Key_name = 'PRIMARY'", $table ), ARRAY_A );
 		if ( '' !== $wpdb->last_error || ! is_array( $keys ) ) throw new RuntimeException( 'Cannot inspect shadow primary key.' );
 		if ( ! $keys ) return self::order_by( $columns );
 		usort( $keys, static fn ( array $a, array $b ): int => (int) $a['Seq_in_index'] <=> (int) $b['Seq_in_index'] );
@@ -31,7 +31,7 @@ final class ContentDigest {
 
 	public static function columns( string $table ): array {
 		global $wpdb;
-		$rows = $wpdb->get_results( 'SHOW FULL COLUMNS FROM `' . str_replace( '`', '``', $table ) . '`', ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i', $table ), ARRAY_A );
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) || ! $rows ) throw new RuntimeException( 'Could not inspect database content schema: ' . $wpdb->last_error );
 		$columns = [];
 		foreach ( $rows as $row ) $columns[] = [ 'name' => (string) $row['Field'], 'type' => strtolower( (string) $row['Type'] ), 'collation' => $row['Collation'], 'nullable' => (string) $row['Null'] ];
